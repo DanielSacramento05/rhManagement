@@ -1,0 +1,83 @@
+
+import { apiRequest, buildQueryParams } from './api';
+import { 
+  Employee, 
+  EmployeeFilters, 
+  ApiResponse, 
+  PaginatedResponse 
+} from '@/types';
+
+const ENDPOINT = '/employees';
+
+/**
+ * Get all employees with optional filtering and pagination
+ * @param filters Filtering and pagination options
+ * @returns Paginated list of employees
+ */
+export const getEmployees = async (
+  filters?: EmployeeFilters
+): Promise<PaginatedResponse<Employee>> => {
+  return apiRequest<PaginatedResponse<Employee>>(
+    ENDPOINT, 
+    'GET', 
+    undefined, 
+    buildQueryParams(filters)
+  );
+};
+
+/**
+ * Get a specific employee by ID
+ * @param id Employee ID
+ * @returns Employee details
+ */
+export const getEmployeeById = async (
+  id: string
+): Promise<ApiResponse<Employee>> => {
+  return apiRequest<ApiResponse<Employee>>(`${ENDPOINT}/${id}`);
+};
+
+/**
+ * Create a new employee
+ * @param employee Employee data
+ * @returns Created employee
+ */
+export const createEmployee = async (
+  employee: Omit<Employee, 'id'>
+): Promise<ApiResponse<Employee>> => {
+  return apiRequest<ApiResponse<Employee>, Omit<Employee, 'id'>>(
+    ENDPOINT, 
+    'POST', 
+    employee
+  );
+};
+
+/**
+ * Update an existing employee
+ * @param id Employee ID
+ * @param employee Updated employee data
+ * @returns Updated employee
+ */
+export const updateEmployee = async (
+  id: string, 
+  employee: Partial<Employee>
+): Promise<ApiResponse<Employee>> => {
+  return apiRequest<ApiResponse<Employee>, Partial<Employee>>(
+    `${ENDPOINT}/${id}`, 
+    'PUT', 
+    employee
+  );
+};
+
+/**
+ * Delete an employee
+ * @param id Employee ID
+ * @returns Success message
+ */
+export const deleteEmployee = async (
+  id: string
+): Promise<ApiResponse<{ message: string }>> => {
+  return apiRequest<ApiResponse<{ message: string }>>(
+    `${ENDPOINT}/${id}`, 
+    'DELETE'
+  );
+};

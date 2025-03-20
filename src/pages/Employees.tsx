@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,76 +7,64 @@ import { EmployeeCard } from "@/components/EmployeeCard";
 import { Plus, Search, Filter, ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// Mock data for employees
-const employeesData = [
-  {
-    id: "1",
-    name: "Emily Johnson",
-    position: "Senior UX Designer",
-    department: "Design",
-    email: "emily.johnson@example.com",
-    phone: "+1 (555) 123-4567",
-    status: "active",
-    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "2",
-    name: "Michael Rodriguez",
-    position: "Software Engineer",
-    department: "Engineering",
-    email: "michael.rodriguez@example.com",
-    phone: "+1 (555) 987-6543",
-    status: "remote",
-    imageUrl: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "3",
-    name: "Jessica Chen",
-    position: "Product Manager",
-    department: "Product",
-    email: "jessica.chen@example.com",
-    phone: "+1 (555) 234-5678",
-    status: "active",
-    imageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "4",
-    name: "David Wilson",
-    position: "Marketing Director",
-    department: "Marketing",
-    email: "david.wilson@example.com",
-    phone: "+1 (555) 876-5432",
-    status: "on-leave",
-    imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "5",
-    name: "Sophia Martinez",
-    position: "HR Specialist",
-    department: "Human Resources",
-    email: "sophia.martinez@example.com",
-    phone: "+1 (555) 345-6789",
-    status: "active",
-    imageUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "6",
-    name: "Andrew Taylor",
-    position: "Financial Analyst",
-    department: "Finance",
-    email: "andrew.taylor@example.com",
-    phone: "+1 (555) 432-1098",
-    status: "remote",
-    imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-];
+import { getEmployees } from "@/services/employeeService";
+import { getDepartments } from "@/services/departmentService";
+import { Employee, Department, EmployeeFilters } from "@/types";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 const Employees = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(12);
+
+  // Build filter parameters for API
+  const buildFilters = (): EmployeeFilters => {
+    return {
+      page: currentPage,
+      pageSize,
+      department: selectedDepartment || undefined,
+      status: selectedStatus || undefined,
+      search: searchTerm || undefined
+    };
+  };
+
+  // Fetch employees with react-query
+  const {
+    data: employeesData,
+    isLoading: employeesLoading,
+    error: employeesError,
+    refetch: refetchEmployees
+  } = useQuery({
+    queryKey: ['employees', buildFilters()],
+    queryFn: () => getEmployees(buildFilters()),
+    // Disable automatic refetching when filters haven't changed
+    staleTime: 60000,
+  });
+
+  // Fetch departments with react-query
+  const {
+    data: departmentsData,
+    isLoading: departmentsLoading,
+  } = useQuery({
+    queryKey: ['departments'],
+    queryFn: () => getDepartments(),
+    staleTime: 300000, // Departments don't change often
+  });
+
+  useEffect(() => {
+    if (employeesError) {
+      toast({
+        title: "Error loading employees",
+        description: "Could not load employee data. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [employeesError, toast]);
 
   const addFilter = (type: string, value: string) => {
     const filter = `${type}: ${value}`;
@@ -100,29 +88,37 @@ const Employees = () => {
     setActiveFilters([]);
     setSelectedDepartment(null);
     setSelectedStatus(null);
+    setSearchTerm("");
+    setCurrentPage(1);
   };
 
   const handleDepartmentChange = (value: string) => {
     setSelectedDepartment(value);
     addFilter("Department", value);
+    setCurrentPage(1);
   };
 
   const handleStatusChange = (value: string) => {
     setSelectedStatus(value);
     addFilter("Status", value);
+    setCurrentPage(1);
   };
 
-  // Filter employees based on search and filters
-  const filteredEmployees = employeesData.filter((employee) => {
-    const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         employee.position.toLowerCase().includes(searchTerm.toLowerCase());
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  // Get filtered employees based on the current tab
+  const getFilteredEmployees = (status?: string): Employee[] => {
+    if (!employeesData?.data) return [];
     
-    const matchesDepartment = !selectedDepartment || employee.department === selectedDepartment;
+    if (status) {
+      return employeesData.data.filter(emp => emp.status === status);
+    }
     
-    const matchesStatus = !selectedStatus || employee.status === selectedStatus;
-    
-    return matchesSearch && matchesDepartment && matchesStatus;
-  });
+    return employeesData.data;
+  };
 
   return (
     <div className="page-container pb-16">
@@ -153,7 +149,7 @@ const Employees = () => {
               <Input 
                 placeholder="Search employees..." 
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -166,12 +162,13 @@ const Employees = () => {
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Engineering">Engineering</SelectItem>
-                <SelectItem value="Design">Design</SelectItem>
-                <SelectItem value="Product">Product</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Human Resources">Human Resources</SelectItem>
-                <SelectItem value="Finance">Finance</SelectItem>
+                {departmentsLoading ? (
+                  <SelectItem value="loading" disabled>Loading departments...</SelectItem>
+                ) : (
+                  departmentsData?.data.map(dept => (
+                    <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
             
@@ -212,92 +209,95 @@ const Employees = () => {
             </div>
           )}
           
-          <TabsContent value="all" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredEmployees.map((employee) => (
-                <EmployeeCard 
-                  key={employee.id}
-                  id={employee.id}
-                  name={employee.name}
-                  position={employee.position}
-                  department={employee.department}
-                  email={employee.email}
-                  phone={employee.phone}
-                  status={employee.status as 'active' | 'on-leave' | 'remote'}
-                  imageUrl={employee.imageUrl}
-                />
-              ))}
+          {employeesLoading ? (
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading employees...</p>
             </div>
-            
-            {filteredEmployees.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-lg text-muted-foreground">No employees found matching your criteria.</p>
-                <Button variant="outline" className="mt-4" onClick={resetFilters}>
-                  Clear filters
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="active" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredEmployees
-                .filter(emp => emp.status === 'active')
-                .map((employee) => (
-                  <EmployeeCard 
-                    key={employee.id}
-                    id={employee.id}
-                    name={employee.name}
-                    position={employee.position}
-                    department={employee.department}
-                    email={employee.email}
-                    phone={employee.phone}
-                    status={employee.status as 'active' | 'on-leave' | 'remote'}
-                    imageUrl={employee.imageUrl}
-                  />
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="remote" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredEmployees
-                .filter(emp => emp.status === 'remote')
-                .map((employee) => (
-                  <EmployeeCard 
-                    key={employee.id}
-                    id={employee.id}
-                    name={employee.name}
-                    position={employee.position}
-                    department={employee.department}
-                    email={employee.email}
-                    phone={employee.phone}
-                    status={employee.status as 'active' | 'on-leave' | 'remote'}
-                    imageUrl={employee.imageUrl}
-                  />
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="on-leave" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredEmployees
-                .filter(emp => emp.status === 'on-leave')
-                .map((employee) => (
-                  <EmployeeCard 
-                    key={employee.id}
-                    id={employee.id}
-                    name={employee.name}
-                    position={employee.position}
-                    department={employee.department}
-                    email={employee.email}
-                    phone={employee.phone}
-                    status={employee.status as 'active' | 'on-leave' | 'remote'}
-                    imageUrl={employee.imageUrl}
-                  />
-              ))}
-            </div>
-          </TabsContent>
+          ) : (
+            <>
+              <TabsContent value="all" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {getFilteredEmployees().map((employee) => (
+                    <EmployeeCard 
+                      key={employee.id}
+                      id={employee.id}
+                      name={employee.name}
+                      position={employee.position}
+                      department={employee.department}
+                      email={employee.email}
+                      phone={employee.phone}
+                      status={employee.status}
+                      imageUrl={employee.imageUrl}
+                    />
+                  ))}
+                </div>
+                
+                {getFilteredEmployees().length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-lg text-muted-foreground">No employees found matching your criteria.</p>
+                    <Button variant="outline" className="mt-4" onClick={resetFilters}>
+                      Clear filters
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="active" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {getFilteredEmployees('active').map((employee) => (
+                    <EmployeeCard 
+                      key={employee.id}
+                      id={employee.id}
+                      name={employee.name}
+                      position={employee.position}
+                      department={employee.department}
+                      email={employee.email}
+                      phone={employee.phone}
+                      status={employee.status}
+                      imageUrl={employee.imageUrl}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="remote" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {getFilteredEmployees('remote').map((employee) => (
+                    <EmployeeCard 
+                      key={employee.id}
+                      id={employee.id}
+                      name={employee.name}
+                      position={employee.position}
+                      department={employee.department}
+                      email={employee.email}
+                      phone={employee.phone}
+                      status={employee.status}
+                      imageUrl={employee.imageUrl}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="on-leave" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {getFilteredEmployees('on-leave').map((employee) => (
+                    <EmployeeCard 
+                      key={employee.id}
+                      id={employee.id}
+                      name={employee.name}
+                      position={employee.position}
+                      department={employee.department}
+                      email={employee.email}
+                      phone={employee.phone}
+                      status={employee.status}
+                      imageUrl={employee.imageUrl}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
     </div>
