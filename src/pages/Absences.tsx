@@ -1,0 +1,405 @@
+
+import { useState } from "react";
+import { 
+  Calendar as CalendarIcon, 
+  Filter, 
+  Plus, 
+  ChevronLeft, 
+  ChevronRight,
+  Check,
+  X
+} from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Avatar } from "@/components/ui/avatar";
+import { format, getDaysInMonth, getMonth, getYear, parseISO, startOfMonth } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Mock data for leave requests
+const absenceData = [
+  {
+    id: "1",
+    employeeId: "1",
+    employeeName: "Emily Johnson",
+    department: "Design",
+    position: "Senior UX Designer",
+    type: "Vacation",
+    status: "approved",
+    startDate: "2023-09-05",
+    endDate: "2023-09-12",
+    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80",
+  },
+  {
+    id: "2",
+    employeeId: "2",
+    employeeName: "Michael Rodriguez",
+    department: "Engineering",
+    position: "Software Engineer",
+    type: "Sick Leave",
+    status: "pending",
+    startDate: "2023-09-01",
+    endDate: "2023-09-02",
+    imageUrl: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
+  },
+  {
+    id: "3",
+    employeeId: "3",
+    employeeName: "Jessica Chen",
+    department: "Product",
+    position: "Product Manager",
+    type: "Personal",
+    status: "approved",
+    startDate: "2023-09-15",
+    endDate: "2023-09-16",
+    imageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
+  },
+  {
+    id: "4",
+    employeeId: "4",
+    employeeName: "David Wilson",
+    department: "Marketing",
+    position: "Marketing Director",
+    type: "Vacation",
+    status: "approved",
+    startDate: "2023-09-20",
+    endDate: "2023-10-05",
+    imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
+  },
+  {
+    id: "5",
+    employeeId: "5",
+    employeeName: "Sophia Martinez",
+    department: "Human Resources",
+    position: "HR Specialist",
+    type: "Training",
+    status: "pending",
+    startDate: "2023-09-10",
+    endDate: "2023-09-14",
+    imageUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
+  },
+  {
+    id: "6",
+    employeeId: "6",
+    employeeName: "Andrew Taylor",
+    department: "Finance",
+    position: "Financial Analyst",
+    type: "Sick Leave",
+    status: "declined",
+    startDate: "2023-09-08",
+    endDate: "2023-09-09",
+    imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
+  },
+];
+
+const Absences = () => {
+  const [date, setDate] = useState<Date>(new Date());
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "calendar">("list");
+
+  // Calendar helpers
+  const currentMonth = getMonth(date);
+  const currentYear = getYear(date);
+  const daysInMonth = getDaysInMonth(date);
+  const firstDayOfMonth = startOfMonth(date).getDay();
+  
+  // Days of the week for calendar header
+  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Go to previous month
+  const prevMonth = () => {
+    const newDate = new Date(date);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setDate(newDate);
+  };
+
+  // Go to next month
+  const nextMonth = () => {
+    const newDate = new Date(date);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setDate(newDate);
+  };
+
+  // Filter absences based on selected filters
+  const filteredAbsences = absenceData.filter((absence) => {
+    const matchesType = !selectedType || absence.type === selectedType;
+    const matchesStatus = !selectedStatus || absence.status === selectedStatus;
+    return matchesType && matchesStatus;
+  });
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "approved":
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Approved</Badge>;
+      case "pending":
+        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">Pending</Badge>;
+      case "declined":
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Declined</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case "Vacation":
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">{type}</Badge>;
+      case "Sick Leave":
+        return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">{type}</Badge>;
+      case "Personal":
+        return <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200">{type}</Badge>;
+      case "Training":
+        return <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200">{type}</Badge>;
+      default:
+        return <Badge>{type}</Badge>;
+    }
+  };
+
+  // Check if a day has any absences
+  const hasAbsence = (day: number) => {
+    const checkDate = new Date(currentYear, currentMonth, day);
+    return filteredAbsences.some((absence) => {
+      const start = parseISO(absence.startDate);
+      const end = parseISO(absence.endDate);
+      return checkDate >= start && checkDate <= end;
+    });
+  };
+
+  // Get absences for a specific day
+  const getAbsencesForDay = (day: number) => {
+    const checkDate = new Date(currentYear, currentMonth, day);
+    return filteredAbsences.filter((absence) => {
+      const start = parseISO(absence.startDate);
+      const end = parseISO(absence.endDate);
+      return checkDate >= start && checkDate <= end;
+    });
+  };
+
+  return (
+    <div className="page-container pb-16">
+      <div className="animate-in">
+        <h1 className="text-3xl font-semibold tracking-tight mb-1">Absences</h1>
+        <p className="text-muted-foreground mb-8">
+          Manage and track time off requests.
+        </p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 animate-in">
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={view === "list" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setView("list")}
+          >
+            List View
+          </Button>
+          <Button
+            variant={view === "calendar" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setView("calendar")}
+          >
+            Calendar View
+          </Button>
+        </div>
+
+        <Button className="ml-auto">
+          <Plus className="mr-2 h-4 w-4" />
+          Request Time Off
+        </Button>
+      </div>
+      
+      <div className="mb-6 flex flex-wrap gap-3 animate-in">
+        <Select onValueChange={setSelectedType} value={selectedType || ""}>
+          <SelectTrigger className="w-[180px]">
+            <div className="flex items-center">
+              <Filter className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="Type" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Vacation">Vacation</SelectItem>
+            <SelectItem value="Sick Leave">Sick Leave</SelectItem>
+            <SelectItem value="Personal">Personal</SelectItem>
+            <SelectItem value="Training">Training</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select onValueChange={setSelectedStatus} value={selectedStatus || ""}>
+          <SelectTrigger className="w-[180px]">
+            <div className="flex items-center">
+              <Filter className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="Status" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="declined">Declined</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              <span>Filter by Date</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={(newDate) => newDate && setDate(newDate)}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {view === "list" ? (
+        <div className="grid grid-cols-1 gap-4 animate-in">
+          {filteredAbsences.length > 0 ? (
+            filteredAbsences.map((absence) => (
+              <Card
+                key={absence.id}
+                className="overflow-hidden transition-all duration-300 card-hover"
+              >
+                <div className="p-6">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                    <Avatar className="h-12 w-12">
+                      <img
+                        src={absence.imageUrl}
+                        alt={absence.employeeName}
+                        className="object-cover"
+                      />
+                    </Avatar>
+
+                    <div className="sm:flex-1 text-center sm:text-left">
+                      <h3 className="font-medium text-lg">{absence.employeeName}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {absence.position} • {absence.department}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-wrap justify-center sm:justify-end gap-2">
+                        {getTypeBadge(absence.type)}
+                        {getStatusBadge(absence.status)}
+                      </div>
+                      <p className="text-sm">
+                        {format(parseISO(absence.startDate), "MMM d")} -{" "}
+                        {format(parseISO(absence.endDate), "MMM d, yyyy")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {absence.status === "pending" && (
+                  <div className="bg-muted/50 px-6 py-3 flex justify-end space-x-2">
+                    <Button size="sm" variant="outline" className="text-red-500">
+                      <X className="mr-1 h-4 w-4" />
+                      Decline
+                    </Button>
+                    <Button size="sm" className="bg-green-600 text-white hover:bg-green-700">
+                      <Check className="mr-1 h-4 w-4" />
+                      Approve
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">No absences found matching your criteria.</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                  setSelectedType(null);
+                  setSelectedStatus(null);
+                }}
+              >
+                Clear filters
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <Card className="animate-in">
+          <div className="p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-medium">
+                {format(date, "MMMM yyyy")}
+              </h2>
+              <div className="flex space-x-2">
+                <Button variant="outline" size="icon" onClick={prevMonth}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={nextMonth}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {/* Calendar header */}
+              {weekDays.map((day) => (
+                <div
+                  key={day}
+                  className="text-center py-2 text-sm font-medium text-muted-foreground"
+                >
+                  {day}
+                </div>
+              ))}
+
+              {/* Empty cells for days before the first day of the month */}
+              {Array.from({ length: firstDayOfMonth }).map((_, index) => (
+                <div key={`empty-${index}`} className="min-h-24 p-2 border rounded-md bg-muted/20"></div>
+              ))}
+
+              {/* Calendar days */}
+              {Array.from({ length: daysInMonth }).map((_, index) => {
+                const day = index + 1;
+                const dayAbsences = getAbsencesForDay(day);
+                const hasAbsences = dayAbsences.length > 0;
+
+                return (
+                  <div
+                    key={day}
+                    className={`min-h-24 p-2 border rounded-md transition-colors ${
+                      hasAbsences ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-secondary/50"
+                    }`}
+                  >
+                    <div className="font-medium mb-1">{day}</div>
+                    <div className="space-y-1">
+                      {dayAbsences.slice(0, 3).map((absence) => (
+                        <div
+                          key={absence.id}
+                          className="text-xs p-1 rounded bg-white shadow-sm truncate"
+                          title={`${absence.employeeName} - ${absence.type}`}
+                        >
+                          {absence.employeeName}
+                        </div>
+                      ))}
+                      {dayAbsences.length > 3 && (
+                        <div className="text-xs text-center text-muted-foreground">
+                          +{dayAbsences.length - 3} more
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default Absences;
