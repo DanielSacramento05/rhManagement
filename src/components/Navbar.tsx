@@ -24,7 +24,7 @@ const Navbar = () => {
             <Link to="/" className="text-xl font-semibold text-primary mr-8">
               HR Management
             </Link>
-            <div className="hidden md:flex space-x-1">
+            <div className="hidden md:flex items-center justify-center space-x-1 mx-auto">
               {navItems.map((item) => (
                 <Link
                   key={item.path}
