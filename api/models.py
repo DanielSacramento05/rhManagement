@@ -18,12 +18,32 @@ class Employee(db.Model):
     hire_date = db.Column(db.Date)
     manager_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=True)
     
-    # Relationships
+    # Relationships - explicitly specify foreign keys
     manager = db.relationship('Employee', remote_side=[id], backref='subordinates')
-    absences = db.relationship('Absence', backref='employee', cascade='all, delete-orphan')
-    performance_reviews = db.relationship('PerformanceReview', backref='employee', cascade='all, delete-orphan')
-    performance_goals = db.relationship('PerformanceGoal', backref='employee', cascade='all, delete-orphan')
-    skill_assessments = db.relationship('SkillAssessment', backref='employee', cascade='all, delete-orphan')
+    absences = db.relationship('Absence', 
+                              foreign_keys='Absence.employee_id', 
+                              backref='employee', 
+                              cascade='all, delete-orphan')
+    performance_reviews = db.relationship('PerformanceReview', 
+                                         foreign_keys='PerformanceReview.employee_id', 
+                                         backref='employee', 
+                                         cascade='all, delete-orphan')
+    performance_goals = db.relationship('PerformanceGoal', 
+                                       foreign_keys='PerformanceGoal.employee_id', 
+                                       backref='employee', 
+                                       cascade='all, delete-orphan')
+    skill_assessments = db.relationship('SkillAssessment', 
+                                       foreign_keys='SkillAssessment.employee_id', 
+                                       backref='employee', 
+                                       cascade='all, delete-orphan')
+    
+    # Add relationships for approver roles
+    approved_absences = db.relationship('Absence', 
+                                       foreign_keys='Absence.approved_by', 
+                                       backref='approver')
+    reviewed_performances = db.relationship('PerformanceReview', 
+                                          foreign_keys='PerformanceReview.reviewer_id', 
+                                          backref='reviewer')
 
 class Department(db.Model):
     __tablename__ = 'departments'
@@ -49,8 +69,7 @@ class Absence(db.Model):
     approved_by = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=True)
     request_date = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationships
-    approver = db.relationship('Employee', foreign_keys=[approved_by])
+    # The relationship to approver is now defined in the Employee class
 
 class PerformanceReview(db.Model):
     __tablename__ = 'performance_reviews'
@@ -65,8 +84,7 @@ class PerformanceReview(db.Model):
     notes = db.Column(db.Text)
     reviewer_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=True)
     
-    # Relationships
-    reviewer = db.relationship('Employee', foreign_keys=[reviewer_id])
+    # The relationship to reviewer is now defined in the Employee class
     goals = db.relationship('PerformanceGoal', backref='review', cascade='all, delete-orphan')
     skills = db.relationship('SkillAssessment', backref='review', cascade='all, delete-orphan')
 
