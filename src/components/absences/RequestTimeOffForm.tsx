@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -81,10 +80,10 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
       const absenceRequest = {
         employeeId,
         type: values.type,
-        status: "pending",
+        status: "pending" as const, // Explicitly type this as a literal "pending"
         startDate: format(values.startDate, "yyyy-MM-dd"),
         endDate: format(values.endDate, "yyyy-MM-dd"),
-        notes: values.notes,
+        notes: values.notes || "",
       };
       
       await createAbsence(absenceRequest);

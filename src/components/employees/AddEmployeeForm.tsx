@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -65,7 +64,13 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
     
     try {
       const newEmployee = {
-        ...values,
+        name: values.name,
+        position: values.position,
+        department: values.department,
+        email: values.email,
+        phone: values.phone,
+        status: values.status,
+        imageUrl: values.imageUrl || "https://randomuser.me/api/portraits/men/1.jpg",
         hireDate: new Date().toISOString().split('T')[0],
       };
       
