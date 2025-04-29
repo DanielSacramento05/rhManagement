@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Calendar as CalendarIcon, 
   Filter, 
@@ -16,90 +16,78 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar } from "@/components/ui/avatar";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog";
 import { format, getDaysInMonth, getMonth, getYear, parseISO, startOfMonth } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Mock data for leave requests
-const absenceData = [
-  {
-    id: "1",
-    employeeId: "1",
-    employeeName: "Emily Johnson",
-    department: "Design",
-    position: "Senior UX Designer",
-    type: "Vacation",
-    status: "approved",
-    startDate: "2023-09-05",
-    endDate: "2023-09-12",
-    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "2",
-    employeeId: "2",
-    employeeName: "Michael Rodriguez",
-    department: "Engineering",
-    position: "Software Engineer",
-    type: "Sick Leave",
-    status: "pending",
-    startDate: "2023-09-01",
-    endDate: "2023-09-02",
-    imageUrl: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "3",
-    employeeId: "3",
-    employeeName: "Jessica Chen",
-    department: "Product",
-    position: "Product Manager",
-    type: "Personal",
-    status: "approved",
-    startDate: "2023-09-15",
-    endDate: "2023-09-16",
-    imageUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "4",
-    employeeId: "4",
-    employeeName: "David Wilson",
-    department: "Marketing",
-    position: "Marketing Director",
-    type: "Vacation",
-    status: "approved",
-    startDate: "2023-09-20",
-    endDate: "2023-10-05",
-    imageUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "5",
-    employeeId: "5",
-    employeeName: "Sophia Martinez",
-    department: "Human Resources",
-    position: "HR Specialist",
-    type: "Training",
-    status: "pending",
-    startDate: "2023-09-10",
-    endDate: "2023-09-14",
-    imageUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-  {
-    id: "6",
-    employeeId: "6",
-    employeeName: "Andrew Taylor",
-    department: "Finance",
-    position: "Financial Analyst",
-    type: "Sick Leave",
-    status: "declined",
-    startDate: "2023-09-08",
-    endDate: "2023-09-09",
-    imageUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80",
-  },
-];
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { getAbsences, updateAbsenceStatus } from "@/services/absenceService";
+import { Absence, AbsenceFilters } from "@/types";
+import RequestTimeOffForm from "@/components/absences/RequestTimeOffForm";
 
 const Absences = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [view, setView] = useState<"list" | "calendar">("list");
+  const [requestTimeOffOpen, setRequestTimeOffOpen] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  // Check for authentication
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (!user || !JSON.parse(user).isAuthenticated) {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  // Build filter parameters for API
+  const buildFilters = (): AbsenceFilters => {
+    return {
+      page: 1,
+      pageSize: 50,
+      type: selectedType || undefined,
+      status: selectedStatus || undefined
+    };
+  };
+
+  // Fetch absences with react-query
+  const {
+    data: absencesData,
+    isLoading: absencesLoading,
+    error: absencesError
+  } = useQuery({
+    queryKey: ['absences', buildFilters()],
+    queryFn: () => getAbsences(buildFilters()),
+    staleTime: 60000,
+  });
+
+  // Mutations for updating absence status
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status, approvedBy }: { id: string; status: 'approved' | 'declined'; approvedBy: string }) => 
+      updateAbsenceStatus(id, status, approvedBy),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['absences'] });
+    },
+  });
+
+  useEffect(() => {
+    if (absencesError) {
+      toast({
+        title: "Error loading absences",
+        description: "Could not load absence data. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [absencesError, toast]);
 
   // Calendar helpers
   const currentMonth = getMonth(date);
@@ -124,12 +112,31 @@ const Absences = () => {
     setDate(newDate);
   };
 
+  // Handle approve/decline
+  const handleStatusUpdate = (id: string, status: 'approved' | 'declined') => {
+    // For this demo, we'll use a mock approver ID
+    // In a real app, this would come from the authenticated user
+    const approvedBy = "1";
+    
+    updateStatusMutation.mutate({ id, status, approvedBy }, {
+      onSuccess: () => {
+        toast({
+          title: `Request ${status}`,
+          description: `The absence request has been ${status}.`,
+        });
+      },
+      onError: () => {
+        toast({
+          variant: "destructive",
+          title: "Error updating status",
+          description: "There was a problem updating the request status.",
+        });
+      }
+    });
+  };
+
   // Filter absences based on selected filters
-  const filteredAbsences = absenceData.filter((absence) => {
-    const matchesType = !selectedType || absence.type === selectedType;
-    const matchesStatus = !selectedStatus || absence.status === selectedStatus;
-    return matchesType && matchesStatus;
-  });
+  const filteredAbsences = absencesData?.data || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -206,14 +213,14 @@ const Absences = () => {
           </Button>
         </div>
 
-        <Button className="ml-auto">
+        <Button className="ml-auto" onClick={() => setRequestTimeOffOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Request Time Off
         </Button>
       </div>
       
       <div className="mb-6 flex flex-wrap gap-3 animate-in">
-        <Select onValueChange={setSelectedType} value={selectedType || ""}>
+        <Select onValueChange={(value) => setSelectedType(value || null)} value={selectedType || ""}>
           <SelectTrigger className="w-[180px]">
             <div className="flex items-center">
               <Filter className="mr-2 h-4 w-4" />
@@ -221,6 +228,7 @@ const Absences = () => {
             </div>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">All Types</SelectItem>
             <SelectItem value="Vacation">Vacation</SelectItem>
             <SelectItem value="Sick Leave">Sick Leave</SelectItem>
             <SelectItem value="Personal">Personal</SelectItem>
@@ -228,7 +236,7 @@ const Absences = () => {
           </SelectContent>
         </Select>
 
-        <Select onValueChange={setSelectedStatus} value={selectedStatus || ""}>
+        <Select onValueChange={(value) => setSelectedStatus(value || null)} value={selectedStatus || ""}>
           <SelectTrigger className="w-[180px]">
             <div className="flex items-center">
               <Filter className="mr-2 h-4 w-4" />
@@ -236,6 +244,7 @@ const Absences = () => {
             </div>
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">All Statuses</SelectItem>
             <SelectItem value="approved">Approved</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="declined">Declined</SelectItem>
@@ -260,7 +269,12 @@ const Absences = () => {
         </Popover>
       </div>
 
-      {view === "list" ? (
+      {absencesLoading ? (
+        <div className="text-center py-12">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading absences...</p>
+        </div>
+      ) : view === "list" ? (
         <div className="grid grid-cols-1 gap-4 animate-in">
           {filteredAbsences.length > 0 ? (
             filteredAbsences.map((absence) => (
@@ -272,16 +286,16 @@ const Absences = () => {
                   <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
                     <Avatar className="h-12 w-12">
                       <img
-                        src={absence.imageUrl}
-                        alt={absence.employeeName}
+                        src={absence.imageUrl || "https://randomuser.me/api/portraits/men/1.jpg"}
+                        alt={absence.employeeName || "Employee"}
                         className="object-cover"
                       />
                     </Avatar>
 
                     <div className="sm:flex-1 text-center sm:text-left">
-                      <h3 className="font-medium text-lg">{absence.employeeName}</h3>
+                      <h3 className="font-medium text-lg">{absence.employeeName || "Employee"}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {absence.position} • {absence.department}
+                        {absence.position || "Position"} • {absence.department || "Department"}
                       </p>
                     </div>
 
@@ -300,11 +314,22 @@ const Absences = () => {
 
                 {absence.status === "pending" && (
                   <div className="bg-muted/50 px-6 py-3 flex justify-end space-x-2">
-                    <Button size="sm" variant="outline" className="text-red-500">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="text-red-500"
+                      onClick={() => handleStatusUpdate(absence.id, 'declined')}
+                      disabled={updateStatusMutation.isPending}
+                    >
                       <X className="mr-1 h-4 w-4" />
                       Decline
                     </Button>
-                    <Button size="sm" className="bg-green-600 text-white hover:bg-green-700">
+                    <Button 
+                      size="sm" 
+                      className="bg-green-600 text-white hover:bg-green-700"
+                      onClick={() => handleStatusUpdate(absence.id, 'approved')}
+                      disabled={updateStatusMutation.isPending}
+                    >
                       <Check className="mr-1 h-4 w-4" />
                       Approve
                     </Button>
@@ -380,9 +405,9 @@ const Absences = () => {
                         <div
                           key={absence.id}
                           className="text-xs p-1 rounded bg-white shadow-sm truncate"
-                          title={`${absence.employeeName} - ${absence.type}`}
+                          title={`${absence.employeeName || "Employee"} - ${absence.type}`}
                         >
-                          {absence.employeeName}
+                          {absence.employeeName || "Employee"}
                         </div>
                       ))}
                       {dayAbsences.length > 3 && (
@@ -398,6 +423,16 @@ const Absences = () => {
           </div>
         </Card>
       )}
+
+      {/* Request Time Off Dialog */}
+      <Dialog open={requestTimeOffOpen} onOpenChange={setRequestTimeOffOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Request Time Off</DialogTitle>
+          </DialogHeader>
+          <RequestTimeOffForm onClose={() => setRequestTimeOffOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -7,20 +7,33 @@ import { EmployeeCard } from "@/components/EmployeeCard";
 import { Plus, Search, Filter, ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getEmployees } from "@/services/employeeService";
 import { getDepartments } from "@/services/departmentService";
 import { Employee, Department, EmployeeFilters } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import AddEmployeeForm from "@/components/employees/AddEmployeeForm";
 
 const Employees = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12);
+  const [addEmployeeOpen, setAddEmployeeOpen] = useState(false);
+
+  // Check for authentication
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (!user || !JSON.parse(user).isAuthenticated) {
+      navigate('/login');
+    }
+  }, [navigate]);
 
   // Build filter parameters for API
   const buildFilters = (): EmployeeFilters => {
@@ -137,7 +150,7 @@ const Employees = () => {
               <TabsTrigger value="on-leave">On Leave</TabsTrigger>
             </TabsList>
             
-            <Button className="ml-auto">
+            <Button className="ml-auto" onClick={() => setAddEmployeeOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Employee
             </Button>
@@ -300,6 +313,21 @@ const Employees = () => {
           )}
         </Tabs>
       </div>
+
+      {/* Add Employee Dialog */}
+      <Dialog open={addEmployeeOpen} onOpenChange={setAddEmployeeOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Add New Employee</DialogTitle>
+          </DialogHeader>
+          {!departmentsLoading && departmentsData?.data && (
+            <AddEmployeeForm 
+              departments={departmentsData.data} 
+              onClose={() => setAddEmployeeOpen(false)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
