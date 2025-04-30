@@ -1,8 +1,8 @@
-
 from app import app
 from models import db, Employee, Department, Absence, PerformanceReview, PerformanceGoal, SkillAssessment
 import uuid
 from datetime import datetime, timedelta, date
+from werkzeug.security import generate_password_hash
 
 def seed_database():
     with app.app_context():
@@ -66,13 +66,30 @@ def seed_database():
                 phone=f'555-{100+i}',
                 status='active',
                 image_url=f'https://randomuser.me/api/portraits/men/{i+10}.jpg',
-                hire_date=date(2018, 1, 15) - timedelta(days=i*30)
+                hire_date=date(2018, 1, 15) - timedelta(days=i*30),
+                # Add password hash
+                password_hash=generate_password_hash('manager123')
             )
             managers.append(manager)
             employees.append(manager)
             
             # Update department with manager
             dept.manager_id = manager_id
+        
+        # Create admin user
+        admin = Employee(
+            id=str(uuid.uuid4()),
+            name='Admin User',
+            position='System Administrator',
+            department='Information Technology',
+            email='admin@example.com',
+            phone='555-000',
+            status='active',
+            image_url='https://randomuser.me/api/portraits/men/1.jpg',
+            hire_date=date(2017, 1, 1),
+            password_hash=generate_password_hash('admin123')
+        )
+        employees.append(admin)
         
         # Create regular employees
         statuses = ['active', 'remote', 'on-leave']
@@ -90,7 +107,9 @@ def seed_database():
                 status=statuses[status_index],
                 image_url=f'https://randomuser.me/api/portraits/{'women' if i%2 else 'men'}/{i+30}.jpg',
                 hire_date=date(2020, 1, 15) - timedelta(days=i*20),
-                manager_id=managers[dept_index].id
+                manager_id=managers[dept_index].id,
+                # Add password hash for demo
+                password_hash=generate_password_hash('employee123')
             )
             employees.append(employee)
         
