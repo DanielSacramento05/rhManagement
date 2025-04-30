@@ -23,7 +23,11 @@ const formSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
-export function LoginForm() {
+interface LoginFormProps {
+  updateAuthState: () => void;
+}
+
+export function LoginForm({ updateAuthState }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -53,6 +57,9 @@ export function LoginForm() {
         title: "Login successful",
         description: `Welcome back, ${response.user.name}`,
       });
+      
+      // Update auth state context
+      updateAuthState();
       
       // Redirect to dashboard
       navigate('/');

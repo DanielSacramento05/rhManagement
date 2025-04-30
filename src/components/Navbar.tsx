@@ -1,6 +1,7 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { ProfileMenu } from "./ProfileMenu";
+import { Book } from "lucide-react";
 
 const Navbar = () => {
   const location = useLocation();
@@ -14,6 +15,7 @@ const Navbar = () => {
     { path: "/employees", label: "Employees" },
     { path: "/absences", label: "Absences" },
     { path: "/performance", label: "Performance" },
+    { path: "/tutorial", label: "Tutorial", icon: Book },
   ];
 
   return (
@@ -29,12 +31,13 @@ const Navbar = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
                     isActive(item.path)
                       ? "bg-primary/10 text-primary"
                       : "text-foreground/70 hover:bg-accent hover:text-accent-foreground"
                   }`}
                 >
+                  {item.icon && <item.icon className="mr-1 h-4 w-4" />}
                   {item.label}
                 </Link>
               ))}

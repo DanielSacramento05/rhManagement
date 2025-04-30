@@ -29,7 +29,11 @@ const formSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  updateAuthState: () => void;
+}
+
+export function RegisterForm({ updateAuthState }: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -64,6 +68,9 @@ export function RegisterForm() {
         title: "Registration successful",
         description: "Your account has been created.",
       });
+      
+      // Update auth state context
+      updateAuthState();
       
       // Redirect to dashboard
       navigate('/');
