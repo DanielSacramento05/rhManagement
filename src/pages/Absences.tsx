@@ -63,7 +63,8 @@ const Absences = () => {
   const {
     data: absencesData,
     isLoading: absencesLoading,
-    error: absencesError
+    error: absencesError,
+    isError
   } = useQuery({
     queryKey: ['absences', buildFilters()],
     queryFn: () => getAbsences(buildFilters()),
@@ -81,6 +82,7 @@ const Absences = () => {
 
   useEffect(() => {
     if (absencesError) {
+      console.error("Error loading absences:", absencesError);
       toast({
         title: "Error loading absences",
         description: "Could not load absence data. Please try again later.",
@@ -125,7 +127,8 @@ const Absences = () => {
           description: `The absence request has been ${status}.`,
         });
       },
-      onError: () => {
+      onError: (error) => {
+        console.error("Error updating status:", error);
         toast({
           variant: "destructive",
           title: "Error updating status",
@@ -168,6 +171,8 @@ const Absences = () => {
 
   // Check if a day has any absences
   const hasAbsence = (day: number) => {
+    if (!filteredAbsences || filteredAbsences.length === 0) return false;
+    
     const checkDate = new Date(currentYear, currentMonth, day);
     return filteredAbsences.some((absence) => {
       const start = parseISO(absence.startDate);
@@ -178,6 +183,8 @@ const Absences = () => {
 
   // Get absences for a specific day
   const getAbsencesForDay = (day: number) => {
+    if (!filteredAbsences || filteredAbsences.length === 0) return [];
+    
     const checkDate = new Date(currentYear, currentMonth, day);
     return filteredAbsences.filter((absence) => {
       const start = parseISO(absence.startDate);
@@ -185,6 +192,30 @@ const Absences = () => {
       return checkDate >= start && checkDate <= end;
     });
   };
+
+  // If there's an error connecting to the API, show a nice error message
+  if (isError) {
+    return (
+      <div className="page-container pb-16">
+        <div className="animate-in">
+          <h1 className="text-3xl font-semibold tracking-tight mb-1">Absences</h1>
+          <p className="text-muted-foreground mb-8">
+            Manage and track time off requests.
+          </p>
+        </div>
+        
+        <Card className="p-8 text-center">
+          <h2 className="text-xl font-semibold mb-2">Unable to load absence data</h2>
+          <p className="text-muted-foreground mb-6">
+            There was a problem connecting to the absence management system.
+          </p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['absences'] })}>
+            Try again
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container pb-16">
@@ -276,7 +307,7 @@ const Absences = () => {
         </div>
       ) : view === "list" ? (
         <div className="grid grid-cols-1 gap-4 animate-in">
-          {filteredAbsences.length > 0 ? (
+          {filteredAbsences && filteredAbsences.length > 0 ? (
             filteredAbsences.map((absence) => (
               <Card
                 key={absence.id}

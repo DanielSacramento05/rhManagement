@@ -17,12 +17,17 @@ const ENDPOINT = '/absences';
 export const getAbsences = async (
   filters?: AbsenceFilters
 ): Promise<PaginatedResponse<Absence>> => {
-  return apiRequest<PaginatedResponse<Absence>>(
-    ENDPOINT, 
-    'GET', 
-    undefined, 
-    buildQueryParams(filters)
-  );
+  try {
+    return await apiRequest<PaginatedResponse<Absence>>(
+      ENDPOINT, 
+      'GET', 
+      undefined, 
+      buildQueryParams(filters)
+    );
+  } catch (error) {
+    console.error('Error fetching absences:', error);
+    throw error;
+  }
 };
 
 /**
@@ -33,7 +38,12 @@ export const getAbsences = async (
 export const getAbsenceById = async (
   id: string
 ): Promise<ApiResponse<Absence>> => {
-  return apiRequest<ApiResponse<Absence>>(`${ENDPOINT}/${id}`);
+  try {
+    return await apiRequest<ApiResponse<Absence>>(`${ENDPOINT}/${id}`);
+  } catch (error) {
+    console.error(`Error fetching absence ${id}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -44,11 +54,16 @@ export const getAbsenceById = async (
 export const createAbsence = async (
   absence: Omit<Absence, 'id'>
 ): Promise<ApiResponse<Absence>> => {
-  return apiRequest<ApiResponse<Absence>, Omit<Absence, 'id'>>(
-    ENDPOINT, 
-    'POST', 
-    absence
-  );
+  try {
+    return await apiRequest<ApiResponse<Absence>, Omit<Absence, 'id'>>(
+      ENDPOINT, 
+      'POST', 
+      absence
+    );
+  } catch (error) {
+    console.error('Error creating absence:', error);
+    throw error;
+  }
 };
 
 /**
@@ -61,11 +76,16 @@ export const updateAbsence = async (
   id: string, 
   absence: Partial<Absence>
 ): Promise<ApiResponse<Absence>> => {
-  return apiRequest<ApiResponse<Absence>, Partial<Absence>>(
-    `${ENDPOINT}/${id}`, 
-    'PUT', 
-    absence
-  );
+  try {
+    return await apiRequest<ApiResponse<Absence>, Partial<Absence>>(
+      `${ENDPOINT}/${id}`, 
+      'PUT', 
+      absence
+    );
+  } catch (error) {
+    console.error(`Error updating absence ${id}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -80,11 +100,16 @@ export const updateAbsenceStatus = async (
   status: 'approved' | 'declined',
   approvedBy: string
 ): Promise<ApiResponse<Absence>> => {
-  return apiRequest<ApiResponse<Absence>, { status: string; approvedBy: string }>(
-    `${ENDPOINT}/${id}/status`, 
-    'PUT', 
-    { status, approvedBy }
-  );
+  try {
+    return await apiRequest<ApiResponse<Absence>, { status: string; approvedBy: string }>(
+      `${ENDPOINT}/${id}/status`, 
+      'PUT', 
+      { status, approvedBy }
+    );
+  } catch (error) {
+    console.error(`Error updating absence status ${id}:`, error);
+    throw error;
+  }
 };
 
 /**
@@ -95,8 +120,13 @@ export const updateAbsenceStatus = async (
 export const deleteAbsence = async (
   id: string
 ): Promise<ApiResponse<{ message: string }>> => {
-  return apiRequest<ApiResponse<{ message: string }>>(
-    `${ENDPOINT}/${id}`, 
-    'DELETE'
-  );
+  try {
+    return await apiRequest<ApiResponse<{ message: string }>>(
+      `${ENDPOINT}/${id}`, 
+      'DELETE'
+    );
+  } catch (error) {
+    console.error(`Error deleting absence ${id}:`, error);
+    throw error;
+  }
 };
