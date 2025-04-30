@@ -16,14 +16,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn } from "lucide-react";
-
-// Mock authentication
-// In a real app, this would be replaced with actual API calls
-const mockUsers = [
-  { email: "admin@example.com", password: "admin123", role: "admin" },
-  { email: "manager@example.com", password: "manager123", role: "manager" },
-  { email: "employee@example.com", password: "employee123", role: "employee" },
-];
+import { login, saveUserToLocalStorage } from "@/services/authService";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -47,43 +40,29 @@ export function LoginForm() {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Authenticate with the API
+      const response = await login({
+        email: values.email,
+        password: values.password
+      });
       
-      // Find user with matching credentials
-      const user = mockUsers.find(
-        u => u.email === values.email && u.password === values.password
-      );
+      // Save user data to localStorage
+      saveUserToLocalStorage(response);
       
-      if (user) {
-        // Store user info in localStorage (simplified auth)
-        localStorage.setItem('user', JSON.stringify({
-          email: user.email,
-          role: user.role,
-          isAuthenticated: true
-        }));
-        
-        toast({
-          title: "Login successful",
-          description: `Welcome back, ${user.email}`,
-        });
-        
-        // Redirect to dashboard
-        navigate('/');
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Login failed",
-          description: "Invalid email or password",
-        });
-      }
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${response.user.name}`,
+      });
+      
+      // Redirect to dashboard
+      navigate('/');
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Invalid email or password",
       });
-      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }

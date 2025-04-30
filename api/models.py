@@ -1,4 +1,3 @@
-
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -17,6 +16,7 @@ class Employee(db.Model):
     image_url = db.Column(db.String(255))
     hire_date = db.Column(db.Date)
     manager_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=True)
+    password_hash = db.Column(db.String(255), nullable=True)
     
     # Relationships - explicitly specify foreign keys
     manager = db.relationship('Employee', remote_side=[id], backref='subordinates')

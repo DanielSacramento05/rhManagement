@@ -16,12 +16,14 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
+import { register as registerUser, saveUserToLocalStorage } from "@/services/authService";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string(),
+  phone: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -39,6 +41,7 @@ export function RegisterForm() {
       email: "",
       password: "",
       confirmPassword: "",
+      phone: ""
     },
   });
 
@@ -46,26 +49,31 @@ export function RegisterForm() {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Submit registration to API
+      const response = await registerUser({
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        phone: values.phone
+      });
       
-      // In a real app, this would send registration data to the server
-      console.log("Registration data:", values);
+      // Save user data to localStorage
+      saveUserToLocalStorage(response);
       
       toast({
         title: "Registration successful",
         description: "Your account has been created.",
       });
       
-      // Redirect to login page
-      navigate('/login');
+      // Redirect to dashboard
+      navigate('/');
     } catch (error) {
+      console.error("Registration error:", error);
       toast({
         variant: "destructive",
         title: "Registration failed",
-        description: "Something went wrong. Please try again.",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
       });
-      console.error("Registration error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -103,6 +111,19 @@ export function RegisterForm() {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input placeholder="name@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone (optional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="+1 (555) 123-4567" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -8,6 +8,7 @@ from routes.employees import employees_bp
 from routes.departments import departments_bp
 from routes.absences import absences_bp
 from routes.performance import performance_bp
+from routes.auth import auth_bp
 
 # Load environment variables
 load_dotenv()
@@ -31,6 +32,7 @@ app.register_blueprint(employees_bp, url_prefix='/api/employees')
 app.register_blueprint(departments_bp, url_prefix='/api/departments')
 app.register_blueprint(absences_bp, url_prefix='/api/absences')
 app.register_blueprint(performance_bp, url_prefix='/api/performance')
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
 
 @app.route('/')
 def index():

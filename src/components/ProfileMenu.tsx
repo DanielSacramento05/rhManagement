@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,18 +13,25 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, User } from "lucide-react";
+import { getCurrentUser, logout } from "@/services/authService";
 
 export function ProfileMenu() {
-  const [user] = useState(() => {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : { email: 'user@example.com', role: 'employee' };
-  });
-  
+  const [user, setUser] = useState(() => getCurrentUser() || { email: 'user@example.com', role: 'employee', name: 'User' });
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Listen for changes to user data in localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setUser(getCurrentUser() || { email: 'user@example.com', role: 'employee', name: 'User' });
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+  
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    logout();
     toast({
       title: "Logged out",
       description: "You have been logged out successfully.",
@@ -40,7 +47,7 @@ export function ProfileMenu() {
           <Avatar className="h-10 w-10">
             <AvatarImage src="https://randomuser.me/api/portraits/men/1.jpg" />
             <AvatarFallback>
-              {user.email.substring(0, 2).toUpperCase()}
+              {user.name ? user.name.substring(0, 2).toUpperCase() : 'US'}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -48,7 +55,8 @@ export function ProfileMenu() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.email}</p>
+            <p className="text-sm font-medium leading-none">{user.name || user.email}</p>
+            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
             <p className="text-xs leading-none text-muted-foreground capitalize">
               {user.role}
             </p>
