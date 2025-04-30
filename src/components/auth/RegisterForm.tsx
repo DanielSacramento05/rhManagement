@@ -66,14 +66,14 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       
       toast({
         title: "Registration successful",
-        description: "Your account has been created.",
+        description: "Please complete your profile setup.",
       });
       
       // Update auth state context
       updateAuthState();
       
-      // Redirect to dashboard
-      navigate('/');
+      // Redirect to profile setup
+      navigate('/profile-setup');
     } catch (error) {
       console.error("Registration error:", error);
       toast({
@@ -184,5 +184,3 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
     </div>
   );
 }
-
-export default RegisterForm;

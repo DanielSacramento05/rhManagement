@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmployeeCard } from "@/components/EmployeeCard";
-import { Plus, Search, Filter, ArrowUpDown } from "lucide-react";
+import { Plus, Search, Filter, ArrowUpDown, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import AddEmployeeForm from "@/components/employees/AddEmployeeForm";
+import { getCurrentUser } from "@/services/authService";
 
 const Employees = () => {
   const { toast } = useToast();
@@ -26,6 +27,8 @@ const Employees = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(12);
   const [addEmployeeOpen, setAddEmployeeOpen] = useState(false);
+  const currentUser = getCurrentUser();
+  const isAdmin = currentUser?.role === 'admin';
 
   // Check for authentication
   useEffect(() => {
@@ -145,15 +148,18 @@ const Employees = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <TabsList>
               <TabsTrigger value="all">All Employees</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="active">In Office</TabsTrigger>
               <TabsTrigger value="remote">Remote</TabsTrigger>
               <TabsTrigger value="on-leave">On Leave</TabsTrigger>
+              {isAdmin && <TabsTrigger value="inactive">Inactive</TabsTrigger>}
             </TabsList>
             
-            <Button className="ml-auto" onClick={() => setAddEmployeeOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Employee
-            </Button>
+            {isAdmin && (
+              <Button className="ml-auto" onClick={() => setAddEmployeeOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Employee
+              </Button>
+            )}
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-4 mb-6">
@@ -196,6 +202,7 @@ const Employees = () => {
                 <SelectItem value="active">In Office</SelectItem>
                 <SelectItem value="remote">Remote</SelectItem>
                 <SelectItem value="on-leave">On Leave</SelectItem>
+                {isAdmin && <SelectItem value="inactive">Inactive</SelectItem>}
               </SelectContent>
             </Select>
           </div>
@@ -242,6 +249,8 @@ const Employees = () => {
                       phone={employee.phone}
                       status={employee.status}
                       imageUrl={employee.imageUrl}
+                      hireDate={employee.hireDate}
+                      managerId={employee.managerId}
                     />
                   ))}
                 </div>
@@ -269,9 +278,18 @@ const Employees = () => {
                       phone={employee.phone}
                       status={employee.status}
                       imageUrl={employee.imageUrl}
+                      hireDate={employee.hireDate}
+                      managerId={employee.managerId}
                     />
                   ))}
                 </div>
+                
+                {getFilteredEmployees('active').length === 0 && (
+                  <div className="text-center py-12">
+                    <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-lg text-muted-foreground">No employees in office.</p>
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="remote" className="mt-0">
@@ -287,9 +305,18 @@ const Employees = () => {
                       phone={employee.phone}
                       status={employee.status}
                       imageUrl={employee.imageUrl}
+                      hireDate={employee.hireDate}
+                      managerId={employee.managerId}
                     />
                   ))}
                 </div>
+                
+                {getFilteredEmployees('remote').length === 0 && (
+                  <div className="text-center py-12">
+                    <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-lg text-muted-foreground">No remote employees.</p>
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="on-leave" className="mt-0">
@@ -305,10 +332,48 @@ const Employees = () => {
                       phone={employee.phone}
                       status={employee.status}
                       imageUrl={employee.imageUrl}
+                      hireDate={employee.hireDate}
+                      managerId={employee.managerId}
                     />
                   ))}
                 </div>
+                
+                {getFilteredEmployees('on-leave').length === 0 && (
+                  <div className="text-center py-12">
+                    <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-lg text-muted-foreground">No employees on leave.</p>
+                  </div>
+                )}
               </TabsContent>
+              
+              {isAdmin && (
+                <TabsContent value="inactive" className="mt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {getFilteredEmployees('inactive').map((employee) => (
+                      <EmployeeCard 
+                        key={employee.id}
+                        id={employee.id}
+                        name={employee.name}
+                        position={employee.position}
+                        department={employee.department}
+                        email={employee.email}
+                        phone={employee.phone}
+                        status={employee.status}
+                        imageUrl={employee.imageUrl}
+                        hireDate={employee.hireDate}
+                        managerId={employee.managerId}
+                      />
+                    ))}
+                  </div>
+                  
+                  {getFilteredEmployees('inactive').length === 0 && (
+                    <div className="text-center py-12">
+                      <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-lg text-muted-foreground">No inactive employees.</p>
+                    </div>
+                  )}
+                </TabsContent>
+              )}
             </>
           )}
         </Tabs>

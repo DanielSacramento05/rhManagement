@@ -7,7 +7,7 @@ export interface Employee {
   department: string;
   email: string;
   phone: string;
-  status: 'active' | 'on-leave' | 'remote';
+  status: 'active' | 'on-leave' | 'remote' | 'inactive';
   imageUrl: string;
   hireDate?: string;
   managerId?: string;

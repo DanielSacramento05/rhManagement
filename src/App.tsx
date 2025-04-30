@@ -26,6 +26,8 @@ const Performance = lazy(() => import("./pages/Performance"));
 const Login = lazy(() => import("./pages/Login"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Tutorial = lazy(() => import("./pages/Tutorial"));
+const Profile = lazy(() => import("./pages/Profile"));
+const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -82,6 +84,11 @@ const App = () => {
                     <Routes>
                       <Route path="/login" element={<Login />} />
                       <Route path="/tutorial" element={<Tutorial />} />
+                      <Route path="/profile-setup" element={
+                        <ProtectedRoute>
+                          <ProfileSetup />
+                        </ProtectedRoute>
+                      } />
                       <Route
                         path="/"
                         element={
@@ -111,6 +118,14 @@ const App = () => {
                         element={
                           <ProtectedRoute>
                             <Performance />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/profile"
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
                           </ProtectedRoute>
                         }
                       />
