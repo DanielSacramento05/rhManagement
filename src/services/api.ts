@@ -33,11 +33,11 @@ export async function apiRequest<T, D = undefined>(
     });
   }
 
-  // Prepare request options
+  // Prepare request options - Remove 'credentials: include' since it's causing CORS issues
   const options: RequestInit = {
     method,
     headers: getHeaders(),
-    credentials: 'include', // Include credentials in the request
+    mode: 'cors', // Explicitly set CORS mode
   };
 
   // Add body for non-GET requests
