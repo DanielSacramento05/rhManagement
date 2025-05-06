@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Calendar as CalendarIcon, 
@@ -251,7 +250,7 @@ const Absences = () => {
       </div>
       
       <div className="mb-6 flex flex-wrap gap-3 animate-in">
-        <Select onValueChange={(value) => setSelectedType(value || null)} value={selectedType || ""}>
+        <Select onValueChange={(value) => setSelectedType(value || null)} value={selectedType || undefined}>
           <SelectTrigger className="w-[180px]">
             <div className="flex items-center">
               <Filter className="mr-2 h-4 w-4" />
@@ -259,7 +258,7 @@ const Absences = () => {
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Types</SelectItem>
+            <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="Vacation">Vacation</SelectItem>
             <SelectItem value="Sick Leave">Sick Leave</SelectItem>
             <SelectItem value="Personal">Personal</SelectItem>
@@ -267,7 +266,7 @@ const Absences = () => {
           </SelectContent>
         </Select>
 
-        <Select onValueChange={(value) => setSelectedStatus(value || null)} value={selectedStatus || ""}>
+        <Select onValueChange={(value) => setSelectedStatus(value || null)} value={selectedStatus || undefined}>
           <SelectTrigger className="w-[180px]">
             <div className="flex items-center">
               <Filter className="mr-2 h-4 w-4" />
@@ -275,7 +274,7 @@ const Absences = () => {
             </div>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="approved">Approved</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="declined">Declined</SelectItem>

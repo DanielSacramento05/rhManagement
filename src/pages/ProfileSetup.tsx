@@ -21,14 +21,14 @@ import { getCurrentUser } from "@/services/authService";
 import { updateEmployee } from "@/services/employeeService";
 import { getDepartments } from "@/services/departmentService";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Image } from "lucide-react";
 import { AuthContext } from "@/App";
 import { useContext } from "react";
 
 const formSchema = z.object({
   position: z.string().min(2, { message: "Position is required" }),
   department: z.string().min(2, { message: "Department is required" }),
-  phone: z.string().optional(),
+  pictureUrl: z.string().optional(),
 });
 
 export default function ProfileSetup() {
@@ -58,7 +58,7 @@ export default function ProfileSetup() {
     defaultValues: {
       position: "",
       department: "",
-      phone: "",
+      pictureUrl: "",
     },
   });
 
@@ -156,7 +156,7 @@ export default function ProfileSetup() {
                         </SelectTrigger>
                         <SelectContent>
                           {departmentsLoading ? (
-                            <SelectItem value="loading" disabled>Loading departments...</SelectItem>
+                            <SelectItem value="loading">Loading departments...</SelectItem>
                           ) : (
                             departmentsData?.data.map(dept => (
                               <SelectItem key={dept.id} value={dept.name}>{dept.name}</SelectItem>
@@ -172,12 +172,34 @@ export default function ProfileSetup() {
 
               <FormField
                 control={form.control}
-                name="phone"
+                name="pictureUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone (optional)</FormLabel>
+                    <FormLabel>Profile Picture (optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="+1 (555) 123-4567" {...field} />
+                      <div className="space-y-2">
+                        <Input 
+                          placeholder="https://example.com/picture.jpg" 
+                          {...field} 
+                        />
+                        {field.value && (
+                          <div className="w-24 h-24 rounded-full overflow-hidden mx-auto border-2 border-primary">
+                            <img 
+                              src={field.value} 
+                              alt="Profile Preview" 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7";
+                              }}
+                            />
+                          </div>
+                        )}
+                        {!field.value && (
+                          <div className="w-24 h-24 rounded-full mx-auto bg-muted flex items-center justify-center">
+                            <Image className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
