@@ -14,7 +14,7 @@ from routes.auth import auth_bp
 load_dotenv()
 
 app = Flask(__name__)
-# Update CORS configuration to allow access from any origin
+# Update CORS configuration to allow access from any origin with credentials
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 # Database configuration

@@ -2,14 +2,16 @@
 import { PaginationParams } from '@/types';
 
 // Base API configuration
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 // Common headers
 const getHeaders = () => {
-  // You can add auth tokens here when you implement authentication
+  const user = localStorage.getItem('user');
+  const token = user ? JSON.parse(user).token : null;
+  
   return {
     'Content-Type': 'application/json',
-    // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+    'Authorization': token ? `Bearer ${token}` : '',
   };
 };
 
@@ -35,6 +37,7 @@ export async function apiRequest<T, D = undefined>(
   const options: RequestInit = {
     method,
     headers: getHeaders(),
+    credentials: 'include', // Include credentials in the request
   };
 
   // Add body for non-GET requests
@@ -43,6 +46,7 @@ export async function apiRequest<T, D = undefined>(
   }
 
   try {
+    console.log(`Making API request to: ${url.toString()}`);
     const response = await fetch(url.toString(), options);
     
     // Parse JSON response
