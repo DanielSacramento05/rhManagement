@@ -14,7 +14,8 @@ from routes.auth import auth_bp
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+# Update CORS configuration to allow access from any origin
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = (
@@ -41,4 +42,4 @@ def index():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Create database tables if they don't exist
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')  # Allow connections from any IP

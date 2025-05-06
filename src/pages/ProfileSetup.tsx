@@ -16,12 +16,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentUser } from "@/services/authService";
 import { updateEmployee } from "@/services/employeeService";
 import { getDepartments } from "@/services/departmentService";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { CheckCircle, Image } from "lucide-react";
+import { CheckCircle, Image, User } from "lucide-react";
 import { AuthContext } from "@/App";
 import { useContext } from "react";
 
@@ -175,30 +176,60 @@ export default function ProfileSetup() {
                 name="pictureUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Profile Picture (optional)</FormLabel>
+                    <FormLabel>Profile Picture</FormLabel>
                     <FormControl>
-                      <div className="space-y-2">
+                      <div className="space-y-4">
                         <Input 
                           placeholder="https://example.com/picture.jpg" 
                           {...field} 
                         />
-                        {field.value && (
-                          <div className="w-24 h-24 rounded-full overflow-hidden mx-auto border-2 border-primary">
-                            <img 
-                              src={field.value} 
-                              alt="Profile Preview" 
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7";
-                              }}
-                            />
-                          </div>
-                        )}
-                        {!field.value && (
-                          <div className="w-24 h-24 rounded-full mx-auto bg-muted flex items-center justify-center">
-                            <Image className="h-8 w-8 text-muted-foreground" />
-                          </div>
-                        )}
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <Avatar className="w-24 h-24 border-2 border-primary">
+                            {field.value ? (
+                              <AvatarImage 
+                                src={field.value} 
+                                alt="Profile Preview"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7";
+                                }}
+                              />
+                            ) : null}
+                            <AvatarFallback className="text-4xl">
+                              <User size={36} />
+                            </AvatarFallback>
+                          </Avatar>
+                          {!field.value && (
+                            <p className="text-sm text-muted-foreground">
+                              Enter an image URL above to preview
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => form.setValue('pictureUrl', 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7')}
+                          >
+                            Sample 1
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => form.setValue('pictureUrl', 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158')}
+                          >
+                            Sample 2
+                          </Button>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => form.setValue('pictureUrl', 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952')}
+                          >
+                            Sample 3
+                          </Button>
+                        </div>
                       </div>
                     </FormControl>
                     <FormMessage />
