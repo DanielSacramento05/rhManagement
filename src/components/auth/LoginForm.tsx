@@ -29,6 +29,7 @@ interface LoginFormProps {
 
 export function LoginForm({ updateAuthState }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -42,13 +43,18 @@ export function LoginForm({ updateAuthState }: LoginFormProps) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
+    setError(null);
     
     try {
+      console.log("Submitting login form with email:", values.email);
+      
       // Authenticate with the API
       const response = await login({
         email: values.email,
         password: values.password
       });
+      
+      console.log("Login response received:", response);
       
       // Save user data to localStorage
       saveUserToLocalStorage(response);
@@ -65,6 +71,9 @@ export function LoginForm({ updateAuthState }: LoginFormProps) {
       navigate('/');
     } catch (error) {
       console.error("Login error:", error);
+      
+      setError(error instanceof Error ? error.message : "Invalid email or password");
+      
       toast({
         variant: "destructive",
         title: "Login failed",
@@ -83,6 +92,12 @@ export function LoginForm({ updateAuthState }: LoginFormProps) {
           Enter your credentials to sign in to your account
         </p>
       </div>
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 text-sm">
+          {error}
+        </div>
+      )}
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

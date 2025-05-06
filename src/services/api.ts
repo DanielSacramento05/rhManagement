@@ -33,11 +33,16 @@ export async function apiRequest<T, D = undefined>(
     });
   }
 
-  // Prepare request options - Remove 'credentials: include' since it's causing CORS issues
+  console.log(`Making API request to: ${url.toString()}`);
+  console.log('Request method:', method);
+  console.log('Request headers:', getHeaders());
+  if (data) console.log('Request data:', JSON.stringify(data));
+
+  // Prepare request options without credentials to avoid CORS issues
   const options: RequestInit = {
     method,
     headers: getHeaders(),
-    mode: 'cors', // Explicitly set CORS mode
+    mode: 'cors'
   };
 
   // Add body for non-GET requests
@@ -46,17 +51,36 @@ export async function apiRequest<T, D = undefined>(
   }
 
   try {
-    console.log(`Making API request to: ${url.toString()}`);
     const response = await fetch(url.toString(), options);
+    console.log('Response status:', response.status);
     
-    // Parse JSON response
-    const result = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(result.error || 'An error occurred while making the request');
+    // Handle non-JSON responses
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const result = await response.json();
+      console.log('Response data:', result);
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'An error occurred while making the request');
+      }
+      
+      return result;
+    } else {
+      const text = await response.text();
+      console.log('Response text:', text);
+      
+      if (!response.ok) {
+        throw new Error(text || 'An error occurred while making the request');
+      }
+      
+      // If the API returns a non-JSON response but it's successful, 
+      // try to parse it anyway or return an empty object
+      try {
+        return JSON.parse(text) as T;
+      } catch (e) {
+        return {} as T;
+      }
     }
-    
-    return result;
   } catch (error) {
     console.error('API request failed:', error);
     throw error;

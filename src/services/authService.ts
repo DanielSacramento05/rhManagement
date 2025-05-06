@@ -27,7 +27,15 @@ export interface RegisterCredentials {
 }
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
-  return apiRequest<AuthResponse, LoginCredentials>('/auth/login', 'POST', credentials);
+  try {
+    console.log('Login attempt with:', credentials.email);
+    const response = await apiRequest<AuthResponse, LoginCredentials>('/auth/login', 'POST', credentials);
+    console.log('Login response received:', response);
+    return response;
+  } catch (error) {
+    console.error('Login error details:', error);
+    throw error;
+  }
 }
 
 export async function register(credentials: RegisterCredentials): Promise<AuthResponse> {
@@ -44,6 +52,7 @@ export function isAuthenticated(): boolean {
 }
 
 export function saveUserToLocalStorage(authResponse: AuthResponse): void {
+  console.log('Saving user to localStorage:', authResponse);
   localStorage.setItem('user', JSON.stringify({
     ...authResponse.user,
     isAuthenticated: true,
