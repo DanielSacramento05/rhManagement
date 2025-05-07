@@ -28,15 +28,27 @@ export function TimeClockHistory() {
 
   const formatTime = (timeString: string | null) => {
     if (!timeString) return '---';
-    return format(parseISO(timeString), 'h:mm a');
+    try {
+      return format(parseISO(timeString), 'h:mm a');
+    } catch (error) {
+      console.error("Error formatting time:", error);
+      return '---';
+    }
   };
 
   const formatDate = (timeString: string) => {
-    return format(parseISO(timeString), 'MMM d, yyyy');
+    try {
+      return format(parseISO(timeString), 'MMM d, yyyy');
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return 'Invalid date';
+    }
   };
 
   const formatDuration = (entry: TimeClockEntry) => {
-    if (entry.totalHours === null) return 'In progress';
+    // Check if totalHours exists and is not null before using it
+    if (entry.status === 'active') return 'In progress';
+    if (entry.totalHours === undefined || entry.totalHours === null) return 'N/A';
     return `${entry.totalHours.toFixed(2)} hrs`;
   };
 
