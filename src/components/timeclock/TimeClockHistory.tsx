@@ -33,7 +33,16 @@ export function TimeClockHistory() {
   const formatTime = (timeString: string | null) => {
     if (!timeString) return '---';
     try {
-      return format(parseISO(timeString), 'h:mm a');
+      // Handle cases where the API returns time as "HH:MM:SS" instead of ISO format
+      if (timeString.includes('T')) {
+        return format(parseISO(timeString), 'h:mm a');
+      } else {
+        // Handle format like "23:31:56"
+        const [hours, minutes] = timeString.split(':').map(Number);
+        const date = new Date();
+        date.setHours(hours, minutes);
+        return format(date, 'h:mm a');
+      }
     } catch (error) {
       console.error("Error formatting time:", error);
       return '---';
@@ -42,17 +51,33 @@ export function TimeClockHistory() {
 
   const formatDate = (timeString: string) => {
     try {
-      return format(parseISO(timeString), 'MMM d, yyyy');
+      // Check if it's already in ISO format or just a date string
+      if (timeString.includes('T')) {
+        return format(parseISO(timeString), 'MMM d, yyyy');
+      } else {
+        return format(parseISO(timeString), 'MMM d, yyyy');
+      }
     } catch (error) {
       console.error("Error formatting date:", error);
       return 'Invalid date';
     }
   };
 
-  const formatDuration = (entry: TimeClockEntry) => {
+  const formatDuration = (entry: any) => {
+    // First check if the entry is active
     if (entry.status === 'active') return 'In progress';
-    if (entry.totalHours === undefined || entry.totalHours === null) return 'N/A';
-    return `${entry.totalHours.toFixed(2)} hrs`;
+    
+    // Try to get totalHours from the response
+    if (entry.totalHours !== undefined && entry.totalHours !== null) {
+      return `${entry.totalHours.toFixed(2)} hrs`;
+    }
+    
+    // For API responses that use snake_case
+    if (entry.total_hours !== undefined && entry.total_hours !== null) {
+      return `${Number(entry.total_hours).toFixed(2)} hrs`;
+    }
+    
+    return 'N/A';
   };
 
   const goToPreviousPage = () => {
@@ -67,6 +92,16 @@ export function TimeClockHistory() {
     }
   };
 
+  // Normalize API data to handle both camelCase and snake_case
+  const normalizedEntries = entries.map((entry: any) => ({
+    id: entry.id,
+    date: entry.date,
+    clockInTime: entry.clockInTime || entry.clock_in_time,
+    clockOutTime: entry.clockOutTime || entry.clock_out_time,
+    totalHours: entry.totalHours || entry.total_hours,
+    status: entry.status,
+  }));
+
   return (
     <Card>
       <CardHeader>
@@ -75,7 +110,7 @@ export function TimeClockHistory() {
       <CardContent>
         {isLoading ? (
           <div className="text-center py-4">Loading...</div>
-        ) : entries.length === 0 ? (
+        ) : normalizedEntries.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">No recent time clock entries</div>
         ) : (
           <>
@@ -89,7 +124,7 @@ export function TimeClockHistory() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {entries.map((entry) => (
+                {normalizedEntries.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell>{formatDate(entry.date)}</TableCell>
                     <TableCell>{formatTime(entry.clockInTime)}</TableCell>

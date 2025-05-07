@@ -22,7 +22,7 @@ import {
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
-import { format, getDaysInMonth, getMonth, getYear, parseISO, startOfMonth } from "date-fns";
+import { format, parseISO, startOfMonth, getMonth, getYear, getDaysInMonth } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getAbsences, updateAbsenceStatus, deleteAbsence } from "@/services/absenceService";
 import { Absence, AbsenceFilters } from "@/types";
 import RequestTimeOffForm from "@/components/absences/RequestTimeOffForm";
-import { getCurrentUser } from "@/services/authService";
+import { getCurrentUser, isUserManager } from "@/services/authService";
 
 const Absences = () => {
   const [date, setDate] = useState<Date>(new Date());
@@ -44,8 +44,8 @@ const Absences = () => {
   
   // Get current user
   const currentUser = getCurrentUser();
-  const isManager = currentUser?.role === "manager" || currentUser?.role === "admin";
   const userId = currentUser?.id || '';
+  const userIsManager = isUserManager();
   
   // Check for authentication
   useEffect(() => {
@@ -69,11 +69,11 @@ const Absences = () => {
   // Build filter parameters for API
   const buildFilters = (): AbsenceFilters => {
     // For employees, only show their own absences
-    // For managers, show all absences
+    // For managers, show all absences or can be filtered
     return {
       page: 1,
       pageSize: 50,
-      employeeId: isManager ? undefined : userId,
+      employeeId: userIsManager ? undefined : userId,
       type: selectedType || undefined,
       status: selectedStatus || undefined
     };
@@ -119,7 +119,7 @@ const Absences = () => {
     }
   }, [absencesError, toast]);
 
-  // Calendar helpers
+  // Calendar view helpers
   const currentMonth = getMonth(date);
   const currentYear = getYear(date);
   const daysInMonth = getDaysInMonth(date);
@@ -145,7 +145,7 @@ const Absences = () => {
   // Handle approve/decline
   const handleStatusUpdate = (id: string, status: 'approved' | 'declined') => {
     // Only managers can approve/decline
-    if (!isManager) {
+    if (!userIsManager) {
       toast({
         variant: "destructive",
         title: "Permission denied",
@@ -239,24 +239,24 @@ const Absences = () => {
     }
   };
 
-  // Check if a day has any absences - with safe date parsing
+  // Check if a day has any absences
   const hasAbsence = (day: number) => {
     if (!filteredAbsences || filteredAbsences.length === 0) return false;
     
     const checkDate = new Date(currentYear, currentMonth, day);
-    return filteredAbsences.some((absence) => {
+    return filteredAbsences.some((absence: any) => {
       const start = safeParseISO(absence.startDate || absence.start_date);
       const end = safeParseISO(absence.endDate || absence.end_date);
       return checkDate >= start && checkDate <= end;
     });
   };
 
-  // Get absences for a specific day - with safe date parsing
+  // Get absences for a specific day
   const getAbsencesForDay = (day: number) => {
     if (!filteredAbsences || filteredAbsences.length === 0) return [];
     
     const checkDate = new Date(currentYear, currentMonth, day);
-    return filteredAbsences.filter((absence) => {
+    return filteredAbsences.filter((absence: any) => {
       const start = safeParseISO(absence.startDate || absence.start_date);
       const end = safeParseISO(absence.endDate || absence.end_date);
       return checkDate >= start && checkDate <= end;
@@ -264,7 +264,7 @@ const Absences = () => {
   };
 
   // Check if user can modify the absence (their own and still pending)
-  const canCancelRequest = (absence: Absence) => {
+  const canCancelRequest = (absence: any) => {
     const absenceEmployeeId = absence.employeeId || absence.employee_id;
     return absenceEmployeeId === userId && absence.status === 'pending';
   };
@@ -299,9 +299,21 @@ const Absences = () => {
       <div className="animate-in">
         <h1 className="text-3xl font-semibold tracking-tight mb-1">Absences</h1>
         <p className="text-muted-foreground mb-8">
-          Manage and track time off requests.
+          {userIsManager 
+            ? "Review and manage team absence requests." 
+            : "Manage and track your time off requests."}
         </p>
       </div>
+
+      {/* Manager info banner */}
+      {userIsManager && (
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6 animate-in">
+          <h2 className="text-blue-800 font-medium mb-1">Manager Access</h2>
+          <p className="text-blue-700 text-sm">
+            You have manager permissions. You can view all team absence requests and approve or decline them.
+          </p>
+        </div>
+      )}
 
       {/* View toggle and request button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 animate-in">
@@ -389,7 +401,7 @@ const Absences = () => {
         // List view
         <div className="grid grid-cols-1 gap-4 animate-in">
           {filteredAbsences && filteredAbsences.length > 0 ? (
-            filteredAbsences.map((absence) => (
+            filteredAbsences.map((absence: any) => (
               <Card
                 key={absence.id}
                 className="overflow-hidden transition-all duration-300 card-hover"
@@ -422,9 +434,16 @@ const Absences = () => {
                       </p>
                     </div>
                   </div>
+                  
+                  {absence.notes && (
+                    <div className="mt-4 p-3 bg-muted/40 rounded-md text-sm">
+                      <p className="font-medium mb-1">Notes:</p>
+                      <p>{absence.notes}</p>
+                    </div>
+                  )}
                 </div>
 
-                {isManager && absence.status === "pending" && (
+                {userIsManager && absence.status === "pending" && (
                   <div className="bg-muted/50 px-6 py-3 flex justify-end space-x-2">
                     <Button 
                       size="sm" 
@@ -481,6 +500,7 @@ const Absences = () => {
           )}
         </div>
       ) : (
+        // Calendar view
         <Card className="animate-in">
           <div className="p-4">
             <div className="flex justify-between items-center mb-4">

@@ -1,4 +1,3 @@
-
 import { apiRequest } from './api';
 
 export interface User {
@@ -52,18 +51,34 @@ export async function register(credentials: RegisterCredentials): Promise<AuthRe
   return response;
 }
 
-export function getCurrentUser(): User | null {
-  const userStr = localStorage.getItem('user');
-  if (!userStr) return null;
-  
+// Modify this function to correctly set the user role
+export const getCurrentUser = () => {
   try {
-    const userData = JSON.parse(userStr);
+    const user = localStorage.getItem('user');
+    if (!user) return null;
+    
+    const userData = JSON.parse(user);
+    
+    // Make sure role is properly set
+    if (!userData.role && userData.position) {
+      // Use position to determine role if role is not explicitly set
+      userData.role = userData.position.toLowerCase().includes('manager') || 
+                     userData.position.toLowerCase().includes('director') || 
+                     userData.position.toLowerCase().includes('admin') ? 'manager' : 'employee';
+    }
+    
     return userData;
-  } catch (e) {
-    console.error("Error parsing user data from localStorage:", e);
+  } catch (error) {
+    console.error('Error getting current user:', error);
     return null;
   }
-}
+};
+
+// Function to check if current user is a manager
+export const isUserManager = () => {
+  const user = getCurrentUser();
+  return user?.role === 'manager' || user?.role === 'admin';
+};
 
 export function isAuthenticated(): boolean {
   const user = getCurrentUser();
