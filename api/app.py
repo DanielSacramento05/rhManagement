@@ -3,12 +3,16 @@ from flask import Flask
 from flask_cors import CORS
 from models import db
 import os
+from dotenv import load_dotenv
 from routes.employees import employees_bp
 from routes.departments import departments_bp
 from routes.absences import absences_bp
 from routes.performance import performance_bp
 from routes.auth import auth_bp
 from routes.time_clock import time_clock_bp
+
+# Load environment variables from .env file
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)
