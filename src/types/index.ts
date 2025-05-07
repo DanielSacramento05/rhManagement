@@ -23,15 +23,18 @@ export interface Department {
 
 // Absence types
 export interface Absence {
-  id: string;
-  employeeId: string;
+  id?: string;
+  employee_id?: string;
+  employeeId?: string;
   employeeName?: string; // For display purposes, not stored in DB
   department?: string; // For display purposes, not stored in DB
   position?: string; // For display purposes, not stored in DB
   type: 'Vacation' | 'Sick Leave' | 'Personal' | 'Training';
   status: 'pending' | 'approved' | 'declined';
-  startDate: string; // ISO date string
-  endDate: string; // ISO date string
+  start_date?: string; // ISO date string
+  startDate?: string; // ISO date string
+  end_date?: string; // ISO date string
+  endDate?: string; // ISO date string
   notes?: string;
   approvedBy?: string;
   requestDate?: string; // ISO date string
@@ -122,6 +125,8 @@ export interface AbsenceFilters extends PaginationParams {
 
 export interface TimeClockFilters extends PaginationParams {
   employeeId?: string;
+  page?: number;
+  pageSize?: number;
   startDate?: string;
   endDate?: string;
   status?: 'active' | 'completed';

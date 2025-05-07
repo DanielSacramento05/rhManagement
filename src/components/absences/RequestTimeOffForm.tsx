@@ -80,16 +80,17 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
     setIsSubmitting(true);
     
     try {
-      // Use the current user's ID
+      // Format the request with field names that match the backend expectations
       const absenceRequest = {
-        employeeId: userId,
+        employee_id: userId,
         type: values.type,
         status: "pending" as const,
-        startDate: format(values.startDate, "yyyy-MM-dd"),
-        endDate: format(values.endDate, "yyyy-MM-dd"),
+        start_date: format(values.startDate, "yyyy-MM-dd"),
+        end_date: format(values.endDate, "yyyy-MM-dd"),
         notes: values.notes || "",
       };
       
+      console.log("Submitting absence request:", absenceRequest);
       await createAbsence(absenceRequest);
       
       toast({
@@ -102,12 +103,12 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
       
       onClose();
     } catch (error) {
+      console.error("Error submitting absence request:", error);
       toast({
         variant: "destructive",
         title: "Error submitting request",
-        description: "There was a problem submitting your request.",
+        description: error instanceof Error ? error.message : "There was a problem submitting your request.",
       });
-      console.error("Error submitting absence request:", error);
     } finally {
       setIsSubmitting(false);
     }

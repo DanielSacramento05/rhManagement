@@ -17,11 +17,12 @@ class Employee(db.Model):
     status = db.Column(db.String(20), default='active')
     manager_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=True)
     image_url = db.Column(db.String(255), nullable=True)
+    password_hash = db.Column(db.String(255), nullable=True)
     
     # Relationships
     manager = db.relationship('Employee', remote_side=[id], backref='reports')
-    absences = db.relationship('Absence', backref='employee', lazy='dynamic')
-    performance_reviews = db.relationship('PerformanceReview', backref='employee', lazy='dynamic')
+    absences = db.relationship('Absence', foreign_keys='Absence.employee_id', backref='employee', lazy='dynamic')
+    performance_reviews = db.relationship('PerformanceReview', foreign_keys='PerformanceReview.employee_id', backref='employee', lazy='dynamic')
     time_clock_entries = db.relationship('TimeClock', backref='employee', lazy='dynamic')
 
 class Department(db.Model):
@@ -39,7 +40,7 @@ class Absence(db.Model):
     __tablename__ = 'absences'
     
     id = db.Column(db.String(36), primary_key=True)
-    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=False)
+    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id', ondelete='CASCADE'), nullable=False)
     type = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(20), default='pending')
     start_date = db.Column(db.Date, nullable=False)
@@ -55,7 +56,7 @@ class PerformanceReview(db.Model):
     __tablename__ = 'performance_reviews'
     
     id = db.Column(db.String(36), primary_key=True)
-    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=False)
+    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id', ondelete='CASCADE'), nullable=False)
     review_date = db.Column(db.Date, nullable=False)
     review_type = db.Column(db.String(50), nullable=False)
     overall_score = db.Column(db.Float, nullable=False)
@@ -73,7 +74,7 @@ class PerformanceGoal(db.Model):
     __tablename__ = 'performance_goals'
     
     id = db.Column(db.String(36), primary_key=True)
-    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=False)
+    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id', ondelete='CASCADE'), nullable=False)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     progress = db.Column(db.Integer, default=0)
@@ -85,7 +86,7 @@ class SkillAssessment(db.Model):
     __tablename__ = 'skill_assessments'
     
     id = db.Column(db.String(36), primary_key=True)
-    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=False)
+    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id', ondelete='CASCADE'), nullable=False)
     review_id = db.Column(db.String(36), db.ForeignKey('performance_reviews.id'), nullable=True)
     name = db.Column(db.String(100), nullable=False)
     score = db.Column(db.Float, nullable=False)
@@ -94,7 +95,7 @@ class TimeClock(db.Model):
     __tablename__ = 'time_clock'
     
     id = db.Column(db.String(36), primary_key=True)
-    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=False)
+    employee_id = db.Column(db.String(36), db.ForeignKey('employees.id', ondelete='CASCADE'), nullable=False)
     date = db.Column(db.String(10), nullable=False)  # Format: YYYY-MM-DD
     clock_in_time = db.Column(db.String(8), nullable=False)  # Format: HH:MM:SS
     clock_out_time = db.Column(db.String(8), nullable=True)  # Format: HH:MM:SS

@@ -15,8 +15,8 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///hr_management.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # Allow CORS
-    CORS(app)
+    # Configure CORS with appropriate settings
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
     
     # Initialize database
     db.init_app(app)
@@ -37,4 +37,4 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

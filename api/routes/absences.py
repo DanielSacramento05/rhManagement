@@ -63,6 +63,16 @@ def get_absence(id):
 def create_absence():
     # Validate and deserialize input
     json_data = request.get_json()
+    print("Received absence request data:", json_data)
+    
+    # Map frontend field names to backend field names
+    if json_data:
+        if 'employeeId' in json_data:
+            json_data['employee_id'] = json_data.pop('employeeId')
+        if 'startDate' in json_data:
+            json_data['start_date'] = json_data.pop('startDate')
+        if 'endDate' in json_data:
+            json_data['end_date'] = json_data.pop('endDate')
     
     try:
         data = absence_schema.load(json_data)
@@ -109,6 +119,15 @@ def update_absence(id):
     
     # Get JSON data
     json_data = request.get_json()
+    
+    # Map frontend field names to backend field names
+    if json_data:
+        if 'employeeId' in json_data:
+            json_data['employee_id'] = json_data.pop('employeeId')
+        if 'startDate' in json_data:
+            json_data['start_date'] = json_data.pop('startDate')
+        if 'endDate' in json_data:
+            json_data['end_date'] = json_data.pop('endDate')
     
     try:
         data = absence_schema.load(json_data, partial=True)

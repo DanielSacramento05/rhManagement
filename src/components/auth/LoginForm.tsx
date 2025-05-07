@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { LogIn } from "lucide-react";
-import { login, saveUserToLocalStorage } from "@/services/authService";
+import { login } from "@/services/authService";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -55,9 +55,6 @@ export function LoginForm({ updateAuthState }: LoginFormProps) {
       });
       
       console.log("Login response received:", response);
-      
-      // Save user data to localStorage
-      saveUserToLocalStorage(response);
       
       toast({
         title: "Login successful",

@@ -52,10 +52,11 @@ export const getAbsenceById = async (
  * @returns Created absence
  */
 export const createAbsence = async (
-  absence: Omit<Absence, 'id'>
+  absence: Omit<Absence, 'id'> | any
 ): Promise<ApiResponse<Absence>> => {
   try {
-    return await apiRequest<ApiResponse<Absence>, Omit<Absence, 'id'>>(
+    // Use the field names expected by the API
+    return await apiRequest<ApiResponse<Absence>, any>(
       ENDPOINT, 
       'POST', 
       absence
@@ -74,10 +75,10 @@ export const createAbsence = async (
  */
 export const updateAbsence = async (
   id: string, 
-  absence: Partial<Absence>
+  absence: Partial<Absence> | any
 ): Promise<ApiResponse<Absence>> => {
   try {
-    return await apiRequest<ApiResponse<Absence>, Partial<Absence>>(
+    return await apiRequest<ApiResponse<Absence>, any>(
       `${ENDPOINT}/${id}`, 
       'PUT', 
       absence
