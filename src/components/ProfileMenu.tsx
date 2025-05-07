@@ -30,7 +30,7 @@ export function ProfileMenu() {
   });
   
   // Profile picture from employee data
-  const profilePicture = employeeData?.data?.pictureUrl;
+  const profilePicture = employeeData?.data?.imageUrl;
   
   // Listen for changes to user data in localStorage
   useEffect(() => {

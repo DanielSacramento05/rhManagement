@@ -68,8 +68,8 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
     try {
       // Get current user from localStorage
       const currentUser = getCurrentUser();
-      if (!currentUser) {
-        throw new Error("User not authenticated");
+      if (!currentUser || !currentUser.id) {
+        throw new Error("User not authenticated or missing ID");
       }
       
       // Use the currently logged in user's ID

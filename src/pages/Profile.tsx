@@ -31,7 +31,7 @@ const formSchema = z.object({
   phone: z.string().optional(),
   position: z.string().min(2, { message: "Position is required" }),
   department: z.string().min(2, { message: "Department is required" }),
-  pictureUrl: z.string().optional(),
+  imageUrl: z.string().optional(),
 });
 
 export default function Profile() {
@@ -70,7 +70,7 @@ export default function Profile() {
       phone: "",
       position: "",
       department: "",
-      pictureUrl: ""
+      imageUrl: ""
     },
   });
 
@@ -84,7 +84,7 @@ export default function Profile() {
         phone: employee.phone || '',
         position: employee.position || '',
         department: employee.department || '',
-        pictureUrl: employee.pictureUrl || ''
+        imageUrl: employee.imageUrl || ''
       });
     }
   }, [employeeData, form]);
@@ -142,7 +142,7 @@ export default function Profile() {
               <div className="flex justify-center mb-6">
                 <FormField
                   control={form.control}
-                  name="pictureUrl"
+                  name="imageUrl"
                   render={({ field }) => (
                     <FormItem className="flex flex-col items-center space-y-3">
                       <Avatar className="w-24 h-24 border-2 border-primary">
@@ -175,7 +175,7 @@ export default function Profile() {
                               type="button" 
                               variant="outline" 
                               size="sm"
-                              onClick={() => form.setValue('pictureUrl', 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7')}
+                              onClick={() => form.setValue('imageUrl', 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7')}
                               disabled={updateMutation.isPending}
                             >
                               <Image className="h-4 w-4 mr-1" /> Sample 1
@@ -184,7 +184,7 @@ export default function Profile() {
                               type="button" 
                               variant="outline" 
                               size="sm"
-                              onClick={() => form.setValue('pictureUrl', 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158')}
+                              onClick={() => form.setValue('imageUrl', 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158')}
                               disabled={updateMutation.isPending}
                             >
                               <Image className="h-4 w-4 mr-1" /> Sample 2
@@ -193,7 +193,7 @@ export default function Profile() {
                               type="button" 
                               variant="outline" 
                               size="sm"
-                              onClick={() => form.setValue('pictureUrl', 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952')}
+                              onClick={() => form.setValue('imageUrl', 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952')}
                               disabled={updateMutation.isPending}
                             >
                               <Image className="h-4 w-4 mr-1" /> Sample 3
