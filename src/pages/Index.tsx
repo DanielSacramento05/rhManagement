@@ -135,19 +135,17 @@ const Index = () => {
         <p className="text-muted-foreground mb-8">Welcome back to your HR management portal.</p>
       </div>
 
-      {/* Employee time clock for employees */}
-      {isEmployee && (
-        <div className="mb-8 animate-in">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div>
-              <TimeClock />
-            </div>
-            <div className="lg:col-span-2">
-              <TimeClockHistory />
-            </div>
+      {/* Employee time clock section */}
+      <div className="mb-8 animate-in">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div>
+            <TimeClock />
+          </div>
+          <div className="lg:col-span-2">
+            <TimeClockHistory />
           </div>
         </div>
-      )}
+      </div>
 
       {/* Key metrics */}
       <div className="dashboard-grid animate-in">
