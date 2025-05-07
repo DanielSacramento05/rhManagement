@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -307,8 +306,5 @@ const Index = () => {
     </div>
   );
 };
-
-// Import Badge after using it
-import { Badge } from "@/components/ui/badge";
 
 export default Index;
