@@ -18,15 +18,21 @@ import { useQuery } from "@tanstack/react-query";
 import { getEmployeeById } from "@/services/employeeService";
 
 export function ProfileMenu() {
-  const [user, setUser] = useState(() => getCurrentUser() || { email: 'user@example.com', role: 'employee', name: 'User' });
+  const [user, setUser] = useState(() => getCurrentUser() || { 
+    id: '',  // Add id property to fix type error
+    email: 'user@example.com', 
+    role: 'employee', 
+    name: 'User' 
+  });
+  
   const navigate = useNavigate();
   const { toast } = useToast();
   
   // Fetch employee data to get profile picture if available
   const { data: employeeData } = useQuery({
-    queryKey: ['employee', user?.id],
-    queryFn: () => getEmployeeById(user?.id || ''),
-    enabled: !!user?.id
+    queryKey: ['employee', user.id],
+    queryFn: () => getEmployeeById(user.id),
+    enabled: !!user.id
   });
   
   // Profile picture from employee data
@@ -35,7 +41,12 @@ export function ProfileMenu() {
   // Listen for changes to user data in localStorage
   useEffect(() => {
     const handleStorageChange = () => {
-      setUser(getCurrentUser() || { email: 'user@example.com', role: 'employee', name: 'User' });
+      setUser(getCurrentUser() || { 
+        id: '',  // Add id property to fix type error
+        email: 'user@example.com', 
+        role: 'employee', 
+        name: 'User' 
+      });
     };
     
     window.addEventListener('storage', handleStorageChange);
