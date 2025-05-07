@@ -7,7 +7,7 @@ export interface Employee {
   department: string;
   email: string;
   phone: string;
-  status: 'active' | 'on-leave' | 'remote' | 'inactive';
+  status: 'active' | 'on-leave' | 'remote' | 'inactive' | 'out-of-office';
   imageUrl?: string;
   image_url?: string; // Adding this to match the API response structure
   hireDate?: string;

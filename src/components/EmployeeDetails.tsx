@@ -37,6 +37,8 @@ export function EmployeeDetails({ employee, isOpen, onClose }: EmployeeDetailsPr
         return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Remote</Badge>;
       case 'inactive':
         return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Inactive</Badge>;
+      case 'out-of-office':
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">Out of Office</Badge>;
       default:
         return null;
     }

@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -86,14 +87,19 @@ def login():
     # Check if user is currently clocked in
     active_entry = TimeClock.query.filter_by(employee_id=user.id, status='active').first()
     
-    # Set appropriate status based on clock-in status
-    current_status = user.status
-    if current_status == 'active' and active_entry:
-        display_status = 'active'  # In office
-    elif current_status == 'remote' and active_entry:
-        display_status = 'remote'  # Remote work
-    else:
-        display_status = 'out-of-office'  # Not clocked in
+    # Set appropriate status based on employee status and clock-in status
+    employee_status = user.status
+    display_status = 'out-of-office'  # Default to out-of-office
+    
+    if employee_status == 'inactive':
+        # Inactive employees stay inactive
+        display_status = 'inactive'
+    elif employee_status == 'on-leave':
+        # On-leave employees stay on-leave
+        display_status = 'on-leave'
+    elif active_entry:
+        # Active clock-in determines if they're in office or remote
+        display_status = 'remote' if employee_status == 'remote' else 'active'
     
     # Generate token
     token = jwt.encode({

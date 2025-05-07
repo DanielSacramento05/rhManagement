@@ -14,7 +14,7 @@ interface EmployeeCardProps {
   department: string;
   email: string;
   phone: string;
-  status: 'active' | 'on-leave' | 'remote' | 'inactive';
+  status: 'active' | 'on-leave' | 'remote' | 'inactive' | 'out-of-office';
   imageUrl?: string;
   image_url?: string;
   hireDate?: string;
@@ -39,7 +39,7 @@ export function EmployeeCard({
   const profileImage = imageUrl || image_url;
 
   // For debugging purposes
-  console.log(`Employee ${name} image:`, { imageUrl, image_url, profileImage });
+  console.log(`Employee ${name} status:`, status);
 
   const getStatusBadge = () => {
     switch (status) {
@@ -51,8 +51,10 @@ export function EmployeeCard({
         return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Remote</Badge>;
       case 'inactive':
         return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Inactive</Badge>;
+      case 'out-of-office':
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">Out of Office</Badge>;
       default:
-        return null;
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">Unknown</Badge>;
     }
   };
 

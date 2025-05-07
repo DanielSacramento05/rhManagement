@@ -151,6 +151,7 @@ const Employees = () => {
               <TabsTrigger value="active">In Office</TabsTrigger>
               <TabsTrigger value="remote">Remote</TabsTrigger>
               <TabsTrigger value="on-leave">On Leave</TabsTrigger>
+              <TabsTrigger value="out-of-office">Out of Office</TabsTrigger>
               {isAdmin && <TabsTrigger value="inactive">Inactive</TabsTrigger>}
             </TabsList>
             
@@ -202,6 +203,7 @@ const Employees = () => {
                 <SelectItem value="active">In Office</SelectItem>
                 <SelectItem value="remote">Remote</SelectItem>
                 <SelectItem value="on-leave">On Leave</SelectItem>
+                <SelectItem value="out-of-office">Out of Office</SelectItem>
                 {isAdmin && <SelectItem value="inactive">Inactive</SelectItem>}
               </SelectContent>
             </Select>
@@ -342,6 +344,33 @@ const Employees = () => {
                   <div className="text-center py-12">
                     <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-lg text-muted-foreground">No employees on leave.</p>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="out-of-office" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {getFilteredEmployees('out-of-office').map((employee) => (
+                    <EmployeeCard 
+                      key={employee.id}
+                      id={employee.id}
+                      name={employee.name}
+                      position={employee.position}
+                      department={employee.department}
+                      email={employee.email}
+                      phone={employee.phone}
+                      status={employee.status}
+                      imageUrl={employee.imageUrl}
+                      hireDate={employee.hireDate}
+                      managerId={employee.managerId}
+                    />
+                  ))}
+                </div>
+                
+                {getFilteredEmployees('out-of-office').length === 0 && (
+                  <div className="text-center py-12">
+                    <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-lg text-muted-foreground">No employees out of office.</p>
                   </div>
                 )}
               </TabsContent>
