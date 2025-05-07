@@ -54,6 +54,17 @@ const Absences = () => {
     }
   }, [navigate]);
 
+  // Safely parse ISO dates with error handling
+  const safeParseISO = (dateString: string | undefined | null) => {
+    if (!dateString) return new Date(); // Default to current date if undefined/null
+    try {
+      return parseISO(dateString);
+    } catch (error) {
+      console.error("Error parsing date:", error, dateString);
+      return new Date(); // Return current date as fallback
+    }
+  };
+
   // Build filter parameters for API
   const buildFilters = (): AbsenceFilters => {
     // For employees, only show their own absences
@@ -214,26 +225,26 @@ const Absences = () => {
     }
   };
 
-  // Check if a day has any absences
+  // Check if a day has any absences - with safe date parsing
   const hasAbsence = (day: number) => {
     if (!filteredAbsences || filteredAbsences.length === 0) return false;
     
     const checkDate = new Date(currentYear, currentMonth, day);
     return filteredAbsences.some((absence) => {
-      const start = parseISO(absence.startDate);
-      const end = parseISO(absence.endDate);
+      const start = safeParseISO(absence.startDate || absence.start_date);
+      const end = safeParseISO(absence.endDate || absence.end_date);
       return checkDate >= start && checkDate <= end;
     });
   };
 
-  // Get absences for a specific day
+  // Get absences for a specific day - with safe date parsing
   const getAbsencesForDay = (day: number) => {
     if (!filteredAbsences || filteredAbsences.length === 0) return [];
     
     const checkDate = new Date(currentYear, currentMonth, day);
     return filteredAbsences.filter((absence) => {
-      const start = parseISO(absence.startDate);
-      const end = parseISO(absence.endDate);
+      const start = safeParseISO(absence.startDate || absence.start_date);
+      const end = safeParseISO(absence.endDate || absence.end_date);
       return checkDate >= start && checkDate <= end;
     });
   };
@@ -386,8 +397,8 @@ const Absences = () => {
                         {getStatusBadge(absence.status)}
                       </div>
                       <p className="text-sm">
-                        {format(parseISO(absence.startDate), "MMM d")} -{" "}
-                        {format(parseISO(absence.endDate), "MMM d, yyyy")}
+                        {format(safeParseISO(absence.startDate || absence.start_date), "MMM d")} -{" "}
+                        {format(safeParseISO(absence.endDate || absence.end_date), "MMM d, yyyy")}
                       </p>
                     </div>
                   </div>

@@ -6,6 +6,8 @@ import { TimeClockEntry, getTimeClockEntries } from "@/services/timeClockService
 import { format, parseISO } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getCurrentUser } from "@/services/authService";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function TimeClockHistory() {
   const currentUser = getCurrentUser();
@@ -25,6 +27,8 @@ export function TimeClockHistory() {
   });
 
   const entries = entriesData?.data || [];
+  const totalCount = entriesData?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const formatTime = (timeString: string | null) => {
     if (!timeString) return '---';
@@ -52,6 +56,18 @@ export function TimeClockHistory() {
     return `${entry.totalHours.toFixed(2)} hrs`;
   };
 
+  const goToPreviousPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (page < totalPages) {
+      setPage(page + 1);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -63,26 +79,52 @@ export function TimeClockHistory() {
         ) : entries.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">No recent time clock entries</div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Clock In</TableHead>
-                <TableHead>Clock Out</TableHead>
-                <TableHead>Hours</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell>{formatDate(entry.date)}</TableCell>
-                  <TableCell>{formatTime(entry.clockInTime)}</TableCell>
-                  <TableCell>{formatTime(entry.clockOutTime)}</TableCell>
-                  <TableCell>{formatDuration(entry)}</TableCell>
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Clock In</TableHead>
+                  <TableHead>Clock Out</TableHead>
+                  <TableHead>Hours</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {entries.map((entry) => (
+                  <TableRow key={entry.id}>
+                    <TableCell>{formatDate(entry.date)}</TableCell>
+                    <TableCell>{formatTime(entry.clockInTime)}</TableCell>
+                    <TableCell>{formatTime(entry.clockOutTime)}</TableCell>
+                    <TableCell>{formatDuration(entry)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={goToPreviousPage}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={goToNextPage}
+                  disabled={page >= totalPages}
+                >
+                  Next <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
