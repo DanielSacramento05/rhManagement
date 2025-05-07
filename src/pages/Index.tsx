@@ -82,13 +82,31 @@ const Index = () => {
     .sort(([, countA], [, countB]) => countB - countA)
     .slice(0, 6); // Get top 6 departments
   
-  // Get upcoming leave requests
+  // Get upcoming leave requests - with null/undefined safety checks
   const upcomingLeave = (absencesData?.data || [])
     .filter(absence => {
-      const startDate = parseISO(absence.startDate);
-      return isAfter(startDate, today) && isBefore(startDate, addDays(today, 30));
+      // Skip any absences with missing startDate
+      if (!absence.startDate) return false;
+      
+      try {
+        const startDate = parseISO(absence.startDate);
+        return isAfter(startDate, today) && isBefore(startDate, addDays(today, 30));
+      } catch (error) {
+        console.error("Error parsing date:", error, absence);
+        return false;
+      }
     })
-    .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime())
+    .sort((a, b) => {
+      try {
+        // Handle potential undefined values
+        if (!a.startDate) return 1;
+        if (!b.startDate) return -1;
+        return parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime();
+      } catch (error) {
+        console.error("Error sorting dates:", error);
+        return 0;
+      }
+    })
     .slice(0, 5);
   
   // Get recent employees (sort by hire date if available)
@@ -227,7 +245,8 @@ const Index = () => {
                   <div className="text-sm text-muted-foreground">{leave.position || "Position"}</div>
                   <div className="mt-2 flex justify-between items-center">
                     <span className="text-sm">
-                      {format(parseISO(leave.startDate), "MMM d")} - {format(parseISO(leave.endDate), "MMM d")}
+                      {leave.startDate && format(parseISO(leave.startDate), "MMM d")} - 
+                      {leave.endDate && format(parseISO(leave.endDate), "MMM d")}
                     </span>
                     <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
                       {leave.type}
