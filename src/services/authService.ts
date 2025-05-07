@@ -1,4 +1,3 @@
-
 import { apiRequest } from './api';
 
 export interface User {
@@ -6,6 +5,7 @@ export interface User {
   email: string;
   name: string;
   role: 'admin' | 'manager' | 'employee';
+  status?: 'active' | 'remote' | 'inactive' | 'out-of-office';
   token?: string;
 }
 
@@ -57,7 +57,6 @@ export async function register(credentials: RegisterCredentials): Promise<AuthRe
   return response;
 }
 
-// Modify this function to correctly set the user role
 export const getCurrentUser = () => {
   try {
     const user = localStorage.getItem('user');
@@ -80,7 +79,6 @@ export const getCurrentUser = () => {
   }
 };
 
-// Function to check if current user is a manager
 export const isUserManager = () => {
   const user = getCurrentUser();
   return user?.role === 'manager' || user?.role === 'admin';
