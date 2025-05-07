@@ -38,6 +38,9 @@ export function EmployeeCard({
   // Use either imageUrl or image_url, whichever is available
   const profileImage = imageUrl || image_url;
 
+  // For debugging purposes
+  console.log(`Employee ${name} image:`, { imageUrl, image_url, profileImage });
+
   const getStatusBadge = () => {
     switch (status) {
       case 'active':
@@ -65,6 +68,7 @@ export function EmployeeCard({
                   alt={name}
                   className="object-cover"
                   onError={(e) => {
+                    console.log(`Error loading image for ${name}`);
                     (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7";
                   }}
                 />

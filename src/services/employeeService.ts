@@ -17,12 +17,24 @@ const ENDPOINT = '/employees';
 export const getEmployees = async (
   filters?: EmployeeFilters
 ): Promise<PaginatedResponse<Employee>> => {
-  return apiRequest<PaginatedResponse<Employee>>(
+  const response = await apiRequest<PaginatedResponse<Employee>>(
     ENDPOINT, 
     'GET', 
     undefined, 
     buildQueryParams(filters)
   );
+  
+  // Map image_url to imageUrl for frontend compatibility for each employee
+  if (response.data) {
+    response.data = response.data.map(employee => {
+      if (employee.image_url) {
+        employee.imageUrl = employee.image_url;
+      }
+      return employee;
+    });
+  }
+  
+  return response;
 };
 
 /**
