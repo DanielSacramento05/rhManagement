@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentUser } from "@/services/authService";
 import { getActiveTimeClockEntry, clockIn, clockOut } from "@/services/timeClockService";
-import { format } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { Clock } from "lucide-react";
 
 export function TimeClock() {
@@ -68,6 +68,36 @@ export function TimeClock() {
     }
   };
 
+  // Safe format function to handle potential invalid dates
+  const safeFormatDate = (dateString) => {
+    try {
+      if (!dateString) return "N/A";
+      
+      // For API responses with date and time in separate fields
+      if (!dateString.includes('T') && !dateString.includes(' ')) {
+        // If we have activeEntry with date and clockInTime separate
+        if (activeEntry?.date && activeEntry?.clockInTime) {
+          const fullDateString = `${activeEntry.date}T${activeEntry.clockInTime}`;
+          const parsedDate = parseISO(fullDateString);
+          if (isValid(parsedDate)) {
+            return format(parsedDate, 'h:mm a');
+          }
+        }
+        return "Invalid date";
+      }
+      
+      // For standard ISO format
+      const parsedDate = parseISO(dateString);
+      if (isValid(parsedDate)) {
+        return format(parsedDate, 'h:mm a');
+      }
+      return "Invalid date";
+    } catch (error) {
+      console.error("Date formatting error:", error, { dateString });
+      return "Invalid date";
+    }
+  };
+
   return (
     <Card className="p-4">
       <div className="flex flex-col items-center space-y-4">
@@ -80,7 +110,11 @@ export function TimeClock() {
           <p className="text-sm text-muted-foreground mb-2">
             {isClockedIn ? (
               <>
-                Clocked in at {format(new Date(activeEntry.clockInTime), 'h:mm a')}
+                {activeEntry.date && activeEntry.clockInTime ? (
+                  `Clocked in at ${safeFormatDate(`${activeEntry.date}T${activeEntry.clockInTime}`)}`
+                ) : (
+                  "Currently clocked in"
+                )}
               </>
             ) : (
               "Not clocked in"
