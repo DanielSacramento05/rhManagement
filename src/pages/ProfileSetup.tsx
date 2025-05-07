@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -29,7 +28,7 @@ import { useContext } from "react";
 const formSchema = z.object({
   position: z.string().min(2, { message: "Position is required" }),
   department: z.string().min(2, { message: "Department is required" }),
-  image_url: z.string().optional(),
+  imageUrl: z.string().optional(),
 });
 
 export default function ProfileSetup() {
@@ -59,7 +58,7 @@ export default function ProfileSetup() {
     defaultValues: {
       position: "",
       department: "",
-      image_url: "",
+      imageUrl: "",
     },
   });
 
@@ -173,7 +172,7 @@ export default function ProfileSetup() {
 
               <FormField
                 control={form.control}
-                name="image_url"
+                name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Profile Picture</FormLabel>
@@ -209,7 +208,7 @@ export default function ProfileSetup() {
                             type="button" 
                             variant="outline" 
                             size="sm"
-                            onClick={() => form.setValue('image_url', 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7')}
+                            onClick={() => form.setValue('imageUrl', 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7')}
                           >
                             Sample 1
                           </Button>
@@ -217,7 +216,7 @@ export default function ProfileSetup() {
                             type="button" 
                             variant="outline" 
                             size="sm"
-                            onClick={() => form.setValue('image_url', 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158')}
+                            onClick={() => form.setValue('imageUrl', 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158')}
                           >
                             Sample 2
                           </Button>
@@ -225,7 +224,7 @@ export default function ProfileSetup() {
                             type="button" 
                             variant="outline" 
                             size="sm"
-                            onClick={() => form.setValue('image_url', 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952')}
+                            onClick={() => form.setValue('imageUrl', 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952')}
                           >
                             Sample 3
                           </Button>
