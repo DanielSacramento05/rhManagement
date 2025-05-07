@@ -17,6 +17,8 @@ export interface TimeClockFilters {
   startDate?: string;
   endDate?: string;
   status?: 'active' | 'completed';
+  page?: number;
+  pageSize?: number;
 }
 
 const ENDPOINT = '/time-clock';

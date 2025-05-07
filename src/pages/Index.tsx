@@ -1,7 +1,9 @@
+
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Users, 
   Clock, 
@@ -21,7 +23,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getEmployees } from "@/services/employeeService";
 import { getAbsences } from "@/services/absenceService";
 import { format, parseISO, isAfter, isBefore, addDays } from "date-fns";
-import { Badge } from "@/components/ui/badge";
 import { getCurrentUser } from "@/services/authService";
 import { TimeClock } from "@/components/timeclock/TimeClock";
 import { TimeClockHistory } from "@/components/timeclock/TimeClockHistory";
