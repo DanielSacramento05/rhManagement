@@ -44,10 +44,17 @@ export const getEmployeeById = async (
 export const createEmployee = async (
   employee: Omit<Employee, 'id'>
 ): Promise<ApiResponse<Employee>> => {
+  // Convert pictureUrl to image_url for API compatibility
+  const apiEmployee = { ...employee };
+  if ('pictureUrl' in apiEmployee) {
+    apiEmployee.image_url = apiEmployee.pictureUrl;
+    delete apiEmployee.pictureUrl;
+  }
+  
   return apiRequest<ApiResponse<Employee>, Omit<Employee, 'id'>>(
     ENDPOINT, 
     'POST', 
-    employee
+    apiEmployee
   );
 };
 
@@ -61,10 +68,17 @@ export const updateEmployee = async (
   id: string, 
   employee: Partial<Employee>
 ): Promise<ApiResponse<Employee>> => {
+  // Convert pictureUrl to image_url for API compatibility
+  const apiEmployee = { ...employee };
+  if ('pictureUrl' in apiEmployee) {
+    apiEmployee.image_url = apiEmployee.pictureUrl;
+    delete apiEmployee.pictureUrl;
+  }
+  
   return apiRequest<ApiResponse<Employee>, Partial<Employee>>(
     `${ENDPOINT}/${id}`, 
     'PUT', 
-    employee
+    apiEmployee
   );
 };
 
