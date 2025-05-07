@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -59,7 +58,6 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
   const currentUser = getCurrentUser();
   const userId = currentUser?.id || '';
   const userName = currentUser?.name || '';
-  const userEmail = currentUser?.email || '';
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -83,7 +81,7 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
     
     try {
       // Format the request with field names that match the backend expectations
-      // and include the employee information
+      // and include the employee information but remove email field
       const absenceRequest = {
         employee_id: userId,
         type: values.type,
@@ -91,9 +89,8 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
         start_date: format(values.startDate, "yyyy-MM-dd"),
         end_date: format(values.endDate, "yyyy-MM-dd"),
         notes: values.notes || "",
-        // Include additional user data to be displayed in the UI
-        employeeName: userName,
-        email: userEmail
+        // Include additional user data for UI display but not sent to API
+        employeeName: userName
       };
       
       console.log("Submitting absence request:", absenceRequest);

@@ -55,14 +55,24 @@ export const createAbsence = async (
   absence: Omit<Absence, 'id'> | any
 ): Promise<ApiResponse<Absence>> => {
   try {
-    // Make sure to send the employee data properly
     console.log('Creating absence with data:', absence);
+    
+    // Create a clean request object without any extra fields that might cause API errors
+    const requestData = {
+      employee_id: absence.employee_id,
+      type: absence.type,
+      status: absence.status,
+      start_date: absence.start_date,
+      end_date: absence.end_date,
+      notes: absence.notes,
+      approved_by: absence.approved_by
+    };
     
     // Use the field names expected by the API
     return await apiRequest<ApiResponse<Absence>, any>(
       ENDPOINT, 
       'POST', 
-      absence
+      requestData
     );
   } catch (error) {
     console.error('Error creating absence:', error);
