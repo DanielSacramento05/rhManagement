@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
 from schemas import AbsenceSchema
+import datetime
 
 absences_bp = Blueprint('absences', __name__)
 absence_schema = AbsenceSchema()
@@ -197,10 +198,21 @@ def update_absence_status(id):
     # Update status
     absence.status = status
     
-    # If approving, set the approver
-    if 'approvedBy' in json_data:
-        absence.approved_by = json_data['approvedBy']
-        print(f"Setting approved_by to {json_data['approvedBy']}")
+    # If approving, set the approver and update employee status
+    if status == 'approved':
+        absence.approved_by = json_data.get('approvedBy')
+        
+        # Update employee status to on-leave if the absence starts today or is ongoing
+        employee = Employee.query.get(absence.employee_id)
+        if employee:
+            today = datetime.datetime.now().date().isoformat()
+            
+            # Check if absence is current
+            is_current = (absence.start_date <= today and absence.end_date >= today)
+            
+            if is_current:
+                employee.status = 'on-leave'
+                print(f"Setting employee {employee.name} status to on-leave")
     
     try:
         db.session.commit()

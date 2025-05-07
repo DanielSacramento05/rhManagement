@@ -96,6 +96,10 @@ def clock_in():
     today = now.strftime('%Y-%m-%d')
     current_time = now.strftime('%H:%M:%S')
     
+    # Check if employee is on leave
+    if employee.status == 'on-leave':
+        return jsonify({'error': 'Cannot clock in while on leave'}), 400
+    
     # Create new time clock entry
     new_entry = TimeClock(
         id=str(uuid.uuid4()),
@@ -104,6 +108,12 @@ def clock_in():
         clock_in_time=current_time,
         status='active'
     )
+    
+    # Update employee status based on their preferred working mode
+    if employee.status == 'remote' or json_data.get('isRemote'):
+        employee.status = 'remote'
+    else:
+        employee.status = 'active'
     
     db.session.add(new_entry)
     
@@ -150,6 +160,11 @@ def clock_out():
     active_entry.clock_out_time = current_time
     active_entry.total_hours = round(hours_worked, 2)
     active_entry.status = 'completed'
+    
+    # Update employee status to out-of-office when clocked out
+    employee = Employee.query.get(employee_id)
+    if employee and employee.status not in ['on-leave', 'inactive']:
+        employee.status = 'out-of-office'
     
     try:
         db.session.commit()

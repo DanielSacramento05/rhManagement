@@ -98,8 +98,13 @@ def login():
         # On-leave employees stay on-leave
         display_status = 'on-leave'
     elif active_entry:
-        # Active clock-in determines if they're in office or remote
+        # If clocked in, use their status (either active or remote)
         display_status = 'remote' if employee_status == 'remote' else 'active'
+    else:
+        # Not clocked in means out-of-office
+        display_status = 'out-of-office'
+    
+    print(f"Login: User {user.name}, Status: {employee_status}, Display Status: {display_status}, Clocked in: {active_entry is not None}")
     
     # Generate token
     token = jwt.encode({
