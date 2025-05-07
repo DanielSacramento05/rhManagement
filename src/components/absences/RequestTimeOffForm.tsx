@@ -27,6 +27,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createAbsence } from "@/services/absenceService";
+import { getCurrentUser } from "@/services/authService";
 
 const formSchema = z.object({
   type: z.enum(["Vacation", "Sick Leave", "Personal", "Training"], {
@@ -66,16 +67,13 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
     
     try {
       // Get current user from localStorage
-      const userString = localStorage.getItem('user');
-      if (!userString) {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
         throw new Error("User not authenticated");
       }
       
-      const user = JSON.parse(userString);
-      
-      // In a real app, we would get the employee ID from the user object
-      // For this demo, we'll use a mock employee ID
-      const employeeId = "1";
+      // Use the currently logged in user's ID
+      const employeeId = currentUser.id;
       
       const absenceRequest = {
         employeeId,

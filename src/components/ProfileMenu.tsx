@@ -14,11 +14,23 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, User } from "lucide-react";
 import { getCurrentUser, logout } from "@/services/authService";
+import { useQuery } from "@tanstack/react-query";
+import { getEmployeeById } from "@/services/employeeService";
 
 export function ProfileMenu() {
   const [user, setUser] = useState(() => getCurrentUser() || { email: 'user@example.com', role: 'employee', name: 'User' });
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Fetch employee data to get profile picture if available
+  const { data: employeeData } = useQuery({
+    queryKey: ['employee', user?.id],
+    queryFn: () => getEmployeeById(user?.id || ''),
+    enabled: !!user?.id
+  });
+  
+  // Profile picture from employee data
+  const profilePicture = employeeData?.data?.pictureUrl;
   
   // Listen for changes to user data in localStorage
   useEffect(() => {
@@ -45,7 +57,12 @@ export function ProfileMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage src="https://randomuser.me/api/portraits/men/1.jpg" />
+            <AvatarImage 
+              src={profilePicture || "https://randomuser.me/api/portraits/men/1.jpg"} 
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://randomuser.me/api/portraits/men/1.jpg";
+              }}
+            />
             <AvatarFallback>
               {user.name ? user.name.substring(0, 2).toUpperCase() : 'US'}
             </AvatarFallback>
