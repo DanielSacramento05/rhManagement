@@ -269,29 +269,6 @@ const Absences = () => {
     return absenceEmployeeId === userId && absence.status === 'pending';
   };
 
-  // Calendar view helpers
-  const currentMonth = getMonth(date);
-  const currentYear = getYear(date);
-  const daysInMonth = getDaysInMonth(date);
-  const firstDayOfMonth = startOfMonth(date).getDay();
-  
-  // Days of the week for calendar header
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  // Go to previous month
-  const prevMonth = () => {
-    const newDate = new Date(date);
-    newDate.setMonth(newDate.getMonth() - 1);
-    setDate(newDate);
-  };
-
-  // Go to next month
-  const nextMonth = () => {
-    const newDate = new Date(date);
-    newDate.setMonth(newDate.getMonth() + 1);
-    setDate(newDate);
-  };
-
   // If there's an error connecting to the API, show a nice error message
   if (isError) {
     return (
