@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   Calendar as CalendarIcon, 
@@ -153,8 +154,19 @@ const Absences = () => {
       return;
     }
     
-    // For this demo, we'll use the current user's ID
-    const approvedBy = userId;
+    if (!currentUser?.id) {
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "You must be logged in to approve/decline requests.",
+      });
+      return;
+    }
+    
+    // Use the current user's ID as the approver
+    const approvedBy = currentUser.id;
+    
+    console.log(`Approving/declining absence ${id} with status ${status} by ${approvedBy}`);
     
     updateStatusMutation.mutate({ id, status, approvedBy }, {
       onSuccess: () => {
@@ -196,6 +208,8 @@ const Absences = () => {
 
   // Filter absences based on selected filters
   const filteredAbsences = absencesData?.data || [];
+  
+  console.log("Current absences data:", filteredAbsences);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -251,7 +265,31 @@ const Absences = () => {
 
   // Check if user can modify the absence (their own and still pending)
   const canCancelRequest = (absence: Absence) => {
-    return absence.employeeId === userId && absence.status === 'pending';
+    const absenceEmployeeId = absence.employeeId || absence.employee_id;
+    return absenceEmployeeId === userId && absence.status === 'pending';
+  };
+
+  // Calendar view helpers
+  const currentMonth = getMonth(date);
+  const currentYear = getYear(date);
+  const daysInMonth = getDaysInMonth(date);
+  const firstDayOfMonth = startOfMonth(date).getDay();
+  
+  // Days of the week for calendar header
+  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Go to previous month
+  const prevMonth = () => {
+    const newDate = new Date(date);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setDate(newDate);
+  };
+
+  // Go to next month
+  const nextMonth = () => {
+    const newDate = new Date(date);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setDate(newDate);
   };
 
   // If there's an error connecting to the API, show a nice error message
@@ -280,6 +318,7 @@ const Absences = () => {
 
   return (
     <div className="page-container pb-16">
+      {/* Page header section */}
       <div className="animate-in">
         <h1 className="text-3xl font-semibold tracking-tight mb-1">Absences</h1>
         <p className="text-muted-foreground mb-8">
@@ -287,6 +326,7 @@ const Absences = () => {
         </p>
       </div>
 
+      {/* View toggle and request button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 animate-in">
         <div className="flex items-center space-x-2">
           <Button
@@ -311,8 +351,9 @@ const Absences = () => {
         </Button>
       </div>
       
+      {/* Filters */}
       <div className="mb-6 flex flex-wrap gap-3 animate-in">
-        <Select onValueChange={(value) => setSelectedType(value || null)} value={selectedType || undefined}>
+        <Select onValueChange={(value) => setSelectedType(value === "all" ? null : value)} value={selectedType || "all"}>
           <SelectTrigger className="w-[180px]">
             <div className="flex items-center">
               <Filter className="mr-2 h-4 w-4" />
@@ -328,7 +369,7 @@ const Absences = () => {
           </SelectContent>
         </Select>
 
-        <Select onValueChange={(value) => setSelectedStatus(value || null)} value={selectedStatus || undefined}>
+        <Select onValueChange={(value) => setSelectedStatus(value === "all" ? null : value)} value={selectedStatus || "all"}>
           <SelectTrigger className="w-[180px]">
             <div className="flex items-center">
               <Filter className="mr-2 h-4 w-4" />
@@ -361,12 +402,14 @@ const Absences = () => {
         </Popover>
       </div>
 
+      {/* Loading indicator */}
       {absencesLoading ? (
         <div className="text-center py-12">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading absences...</p>
         </div>
       ) : view === "list" ? (
+        // List view
         <div className="grid grid-cols-1 gap-4 animate-in">
           {filteredAbsences && filteredAbsences.length > 0 ? (
             filteredAbsences.map((absence) => (

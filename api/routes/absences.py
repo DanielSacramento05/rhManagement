@@ -44,9 +44,24 @@ def get_absences():
     # Apply pagination
     absences = query.paginate(page=page, per_page=page_size, error_out=False).items
     
+    # Prepare response with enhanced employee details
+    result_data = []
+    for absence in absences:
+        absence_data = absence_schema.dump(absence)
+        
+        # Get employee details
+        employee = Employee.query.get(absence.employee_id)
+        if employee:
+            absence_data['employeeName'] = employee.name
+            absence_data['department'] = employee.department
+            absence_data['position'] = employee.position
+            absence_data['imageUrl'] = employee.image_url
+        
+        result_data.append(absence_data)
+    
     # Prepare response
     result = {
-        'data': absences_schema.dump(absences),
+        'data': result_data,
         'totalCount': total_count,
         'page': page,
         'pageSize': page_size
@@ -57,7 +72,17 @@ def get_absences():
 @absences_bp.route('/<id>', methods=['GET'])
 def get_absence(id):
     absence = Absence.query.get_or_404(id)
-    return jsonify({'data': absence_schema.dump(absence)})
+    absence_data = absence_schema.dump(absence)
+    
+    # Enrich with employee details
+    employee = Employee.query.get(absence.employee_id)
+    if employee:
+        absence_data['employeeName'] = employee.name
+        absence_data['department'] = employee.department
+        absence_data['position'] = employee.position
+        absence_data['imageUrl'] = employee.image_url
+    
+    return jsonify({'data': absence_data})
 
 @absences_bp.route('', methods=['POST'])
 def create_absence():
@@ -160,6 +185,7 @@ def update_absence_status(id):
     
     # Get JSON data
     json_data = request.get_json()
+    print("Updating absence status with data:", json_data)
     
     if 'status' not in json_data:
         return jsonify({'error': 'Status is required'}), 400
@@ -172,8 +198,9 @@ def update_absence_status(id):
     absence.status = status
     
     # If approving, set the approver
-    if status == 'approved' and 'approvedBy' in json_data:
+    if 'approvedBy' in json_data:
         absence.approved_by = json_data['approvedBy']
+        print(f"Setting approved_by to {json_data['approvedBy']}")
     
     try:
         db.session.commit()
