@@ -61,8 +61,17 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
         phone: values.phone
       });
       
+      // Make sure we include the out-of-office status
+      const userData = {
+        ...response,
+        user: {
+          ...response.user,
+          status: 'out-of-office' // Ensure status is set to out-of-office
+        }
+      };
+      
       // Save user data to localStorage
-      saveUserToLocalStorage(response);
+      saveUserToLocalStorage(userData);
       
       toast({
         title: "Registration successful",

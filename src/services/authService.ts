@@ -6,7 +6,7 @@ export interface User {
   email: string;
   name: string;
   role: 'admin' | 'manager' | 'employee';
-  status?: 'active' | 'remote' | 'inactive' | 'out-of-office';
+  status?: 'active' | 'remote' | 'inactive' | 'out-of-office' | 'on-leave';
   token?: string;
 }
 
@@ -53,6 +53,10 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
 export async function register(credentials: RegisterCredentials): Promise<AuthResponse> {
   const response = await apiRequest<AuthResponse, RegisterCredentials>('/auth/register', 'POST', credentials);
   if (response && response.token) {
+    // Ensure the user has the out-of-office status
+    if (response.user && !response.user.status) {
+      response.user.status = 'out-of-office';
+    }
     saveUserToLocalStorage(response);
   }
   return response;
@@ -97,7 +101,7 @@ export function saveUserToLocalStorage(authResponse: AuthResponse): void {
     name: authResponse.user.name,
     email: authResponse.user.email,
     role: authResponse.user.role,
-    status: authResponse.user.status,
+    status: authResponse.user.status || 'out-of-office', // Default to out-of-office if no status
     token: authResponse.token,
     isAuthenticated: true
   }));

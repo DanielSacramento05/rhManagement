@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -30,7 +29,7 @@ def register():
         phone=data.get('phone', ''),
         position=data.get('position', 'Employee'),
         department=data.get('department', 'General'),
-        status='active',
+        status='out-of-office',  # Set default status to out-of-office
         hire_date=datetime.datetime.now().date()
     )
     
@@ -55,7 +54,8 @@ def register():
                 'id': new_user.id,
                 'email': new_user.email,
                 'name': new_user.name,
-                'role': 'employee'
+                'role': 'employee',
+                'status': 'out-of-office'  # Return the correct status in the response
             },
             'token': token
         }), 201
