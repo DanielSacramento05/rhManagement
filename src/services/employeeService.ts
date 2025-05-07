@@ -33,7 +33,14 @@ export const getEmployees = async (
 export const getEmployeeById = async (
   id: string
 ): Promise<ApiResponse<Employee>> => {
-  return apiRequest<ApiResponse<Employee>>(`${ENDPOINT}/${id}`);
+  const response = await apiRequest<ApiResponse<Employee>>(`${ENDPOINT}/${id}`);
+  
+  // Map image_url to imageUrl for frontend compatibility
+  if (response.data && response.data.image_url) {
+    response.data.imageUrl = response.data.image_url;
+  }
+  
+  return response;
 };
 
 /**
@@ -51,11 +58,18 @@ export const createEmployee = async (
     delete apiEmployee.imageUrl;
   }
   
-  return apiRequest<ApiResponse<Employee>, typeof apiEmployee>(
+  const response = await apiRequest<ApiResponse<Employee>, typeof apiEmployee>(
     ENDPOINT, 
     'POST', 
     apiEmployee
   );
+  
+  // Map image_url back to imageUrl for frontend compatibility
+  if (response.data && response.data.image_url) {
+    response.data.imageUrl = response.data.image_url;
+  }
+  
+  return response;
 };
 
 /**
@@ -75,11 +89,18 @@ export const updateEmployee = async (
     delete apiEmployee.imageUrl;
   }
   
-  return apiRequest<ApiResponse<Employee>, typeof apiEmployee>(
+  const response = await apiRequest<ApiResponse<Employee>, typeof apiEmployee>(
     `${ENDPOINT}/${id}`, 
     'PUT', 
     apiEmployee
   );
+  
+  // Map image_url back to imageUrl for frontend compatibility
+  if (response.data && response.data.image_url) {
+    response.data.imageUrl = response.data.image_url;
+  }
+  
+  return response;
 };
 
 /**

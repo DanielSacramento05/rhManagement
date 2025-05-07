@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, User } from 'lucide-react';
 import { EmployeeDetails } from './EmployeeDetails';
 
 interface EmployeeCardProps {
@@ -15,7 +15,8 @@ interface EmployeeCardProps {
   email: string;
   phone: string;
   status: 'active' | 'on-leave' | 'remote' | 'inactive';
-  imageUrl: string;
+  imageUrl?: string;
+  image_url?: string;
   hireDate?: string;
   managerId?: string;
 }
@@ -29,10 +30,13 @@ export function EmployeeCard({
   phone,
   status,
   imageUrl,
+  image_url,
   hireDate,
   managerId
 }: EmployeeCardProps) {
   const [showDetails, setShowDetails] = useState(false);
+  // Use either imageUrl or image_url, whichever is available
+  const profileImage = imageUrl || image_url;
 
   const getStatusBadge = () => {
     switch (status) {
@@ -55,7 +59,20 @@ export function EmployeeCard({
         <div className="p-6">
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <Avatar className="h-20 w-20 border-2 border-white shadow-sm">
-              <img src={imageUrl} alt={name} className="object-cover" />
+              {profileImage ? (
+                <AvatarImage 
+                  src={profileImage} 
+                  alt={name}
+                  className="object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7";
+                  }}
+                />
+              ) : (
+                <AvatarFallback className="text-2xl">
+                  <User size={32} />
+                </AvatarFallback>
+              )}
             </Avatar>
             
             <div className="text-center sm:text-left grow">
@@ -95,7 +112,7 @@ export function EmployeeCard({
           email,
           phone,
           status,
-          imageUrl,
+          imageUrl: profileImage,
           hireDate,
           managerId
         }}

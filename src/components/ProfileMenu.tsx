@@ -19,7 +19,7 @@ import { getEmployeeById } from "@/services/employeeService";
 
 export function ProfileMenu() {
   const [user, setUser] = useState(() => getCurrentUser() || { 
-    id: '',  // Add id property to fix type error
+    id: '',
     email: 'user@example.com', 
     role: 'employee', 
     name: 'User' 
@@ -29,20 +29,22 @@ export function ProfileMenu() {
   const { toast } = useToast();
   
   // Fetch employee data to get profile picture if available
-  const { data: employeeData } = useQuery({
+  const { data: employeeData, isLoading } = useQuery({
     queryKey: ['employee', user.id],
     queryFn: () => getEmployeeById(user.id),
-    enabled: !!user.id
+    enabled: !!user.id,
+    retry: 1,
+    staleTime: 5 * 60 * 1000 // 5 minutes
   });
   
   // Profile picture from employee data
-  const profilePicture = employeeData?.data?.imageUrl;
+  const profilePicture = employeeData?.data?.imageUrl || employeeData?.data?.image_url;
   
   // Listen for changes to user data in localStorage
   useEffect(() => {
     const handleStorageChange = () => {
       setUser(getCurrentUser() || { 
-        id: '',  // Add id property to fix type error
+        id: '',
         email: 'user@example.com', 
         role: 'employee', 
         name: 'User' 
@@ -68,15 +70,19 @@ export function ProfileMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage 
-              src={profilePicture || "https://randomuser.me/api/portraits/men/1.jpg"} 
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "https://randomuser.me/api/portraits/men/1.jpg";
-              }}
-            />
-            <AvatarFallback>
-              {user.name ? user.name.substring(0, 2).toUpperCase() : 'US'}
-            </AvatarFallback>
+            {profilePicture ? (
+              <AvatarImage 
+                src={profilePicture} 
+                alt={user.name || 'User profile'}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1649972904349-6e44c42644a7";
+                }}
+              />
+            ) : (
+              <AvatarFallback>
+                {user.name ? user.name.substring(0, 2).toUpperCase() : 'US'}
+              </AvatarFallback>
+            )}
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
