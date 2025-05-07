@@ -55,7 +55,7 @@ export const createAbsence = async (
   absence: Omit<Absence, 'id'> | any
 ): Promise<ApiResponse<Absence>> => {
   try {
-    // Console log the data being sent to the API for debugging
+    // Make sure to send the employee data properly
     console.log('Creating absence with data:', absence);
     
     // Use the field names expected by the API

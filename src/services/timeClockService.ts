@@ -30,12 +30,14 @@ export const getTimeClockEntries = async (
   filters?: TimeClockFilters
 ): Promise<PaginatedResponse<TimeClockEntry>> => {
   try {
-    return await apiRequest<PaginatedResponse<TimeClockEntry>>(
+    const response = await apiRequest<PaginatedResponse<TimeClockEntry>>(
       ENDPOINT,
       'GET',
       undefined,
       buildQueryParams(filters)
     );
+    console.log('Time clock entries response:', response);
+    return response;
   } catch (error) {
     console.error('Error fetching time clock entries:', error);
     throw error;

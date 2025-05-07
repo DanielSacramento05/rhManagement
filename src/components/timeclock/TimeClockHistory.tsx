@@ -50,7 +50,6 @@ export function TimeClockHistory() {
   };
 
   const formatDuration = (entry: TimeClockEntry) => {
-    // Check if totalHours exists and is not null before using it
     if (entry.status === 'active') return 'In progress';
     if (entry.totalHours === undefined || entry.totalHours === null) return 'N/A';
     return `${entry.totalHours.toFixed(2)} hrs`;
