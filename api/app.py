@@ -15,8 +15,12 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///hr_management.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # Configure CORS with appropriate settings
-    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+    # Configure CORS with explicit headers to ensure Access-Control-Allow-Origin is set
+    CORS(app, 
+         resources={r"/api/*": {"origins": "*"}}, 
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
     
     # Initialize database
     db.init_app(app)
@@ -32,6 +36,14 @@ def create_app():
     @app.route('/')
     def hello():
         return {'message': 'HR Management API is running!'}
+    
+    @app.after_request
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
     
     return app
 
