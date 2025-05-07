@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -18,6 +17,14 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getEmployees } from "@/services/employeeService";
+import { getAbsences } from "@/services/absenceService";
+import { format, parseISO, isAfter, isBefore, addDays } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { getCurrentUser } from "@/services/authService";
+import { TimeClock } from "@/components/timeclock/TimeClock";
+import { TimeClockHistory } from "@/components/timeclock/TimeClockHistory";
 
 // Mock data
 const recentEmployees = [
@@ -40,6 +47,58 @@ const pendingTasks = [
 
 const Index = () => {
   const isMobile = useIsMobile();
+  const currentUser = getCurrentUser();
+  const isEmployee = currentUser?.role === "employee";
+
+  // Fetch employees data
+  const { data: employeesData } = useQuery({
+    queryKey: ['employees', { page: 1, pageSize: 50 }],
+    queryFn: () => getEmployees({ page: 1, pageSize: 50 }),
+  });
+  
+  // Fetch upcoming absences
+  const today = new Date();
+  const { data: absencesData } = useQuery({
+    queryKey: ['absences', { startDate: format(today, 'yyyy-MM-dd'), status: 'approved' }],
+    queryFn: () => getAbsences({
+      startDate: format(today, 'yyyy-MM-dd'),
+      status: 'approved',
+    }),
+  });
+  
+  // Get employees by department for chart
+  const departmentCounts: Record<string, number> = {};
+  const employees = employeesData?.data || [];
+  const totalEmployees = employeesData?.totalCount || 0;
+  
+  employees.forEach(employee => {
+    if (employee.department) {
+      departmentCounts[employee.department] = (departmentCounts[employee.department] || 0) + 1;
+    }
+  });
+  
+  // Sort departments by count
+  const sortedDepartments = Object.entries(departmentCounts)
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, 6); // Get top 6 departments
+  
+  // Get upcoming leave requests
+  const upcomingLeave = (absencesData?.data || [])
+    .filter(absence => {
+      const startDate = parseISO(absence.startDate);
+      return isAfter(startDate, today) && isBefore(startDate, addDays(today, 30));
+    })
+    .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime())
+    .slice(0, 5);
+  
+  // Get recent employees (sort by hire date if available)
+  const recentEmployees = [...employees]
+    .filter(employee => employee.hireDate)
+    .sort((a, b) => {
+      if (!a.hireDate || !b.hireDate) return 0;
+      return parseISO(b.hireDate).getTime() - parseISO(a.hireDate).getTime();
+    })
+    .slice(0, 3);
 
   useEffect(() => {
     // Simulate data loading with nice animation
@@ -58,11 +117,25 @@ const Index = () => {
         <p className="text-muted-foreground mb-8">Welcome back to your HR management portal.</p>
       </div>
 
+      {/* Employee time clock for employees */}
+      {isEmployee && (
+        <div className="mb-8 animate-in">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div>
+              <TimeClock />
+            </div>
+            <div className="lg:col-span-2">
+              <TimeClockHistory />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Key metrics */}
       <div className="dashboard-grid animate-in">
         <DashboardCard 
           title="Total Employees" 
-          value="243" 
+          value={totalEmployees.toString()} 
           icon={<Users className="h-5 w-5" />}
           trend={{ value: 4.6, isPositive: true }}
           footer={<Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View all employees <ChevronRight className="h-4 w-4 ml-1" /></Link>}
@@ -93,53 +166,15 @@ const Index = () => {
           </h2>
           
           <div className="glass-panel p-6 space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Engineering</span>
-                <span className="font-medium">68 employees</span>
+            {sortedDepartments.map(([department, count]) => (
+              <div key={department} className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>{department}</span>
+                  <span className="font-medium">{count} employees</span>
+                </div>
+                <Progress value={Math.round((count / totalEmployees) * 100)} className="h-2" />
               </div>
-              <Progress value={68} className="h-2" />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Sales & Marketing</span>
-                <span className="font-medium">53 employees</span>
-              </div>
-              <Progress value={53} className="h-2" />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Product</span>
-                <span className="font-medium">47 employees</span>
-              </div>
-              <Progress value={47} className="h-2" />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Operations</span>
-                <span className="font-medium">41 employees</span>
-              </div>
-              <Progress value={41} className="h-2" />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Human Resources</span>
-                <span className="font-medium">24 employees</span>
-              </div>
-              <Progress value={24} className="h-2" />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Finance</span>
-                <span className="font-medium">10 employees</span>
-              </div>
-              <Progress value={10} className="h-2" />
-            </div>
+            ))}
           </div>
           
           <div className="mt-8">
@@ -149,7 +184,13 @@ const Index = () => {
             </h2>
             
             <div className="glass-panel divide-y">
-              {pendingTasks.map((task) => (
+              {/* We'll keep the mock data for tasks since we don't have a tasks API */}
+              {[
+                { id: '1', title: 'Review performance reports', due: 'Today', priority: 'High' },
+                { id: '2', title: 'Approve team vacations', due: 'Tomorrow', priority: 'Medium' },
+                { id: '3', title: 'Finalize new hire paperwork', due: 'Sep 3', priority: 'Medium' },
+                { id: '4', title: 'Monthly department budgets', due: 'Sep 5', priority: 'High' },
+              ].map((task) => (
                 <div key={task.id} className="p-4 flex justify-between items-center">
                   <div>
                     <div className="font-medium">{task.title}</div>
@@ -180,20 +221,24 @@ const Index = () => {
             </h2>
             
             <div className="glass-panel divide-y">
-              {upcomingLeave.map((leave) => (
+              {upcomingLeave.length > 0 ? upcomingLeave.map((leave) => (
                 <div key={leave.id} className="p-4">
-                  <div className="font-medium">{leave.name}</div>
-                  <div className="text-sm text-muted-foreground">{leave.position}</div>
+                  <div className="font-medium">{leave.employeeName || "Employee"}</div>
+                  <div className="text-sm text-muted-foreground">{leave.position || "Position"}</div>
                   <div className="mt-2 flex justify-between items-center">
                     <span className="text-sm">
-                      {leave.startDate} - {leave.endDate}
+                      {format(parseISO(leave.startDate), "MMM d")} - {format(parseISO(leave.endDate), "MMM d")}
                     </span>
                     <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
                       {leave.type}
                     </Badge>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  No upcoming leave requests
+                </div>
+              )}
               <div className="p-4 text-center">
                 <Button variant="ghost" asChild>
                   <Link to="/absences">View all leave</Link>
@@ -209,13 +254,19 @@ const Index = () => {
             </h2>
             
             <div className="glass-panel divide-y">
-              {recentEmployees.map((employee) => (
+              {recentEmployees.length > 0 ? recentEmployees.map((employee) => (
                 <div key={employee.id} className="p-4">
                   <div className="font-medium">{employee.name}</div>
                   <div className="text-sm text-muted-foreground">{employee.position}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Joined: {employee.date}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    Joined: {employee.hireDate ? format(parseISO(employee.hireDate), "MMM d, yyyy") : "N/A"}
+                  </div>
                 </div>
-              ))}
+              )) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  No recent hires
+                </div>
+              )}
               <div className="p-4 text-center">
                 <Button variant="ghost" asChild>
                   <Link to="/employees">View all employees</Link>

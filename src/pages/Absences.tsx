@@ -26,9 +26,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { getAbsences, updateAbsenceStatus } from "@/services/absenceService";
+import { getAbsences, updateAbsenceStatus, deleteAbsence } from "@/services/absenceService";
 import { Absence, AbsenceFilters } from "@/types";
 import RequestTimeOffForm from "@/components/absences/RequestTimeOffForm";
+import { getCurrentUser } from "@/services/authService";
 
 const Absences = () => {
   const [date, setDate] = useState<Date>(new Date());
@@ -40,6 +41,11 @@ const Absences = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
+  // Get current user
+  const currentUser = getCurrentUser();
+  const isManager = currentUser?.role === "manager" || currentUser?.role === "admin";
+  const userId = currentUser?.id || '';
+  
   // Check for authentication
   useEffect(() => {
     const user = localStorage.getItem('user');
@@ -50,9 +56,12 @@ const Absences = () => {
 
   // Build filter parameters for API
   const buildFilters = (): AbsenceFilters => {
+    // For employees, only show their own absences
+    // For managers, show all absences
     return {
       page: 1,
       pageSize: 50,
+      employeeId: isManager ? undefined : userId,
       type: selectedType || undefined,
       status: selectedStatus || undefined
     };
@@ -74,6 +83,14 @@ const Absences = () => {
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status, approvedBy }: { id: string; status: 'approved' | 'declined'; approvedBy: string }) => 
       updateAbsenceStatus(id, status, approvedBy),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['absences'] });
+    },
+  });
+
+  // Mutation for canceling a request
+  const cancelRequestMutation = useMutation({
+    mutationFn: (id: string) => deleteAbsence(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['absences'] });
     },
@@ -115,9 +132,18 @@ const Absences = () => {
 
   // Handle approve/decline
   const handleStatusUpdate = (id: string, status: 'approved' | 'declined') => {
-    // For this demo, we'll use a mock approver ID
-    // In a real app, this would come from the authenticated user
-    const approvedBy = "1";
+    // Only managers can approve/decline
+    if (!isManager) {
+      toast({
+        variant: "destructive",
+        title: "Permission denied",
+        description: "You don't have permission to approve/decline requests.",
+      });
+      return;
+    }
+    
+    // For this demo, we'll use the current user's ID
+    const approvedBy = userId;
     
     updateStatusMutation.mutate({ id, status, approvedBy }, {
       onSuccess: () => {
@@ -132,6 +158,26 @@ const Absences = () => {
           variant: "destructive",
           title: "Error updating status",
           description: "There was a problem updating the request status.",
+        });
+      }
+    });
+  };
+
+  // Handle request cancellation
+  const handleCancelRequest = (id: string) => {
+    cancelRequestMutation.mutate(id, {
+      onSuccess: () => {
+        toast({
+          title: "Request cancelled",
+          description: "Your absence request has been cancelled.",
+        });
+      },
+      onError: (error) => {
+        console.error("Error cancelling request:", error);
+        toast({
+          variant: "destructive",
+          title: "Error cancelling request",
+          description: "There was a problem cancelling your request.",
         });
       }
     });
@@ -190,6 +236,11 @@ const Absences = () => {
       const end = parseISO(absence.endDate);
       return checkDate >= start && checkDate <= end;
     });
+  };
+
+  // Check if user can modify the absence (their own and still pending)
+  const canCancelRequest = (absence: Absence) => {
+    return absence.employeeId === userId && absence.status === 'pending';
   };
 
   // If there's an error connecting to the API, show a nice error message
@@ -342,7 +393,7 @@ const Absences = () => {
                   </div>
                 </div>
 
-                {absence.status === "pending" && (
+                {isManager && absence.status === "pending" && (
                   <div className="bg-muted/50 px-6 py-3 flex justify-end space-x-2">
                     <Button 
                       size="sm" 
@@ -362,6 +413,21 @@ const Absences = () => {
                     >
                       <Check className="mr-1 h-4 w-4" />
                       Approve
+                    </Button>
+                  </div>
+                )}
+                
+                {canCancelRequest(absence) && (
+                  <div className="bg-muted/50 px-6 py-3 flex justify-end space-x-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="text-red-500"
+                      onClick={() => handleCancelRequest(absence.id)}
+                      disabled={cancelRequestMutation.isPending}
+                    >
+                      <X className="mr-1 h-4 w-4" />
+                      Cancel Request
                     </Button>
                   </div>
                 )}

@@ -38,6 +38,17 @@ export interface Absence {
   imageUrl?: string; // For display purposes, not stored in DB
 }
 
+// TimeClock types
+export interface TimeClockEntry {
+  id: string;
+  employeeId: string;
+  date: string;
+  clockInTime: string;
+  clockOutTime: string | null;
+  totalHours: number | null;
+  status: 'active' | 'completed';
+}
+
 // Performance types
 export interface PerformanceReview {
   id: string;
@@ -107,6 +118,13 @@ export interface AbsenceFilters extends PaginationParams {
   status?: string;
   startDate?: string;
   endDate?: string;
+}
+
+export interface TimeClockFilters extends PaginationParams {
+  employeeId?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: 'active' | 'completed';
 }
 
 export interface PerformanceFilters extends PaginationParams {

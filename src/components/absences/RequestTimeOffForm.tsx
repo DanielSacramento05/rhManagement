@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -54,6 +55,10 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Get current user
+  const currentUser = getCurrentUser();
+  const userId = currentUser?.id || '';
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,22 +68,23 @@ export function RequestTimeOffForm({ onClose }: RequestTimeOffFormProps) {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!userId) {
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "You must be logged in to request time off.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // Get current user from localStorage
-      const currentUser = getCurrentUser();
-      if (!currentUser || !currentUser.id) {
-        throw new Error("User not authenticated or missing ID");
-      }
-      
-      // Use the currently logged in user's ID
-      const employeeId = currentUser.id;
-      
+      // Use the current user's ID
       const absenceRequest = {
-        employeeId,
+        employeeId: userId,
         type: values.type,
-        status: "pending" as const, // Explicitly type this as a literal "pending"
+        status: "pending" as const,
         startDate: format(values.startDate, "yyyy-MM-dd"),
         endDate: format(values.endDate, "yyyy-MM-dd"),
         notes: values.notes || "",
