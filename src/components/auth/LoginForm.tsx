@@ -69,12 +69,27 @@ export function LoginForm({ updateAuthState }: LoginFormProps) {
     } catch (error) {
       console.error("Login error:", error);
       
-      setError(error instanceof Error ? error.message : "Invalid email or password");
+      let errorMessage = "Invalid email or password";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Special handling for deactivated accounts
+        if (error.message.includes("deactivated")) {
+          toast({
+            variant: "destructive",
+            title: "Account Deactivated",
+            description: "Your account has been deactivated. Please contact an administrator.",
+          });
+        }
+      }
+      
+      setError(errorMessage);
       
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid email or password",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);

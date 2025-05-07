@@ -1,8 +1,7 @@
-
 from flask import Blueprint, request, jsonify
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, Employee
+from models import db, Employee, TimeClock
 import jwt
 import datetime
 import os
@@ -77,8 +76,24 @@ def login():
     if not user or not hasattr(user, 'password_hash') or not check_password_hash(user.password_hash, data['password']):
         return jsonify({'error': 'Invalid email or password'}), 401
     
+    # Check if user is inactive
+    if user.status == 'inactive':
+        return jsonify({'error': 'Account has been deactivated. Please contact an administrator.'}), 403
+    
     # Determine role based on position or department (customize as needed)
     role = 'admin' if user.position.lower() == 'manager' else 'employee'
+    
+    # Check if user is currently clocked in
+    active_entry = TimeClock.query.filter_by(employee_id=user.id, status='active').first()
+    
+    # Set appropriate status based on clock-in status
+    current_status = user.status
+    if current_status == 'active' and active_entry:
+        display_status = 'active'  # In office
+    elif current_status == 'remote' and active_entry:
+        display_status = 'remote'  # Remote work
+    else:
+        display_status = 'out-of-office'  # Not clocked in
     
     # Generate token
     token = jwt.encode({
@@ -94,7 +109,8 @@ def login():
             'id': user.id,
             'email': user.email,
             'name': user.name,
-            'role': role
+            'role': role,
+            'status': display_status
         },
         'token': token
     }), 200

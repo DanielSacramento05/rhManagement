@@ -1,3 +1,4 @@
+
 import { apiRequest } from './api';
 
 export interface User {
@@ -31,6 +32,11 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     console.log('Login attempt with:', credentials.email);
     const response = await apiRequest<AuthResponse, LoginCredentials>('/auth/login', 'POST', credentials);
     console.log('Login response received:', response);
+    
+    // Check if the user status is inactive/deactivated
+    if (response?.user?.status === 'inactive') {
+      throw new Error('Your account has been deactivated. Please contact an administrator.');
+    }
     
     if (response && response.token) {
       saveUserToLocalStorage(response);
@@ -92,6 +98,7 @@ export function saveUserToLocalStorage(authResponse: AuthResponse): void {
     name: authResponse.user.name,
     email: authResponse.user.email,
     role: authResponse.user.role,
+    status: authResponse.user.status,
     token: authResponse.token,
     isAuthenticated: true
   }));
