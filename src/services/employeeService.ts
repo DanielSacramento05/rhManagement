@@ -53,7 +53,7 @@ export const createEmployee = async (
 ): Promise<ApiResponse<Employee>> => {
   // Convert imageUrl to image_url for API compatibility
   const apiEmployee: Record<string, any> = { ...employee };
-  if ('imageUrl' in apiEmployee) {
+  if (apiEmployee.imageUrl) {
     apiEmployee.image_url = apiEmployee.imageUrl;
     delete apiEmployee.imageUrl;
   }
@@ -84,7 +84,7 @@ export const updateEmployee = async (
 ): Promise<ApiResponse<Employee>> => {
   // Convert imageUrl to image_url for API compatibility
   const apiEmployee: Record<string, any> = { ...employee };
-  if ('imageUrl' in apiEmployee) {
+  if (apiEmployee.imageUrl) {
     apiEmployee.image_url = apiEmployee.imageUrl;
     delete apiEmployee.imageUrl;
   }

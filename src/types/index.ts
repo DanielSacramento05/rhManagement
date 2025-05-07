@@ -8,7 +8,8 @@ export interface Employee {
   email: string;
   phone: string;
   status: 'active' | 'on-leave' | 'remote' | 'inactive';
-  imageUrl: string;
+  imageUrl?: string;
+  image_url?: string; // Adding this to match the API response structure
   hireDate?: string;
   managerId?: string;
 }
