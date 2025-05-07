@@ -13,18 +13,11 @@ from routes.time_clock import time_clock_bp
 def create_app():
     app = Flask(__name__)
     
-    # Get database configuration from environment variables
-    db_user = os.environ.get('DB_USER', 'root')
-    db_password = os.environ.get('DB_PASSWORD', '')
-    db_host = os.environ.get('DB_HOST', 'localhost')
-    db_port = os.environ.get('DB_PORT', '3306')
-    db_name = os.environ.get('DB_NAME', 'hr_management')
-    
-    # Construct database URI from environment variables
-    if os.environ.get('DATABASE_URL'):
-        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-    else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+    # Simplified database URI configuration
+    app.config['SQLALCHEMY_DATABASE_URI'] = (
+        f"mysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
+        f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+    )
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
