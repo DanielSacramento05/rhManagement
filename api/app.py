@@ -26,6 +26,10 @@ def create_app():
     # Initialize database
     db.init_app(app)
     
+    # Create all database tables if they don't exist
+    with app.app_context():
+        db.create_all()
+    
     # Register blueprints
     app.register_blueprint(employees_bp, url_prefix='/api/employees')
     app.register_blueprint(departments_bp, url_prefix='/api/departments')
