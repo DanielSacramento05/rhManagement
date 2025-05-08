@@ -1,29 +1,18 @@
 
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { BellRing, TrendingUp, Calendar, AlertCircle } from "lucide-react";
+import { apiRequest } from "@/services/api";
 
-// Mock announcement data - would be replaced with actual API integration
-const ANNOUNCEMENTS = [
-  { 
-    id: '1',
-    title: 'Quarterly Review',
-    content: 'Quarterly reviews scheduled for the second week of September.',
-    icon: 'bell'
-  },
-  { 
-    id: '2',
-    title: 'Employee Engagement Survey',
-    content: 'Please complete the survey by August 29th.',
-    icon: 'trending-up'
-  },
-  { 
-    id: '3',
-    title: 'Holiday Schedule',
-    content: 'The upcoming holiday schedule is now available. Please plan accordingly.',
-    icon: 'calendar'
-  }
-];
+// Define announcement type
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  icon: string;
+  createdAt?: string;
+}
 
 // Map icon names to Lucide components
 const iconMap = {
@@ -33,7 +22,47 @@ const iconMap = {
   'info': AlertCircle
 };
 
+// Function to fetch announcements
+const fetchAnnouncements = async (): Promise<{ data: Announcement[] }> => {
+  try {
+    return await apiRequest<{ data: Announcement[] }>('/announcements');
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    // Return mock data as fallback
+    return { 
+      data: [
+        { 
+          id: '1',
+          title: 'Quarterly Review',
+          content: 'Quarterly reviews scheduled for the second week of September.',
+          icon: 'bell'
+        },
+        { 
+          id: '2',
+          title: 'Employee Engagement Survey',
+          content: 'Please complete the survey by August 29th.',
+          icon: 'trending-up'
+        },
+        { 
+          id: '3',
+          title: 'Holiday Schedule',
+          content: 'The upcoming holiday schedule is now available. Please plan accordingly.',
+          icon: 'calendar'
+        }
+      ]
+    };
+  }
+};
+
 export function Announcements() {
+  // Fetch announcements
+  const { data: announcementsData, isLoading, isError } = useQuery({
+    queryKey: ['announcements'],
+    queryFn: fetchAnnouncements,
+  });
+
+  const announcements = announcementsData?.data || [];
+
   return (
     <Card className="h-full">
       <CardContent className="p-4">
@@ -42,16 +71,24 @@ export function Announcements() {
           Announcements
         </h2>
         
-        {ANNOUNCEMENTS.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-4">
+            Loading announcements...
+          </div>
+        ) : isError ? (
+          <div className="text-center py-4 text-muted-foreground">
+            Unable to load announcements.
+          </div>
+        ) : announcements.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">
             No announcements at this time.
           </div>
         ) : (
           <div>
-            {ANNOUNCEMENTS.map((announcement, index) => {
+            {announcements.map((announcement, index) => {
               // Get the icon component or default to BellRing
               const IconComponent = iconMap[announcement.icon] || BellRing;
-              const isLast = index === ANNOUNCEMENTS.length - 1;
+              const isLast = index === announcements.length - 1;
               
               return (
                 <div key={announcement.id}>
