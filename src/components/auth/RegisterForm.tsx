@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
-import { register as registerUser, saveUserToLocalStorage } from "@/services/authService";
+import { register as registerUser, saveUserToLocalStorage, AuthResponse } from "@/services/authService";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -62,11 +62,11 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       });
       
       // Make sure we include the out-of-office status
-      const userData = {
+      const userData: AuthResponse = {
         ...response,
         user: {
           ...response.user,
-          status: 'out-of-office' // Ensure status is set to out-of-office
+          status: 'out-of-office' as const // Use const assertion to ensure it matches the union type
         }
       };
       
