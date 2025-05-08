@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -22,7 +21,7 @@ export function TimeClockManager() {
   const [selectedEntry, setSelectedEntry] = useState<TimeClockEntry | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("all");
   
   // Form state
   const [editForm, setEditForm] = useState({
@@ -42,7 +41,7 @@ export function TimeClockManager() {
   const { data: entriesData, isLoading } = useQuery({
     queryKey: ['timeclock', 'manager', page, pageSize, selectedEmployeeId],
     queryFn: () => getTimeClockEntries({
-      employeeId: selectedEmployeeId || undefined,
+      employeeId: selectedEmployeeId !== "all" ? selectedEmployeeId : undefined,
       page,
       pageSize,
     }),
@@ -220,7 +219,7 @@ export function TimeClockManager() {
                 <SelectValue placeholder="All Employees" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Employees</SelectItem>
+                <SelectItem value="all">All Employees</SelectItem>
                 {employeesData?.data.map(employee => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {employee.name}
@@ -228,8 +227,8 @@ export function TimeClockManager() {
                 ))}
               </SelectContent>
             </Select>
-            {selectedEmployeeId && (
-              <Button variant="outline" onClick={() => setSelectedEmployeeId("")}>
+            {selectedEmployeeId !== "all" && (
+              <Button variant="outline" onClick={() => setSelectedEmployeeId("all")}>
                 Clear
               </Button>
             )}
