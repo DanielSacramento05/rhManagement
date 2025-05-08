@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -120,6 +119,11 @@ const Index = () => {
       <div className="animate-in">
         <h1 className="text-3xl font-semibold tracking-tight mb-1">Dashboard</h1>
         <p className="text-muted-foreground mb-8">Welcome back to your HR management portal.</p>
+      </div>
+
+      {/* Announcements section - visible to all users */}
+      <div className="mb-8 animate-in">
+        <Announcements />
       </div>
 
       {/* Employee time clock section - all users */}
@@ -265,16 +269,7 @@ const Index = () => {
             </div>
           </div>
         </>
-      ) : (
-        <>
-          {/* Employee Dashboard View - simplified with only announcements */}
-          <div className="animate-in">
-            <div className="mt-6">
-              <Announcements />
-            </div>
-          </div>
-        </>
-      )}
+      ) : null}
     </div>
   );
 };

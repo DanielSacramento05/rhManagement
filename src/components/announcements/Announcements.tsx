@@ -16,6 +16,12 @@ const ANNOUNCEMENTS = [
     title: 'Employee Engagement Survey',
     content: 'Please complete the survey by August 29th.',
     icon: 'trending-up'
+  },
+  { 
+    id: '3',
+    title: 'Holiday Schedule',
+    content: 'The upcoming holiday schedule is now available. Please plan accordingly.',
+    icon: 'calendar'
   }
 ];
 
@@ -51,7 +57,8 @@ export function Announcements() {
                 <div key={announcement.id}>
                   <div className="flex items-start gap-3">
                     <IconComponent className={`h-5 w-5 ${
-                      announcement.icon === 'trending-up' ? 'text-green-500' : 'text-amber-500'
+                      announcement.icon === 'trending-up' ? 'text-green-500' : 
+                      announcement.icon === 'calendar' ? 'text-blue-500' : 'text-amber-500'
                     } mt-0.5`} />
                     <div>
                       <h3 className="font-medium">{announcement.title}</h3>
