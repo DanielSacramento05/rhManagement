@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from routes.employees import employees_bp
 from routes.departments import departments_bp
-from routes.absences import absences_combined_bp
+from routes.absence import absences_combined_bp
 from routes.performance import performance_bp
 from routes.auth import auth_bp
 from routes.time_clock import time_clock_bp
