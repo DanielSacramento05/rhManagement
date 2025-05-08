@@ -2,66 +2,39 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { BellRing, TrendingUp, Calendar, AlertCircle } from "lucide-react";
-import { apiRequest } from "@/services/api";
-
-// Define announcement type
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  icon: string;
-  createdAt?: string;
-}
+import { BellRing, TrendingUp, Calendar, AlertCircle, Users } from "lucide-react";
+import { getAnnouncements, Announcement } from "@/services/announcementService";
+import { getCurrentUser } from "@/services/authService";
 
 // Map icon names to Lucide components
 const iconMap = {
   'bell': BellRing,
   'trending-up': TrendingUp,
   'calendar': Calendar,
-  'info': AlertCircle
-};
-
-// Function to fetch announcements
-const fetchAnnouncements = async (): Promise<{ data: Announcement[] }> => {
-  try {
-    return await apiRequest<{ data: Announcement[] }>('/announcements');
-  } catch (error) {
-    console.error('Error fetching announcements:', error);
-    // Return mock data as fallback
-    return { 
-      data: [
-        { 
-          id: '1',
-          title: 'Quarterly Review',
-          content: 'Quarterly reviews scheduled for the second week of September.',
-          icon: 'bell'
-        },
-        { 
-          id: '2',
-          title: 'Employee Engagement Survey',
-          content: 'Please complete the survey by August 29th.',
-          icon: 'trending-up'
-        },
-        { 
-          id: '3',
-          title: 'Holiday Schedule',
-          content: 'The upcoming holiday schedule is now available. Please plan accordingly.',
-          icon: 'calendar'
-        }
-      ]
-    };
-  }
+  'info': AlertCircle,
+  'users': Users
 };
 
 export function Announcements() {
-  // Fetch announcements
+  const currentUser = getCurrentUser();
+  
+  // Fetch announcements for the current user
   const { data: announcementsData, isLoading, isError } = useQuery({
-    queryKey: ['announcements'],
-    queryFn: fetchAnnouncements,
+    queryKey: ['announcements', currentUser?.departmentId, currentUser?.role],
+    queryFn: () => getAnnouncements(),
   });
 
   const announcements = announcementsData?.data || [];
+
+  // Function to render announcement source based on role
+  const renderAnnouncementSource = (announcement: Announcement) => {
+    if (announcement.isGlobal) {
+      return <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">Company-wide</span>;
+    } else if (announcement.departmentId) {
+      return <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full px-2 py-0.5">Team</span>;
+    }
+    return null;
+  };
 
   return (
     <Card className="h-full">
@@ -87,7 +60,7 @@ export function Announcements() {
           <div>
             {announcements.map((announcement, index) => {
               // Get the icon component or default to BellRing
-              const IconComponent = iconMap[announcement.icon] || BellRing;
+              const IconComponent = iconMap[announcement.icon as keyof typeof iconMap] || BellRing;
               const isLast = index === announcements.length - 1;
               
               return (
@@ -95,11 +68,29 @@ export function Announcements() {
                   <div className="flex items-start gap-3">
                     <IconComponent className={`h-5 w-5 ${
                       announcement.icon === 'trending-up' ? 'text-green-500' : 
-                      announcement.icon === 'calendar' ? 'text-blue-500' : 'text-amber-500'
+                      announcement.icon === 'calendar' ? 'text-blue-500' : 
+                      announcement.icon === 'users' ? 'text-purple-500' : 'text-amber-500'
                     } mt-0.5`} />
-                    <div>
-                      <h3 className="font-medium">{announcement.title}</h3>
-                      <p className="text-sm text-muted-foreground">{announcement.content}</p>
+                    <div className="w-full">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium">{announcement.title}</h3>
+                        {renderAnnouncementSource(announcement)}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-0.5">{announcement.content}</p>
+                      <div className="flex justify-between mt-1.5">
+                        <span className="text-xs text-muted-foreground">
+                          {announcement.date && new Date(announcement.date).toLocaleDateString()}
+                        </span>
+                        {announcement.priority && (
+                          <span className={`text-xs rounded-full px-2 py-0.5 ${
+                            announcement.priority === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                            announcement.priority === 'medium' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300' :
+                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                          }`}>
+                            {announcement.priority}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   

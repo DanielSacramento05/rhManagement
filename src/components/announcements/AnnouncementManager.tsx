@@ -7,40 +7,108 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { BellRing, Edit, Trash, Plus } from "lucide-react";
+import { BellRing, Edit, Trash, Plus, Users, Calendar, AlertCircle, TrendingUp } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Announcement, createAnnouncement, deleteAnnouncement, getAnnouncements, updateAnnouncement } from "@/services/announcementService";
+import { getCurrentUser } from "@/services/authService";
+import { Badge } from "@/components/ui/badge";
 
-// Mock announcement data - would be replaced with actual API integration
-const MOCK_ANNOUNCEMENTS = [
-  { 
-    id: '1',
-    title: 'Quarterly Review',
-    content: 'Quarterly reviews scheduled for the second week of September.',
-    priority: 'medium',
-    date: '2025-05-01',
-    icon: 'bell'
-  },
-  { 
-    id: '2',
-    title: 'Employee Engagement Survey',
-    content: 'Please complete the survey by August 29th.',
-    priority: 'high',
-    date: '2025-04-28',
-    icon: 'trending-up'
-  }
-];
+// Map icon names to Lucide components for display
+const iconMap = {
+  'bell': BellRing,
+  'trending-up': TrendingUp,
+  'calendar': Calendar,
+  'info': AlertCircle,
+  'users': Users
+};
 
 export function AnnouncementManager() {
-  const [announcements, setAnnouncements] = useState(MOCK_ANNOUNCEMENTS);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const currentUser = getCurrentUser();
+  const isAdmin = currentUser?.role === 'admin';
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState<any>(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     priority: 'medium',
-    icon: 'bell'
+    icon: 'bell',
+    isGlobal: isAdmin // Only admins can create global announcements by default
+  });
+  
+  // Query announcements that the current user manages
+  const { data: announcementsData, isLoading } = useQuery({
+    queryKey: ['announcements', 'manager', currentUser?.departmentId, currentUser?.role],
+    queryFn: () => getAnnouncements(),
+  });
+  
+  const announcements = announcementsData?.data || [];
+  
+  // Create announcement mutation
+  const createMutation = useMutation({
+    mutationFn: createAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      toast({
+        title: "Announcement Created",
+        description: isAdmin ? "Announcement has been published to all employees." : "Announcement has been published to your team.",
+      });
+      setIsAddDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Creation Failed",
+        description: `Error: ${error}`,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Update announcement mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: Partial<Announcement> }) => 
+      updateAnnouncement(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      toast({
+        title: "Announcement Updated",
+        description: "The announcement has been successfully updated.",
+      });
+      setIsEditDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Update Failed",
+        description: `Error: ${error}`,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Delete announcement mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAnnouncement(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      toast({
+        title: "Announcement Deleted",
+        description: "The announcement has been successfully deleted.",
+      });
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Deletion Failed",
+        description: `Error: ${error}`,
+        variant: "destructive"
+      });
+    }
   });
   
   const handleAddNew = () => {
@@ -48,59 +116,59 @@ export function AnnouncementManager() {
       title: '',
       content: '',
       priority: 'medium',
-      icon: 'bell'
+      icon: 'bell',
+      isGlobal: isAdmin
     });
     setIsAddDialogOpen(true);
   };
   
-  const handleEdit = (announcement) => {
+  const handleEdit = (announcement: Announcement) => {
     setSelectedAnnouncement(announcement);
     setFormData({
       title: announcement.title,
       content: announcement.content,
-      priority: announcement.priority,
-      icon: announcement.icon
+      priority: announcement.priority || 'medium',
+      icon: announcement.icon || 'bell',
+      isGlobal: announcement.isGlobal || false
     });
     setIsEditDialogOpen(true);
   };
   
-  const handleDelete = (announcement) => {
+  const handleDelete = (announcement: Announcement) => {
     setSelectedAnnouncement(announcement);
     setIsDeleteDialogOpen(true);
   };
   
   const saveNewAnnouncement = () => {
-    const newAnnouncement = {
-      id: Date.now().toString(),
-      ...formData,
-      date: new Date().toISOString().split('T')[0]
-    };
-    
-    setAnnouncements([...announcements, newAnnouncement]);
-    setIsAddDialogOpen(false);
+    createMutation.mutate(formData);
   };
   
   const saveEditedAnnouncement = () => {
-    const updatedAnnouncements = announcements.map(ann => 
-      ann.id === selectedAnnouncement.id ? { ...ann, ...formData } : ann
-    );
-    
-    setAnnouncements(updatedAnnouncements);
-    setIsEditDialogOpen(false);
+    if (selectedAnnouncement) {
+      updateMutation.mutate({
+        id: selectedAnnouncement.id,
+        data: formData
+      });
+    }
   };
   
   const confirmDelete = () => {
-    const filteredAnnouncements = announcements.filter(
-      ann => ann.id !== selectedAnnouncement.id
-    );
-    
-    setAnnouncements(filteredAnnouncements);
-    setIsDeleteDialogOpen(false);
+    if (selectedAnnouncement) {
+      deleteMutation.mutate(selectedAnnouncement.id);
+    }
   };
   
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB'); // European format DD/MM/YYYY
+  };
+  
+  // Determine if an announcement is global or team-based
+  const getAnnouncementScope = (announcement: Announcement) => {
+    if (announcement.isGlobal) {
+      return <Badge className="bg-primary/20 text-primary hover:bg-primary/30">Company-wide</Badge>;
+    }
+    return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200">Team</Badge>;
   };
 
   return (
@@ -114,57 +182,71 @@ export function AnnouncementManager() {
       </CardHeader>
       
       <CardContent>
-        {announcements.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-8">
+            Loading announcements...
+          </div>
+        ) : announcements.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No announcements. Click "New Announcement" to create one.
           </div>
         ) : (
           <div className="space-y-4">
-            {announcements.map((announcement) => (
-              <div key={announcement.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-start gap-3">
-                    <BellRing className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{announcement.title}</h3>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(announcement.date)}
-                        </span>
-                        <span className={`text-xs px-2 py-0.5 rounded ${
-                          announcement.priority === 'high' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {announcement.priority}
-                        </span>
+            {announcements.map((announcement) => {
+              // Get icon component
+              const IconComponent = iconMap[announcement.icon as keyof typeof iconMap] || BellRing;
+              
+              return (
+                <div key={announcement.id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start gap-3">
+                      <IconComponent className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">{announcement.title}</h3>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(announcement.date)}
+                          </span>
+                          {getAnnouncementScope(announcement)}
+                          {announcement.priority && (
+                            <span className={`text-xs px-2 py-0.5 rounded ${
+                              announcement.priority === 'high' 
+                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' 
+                                : announcement.priority === 'medium'
+                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
+                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                            }`}>
+                              {announcement.priority}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {announcement.content}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {announcement.content}
-                      </p>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={() => handleEdit(announcement)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => handleDelete(announcement)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      onClick={() => handleEdit(announcement)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="text-red-500 hover:text-red-700"
-                      onClick={() => handleDelete(announcement)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>
@@ -199,7 +281,7 @@ export function AnnouncementManager() {
               <Label htmlFor="priority">Priority</Label>
               <Select 
                 value={formData.priority}
-                onValueChange={(value) => setFormData({...formData, priority: value})}
+                onValueChange={(value) => setFormData({...formData, priority: value as 'low' | 'medium' | 'high'})}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select priority" />
@@ -225,9 +307,27 @@ export function AnnouncementManager() {
                   <SelectItem value="trending-up">Trending Up</SelectItem>
                   <SelectItem value="info">Info</SelectItem>
                   <SelectItem value="calendar">Calendar</SelectItem>
+                  <SelectItem value="users">Users</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {isAdmin && (
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="visibility">Visibility:</Label>
+                <Select
+                  value={formData.isGlobal ? "global" : "team"}
+                  onValueChange={(value) => setFormData({...formData, isGlobal: value === "global"})}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="global">Company-wide</SelectItem>
+                    <SelectItem value="team">Team Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -268,7 +368,7 @@ export function AnnouncementManager() {
               <Label htmlFor="edit-priority">Priority</Label>
               <Select 
                 value={formData.priority}
-                onValueChange={(value) => setFormData({...formData, priority: value})}
+                onValueChange={(value) => setFormData({...formData, priority: value as 'low' | 'medium' | 'high'})}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -294,9 +394,27 @@ export function AnnouncementManager() {
                   <SelectItem value="trending-up">Trending Up</SelectItem>
                   <SelectItem value="info">Info</SelectItem>
                   <SelectItem value="calendar">Calendar</SelectItem>
+                  <SelectItem value="users">Users</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {isAdmin && (
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="visibility">Visibility:</Label>
+                <Select
+                  value={formData.isGlobal ? "global" : "team"}
+                  onValueChange={(value) => setFormData({...formData, isGlobal: value === "global"})}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="global">Company-wide</SelectItem>
+                    <SelectItem value="team">Team Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>

@@ -1,3 +1,4 @@
+
 import { PaginationParams } from '@/types';
 
 // Base API configuration
@@ -80,7 +81,8 @@ export async function apiRequest<T, D = undefined>(
   const options: RequestInit = {
     method,
     headers: getHeaders(),
-    // Don't include credentials to avoid preflight issues
+    // For CORS issues, try a more permissive approach
+    credentials: 'same-origin',
     mode: 'cors'
   };
 

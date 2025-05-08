@@ -136,19 +136,28 @@ const Index = () => {
         </div>
       </div>
 
+      {/* Time Clock Manager for managers */}
+      {(isTeamLeader || isHRManager) && (
+        <div className="mb-8 animate-in">
+          <TimeClockManager />
+        </div>
+      )}
+
       {/* Announcements section - visible to all users */}
       <div className="mb-8 animate-in">
         <Announcements />
       </div>
 
+      {/* Announcement Manager for managers */}
+      {(isTeamLeader || isHRManager) && (
+        <div className="mb-8 animate-in">
+          <AnnouncementManager />
+        </div>
+      )}
+
       {isTeamLeader || isHRManager ? (
         <>
           {/* Manager Dashboard View */}
-          
-          {/* Time Clock Manager */}
-          <div className="mb-8 animate-in">
-            <TimeClockManager />
-          </div>
           
           {/* Key metrics - managers only */}
           <div className="dashboard-grid animate-in mb-8">
@@ -195,15 +204,6 @@ const Index = () => {
                     <Progress value={Math.round((count / totalEmployees) * 100)} className="h-2" />
                   </div>
                 ))}
-              </div>
-              
-              <div className="mt-8">
-                <h2 className="section-title flex items-center">
-                  <AlertCircle className="h-5 w-5 mr-2 text-primary" />
-                  Manage Announcements
-                </h2>
-                
-                <AnnouncementManager />
               </div>
             </div>
             

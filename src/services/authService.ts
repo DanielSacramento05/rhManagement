@@ -7,6 +7,9 @@ export interface User {
   name: string;
   role: 'admin' | 'manager' | 'employee';
   status?: 'active' | 'remote' | 'inactive' | 'out-of-office' | 'on-leave';
+  departmentId?: string;
+  departmentName?: string;
+  managerId?: string;
   token?: string;
 }
 
@@ -102,6 +105,9 @@ export function saveUserToLocalStorage(authResponse: AuthResponse): void {
     email: authResponse.user.email,
     role: authResponse.user.role,
     status: authResponse.user.status || 'out-of-office', // Default to out-of-office if no status
+    departmentId: authResponse.user.departmentId,
+    departmentName: authResponse.user.departmentName,
+    managerId: authResponse.user.managerId,
     token: authResponse.token,
     isAuthenticated: true
   }));
