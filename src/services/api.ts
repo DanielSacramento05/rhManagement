@@ -1,3 +1,4 @@
+
 import { PaginationParams } from '@/types';
 
 // Base API configuration
@@ -21,7 +22,7 @@ const handleApiError = (error: any, url: string, method: string) => {
   if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
     // Special handling for CORS issues
     if (error.message.includes('CORS') || 
-        (error instanceof DOMException && error.name === 'NetworkError')) {
+        error.name === 'NetworkError') {
       const errorMessage = 'Cross-Origin Request Blocked: The server has CORS configuration issues. ' +
                           'This may be caused by multiple Access-Control-Allow-Origin headers. ' + 
                           'Please contact your administrator.';
