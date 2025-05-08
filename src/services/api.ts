@@ -1,4 +1,3 @@
-
 import { PaginationParams } from '@/types';
 
 // Base API configuration
@@ -19,7 +18,7 @@ const getHeaders = () => {
 const handleApiError = (error: any, url: string, method: string) => {
   console.error(`API request failed for ${method} ${url}:`, error);
   
-  if (error instanceof TypeError && error.message.includes('NetworkError')) {
+  if (error instanceof TypeError) {
     // Special handling for CORS issues
     if (error.message.includes('CORS') || 
         error.message.includes('Access-Control-Allow-Origin')) {

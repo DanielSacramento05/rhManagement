@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ProfileMenu } from "./ProfileMenu";
 import { Book } from "lucide-react";
 import { getCurrentUser } from "@/services/authService";
+import { ThemeToggle } from "./ThemeToggle";
 
 const Navbar = () => {
   const location = useLocation();
@@ -53,7 +54,10 @@ const Navbar = () => {
               ))}
             </div>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
             <ProfileMenu />
           </div>
         </div>

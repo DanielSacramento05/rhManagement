@@ -1,8 +1,8 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
-import { Switch } from "./ui/switch";
-import { Label } from "./ui/label";
+import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -12,16 +12,25 @@ export function ThemeToggle() {
   };
 
   return (
-    <div className="flex items-center justify-between w-full gap-2">
-      <div className="flex items-center gap-2">
-        {theme === "light" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        <Label htmlFor="theme-mode" className="text-sm">Dark mode</Label>
-      </div>
-      <Switch
-        id="theme-mode"
-        checked={theme === "dark"}
-        onCheckedChange={toggleTheme}
-      />
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="h-9 w-9 rounded-md"
+        >
+          {theme === "light" ? (
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+          ) : (
+            <Moon className="h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          )}
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>Toggle {theme === "light" ? "Dark" : "Light"} Mode</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
