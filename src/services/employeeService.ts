@@ -1,3 +1,4 @@
+
 import { apiRequest, buildQueryParams } from './api';
 import { 
   Employee, 
@@ -17,11 +18,15 @@ export const getEmployees = async (
   filters?: EmployeeFilters
 ): Promise<PaginatedResponse<Employee>> => {
   try {
+    // Add a timestamp parameter to prevent caching
+    const timestamp = new Date().getTime();
+    const updatedFilters = { ...filters, _t: timestamp };
+    
     const response = await apiRequest<PaginatedResponse<Employee>>(
       ENDPOINT, 
       'GET', 
       undefined, 
-      buildQueryParams(filters)
+      buildQueryParams(updatedFilters)
     );
     
     // Map image_url to imageUrl for frontend compatibility for each employee
@@ -52,7 +57,9 @@ export const getEmployees = async (
 export const getEmployeeById = async (
   id: string
 ): Promise<ApiResponse<Employee>> => {
-  const response = await apiRequest<ApiResponse<Employee>>(`${ENDPOINT}/${id}`);
+  // Add a timestamp parameter to prevent caching
+  const timestamp = new Date().getTime();
+  const response = await apiRequest<ApiResponse<Employee>>(`${ENDPOINT}/${id}?_t=${timestamp}`);
   
   // Map image_url to imageUrl for frontend compatibility
   if (response.data && response.data.image_url) {

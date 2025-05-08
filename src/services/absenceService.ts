@@ -117,10 +117,15 @@ export const updateAbsenceStatus = async (
   try {
     console.log(`Updating absence ${id} status to ${status} by ${approvedBy}`);
     
-    const response = await apiRequest<ApiResponse<Absence>, { status: string; approvedBy: string }>(
+    // Format today's date as an ISO string (YYYY-MM-DD) to match the backend format
+    // This helps ensure the backend can properly compare dates
+    const today = new Date().toISOString().split('T')[0];
+    console.log(`Current date for comparison: ${today}`);
+    
+    const response = await apiRequest<ApiResponse<Absence>, { status: string; approvedBy: string; currentDate: string }>(
       `${ENDPOINT}/${id}/status`, 
       'PUT', 
-      { status, approvedBy }
+      { status, approvedBy, currentDate: today }
     );
     
     // After updating an absence status, refetch employees to get updated statuses
