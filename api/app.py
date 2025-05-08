@@ -1,3 +1,4 @@
+
 from flask import Flask
 from flask_cors import CORS
 from models import db
@@ -9,6 +10,7 @@ from routes.absence import absences_combined_bp
 from routes.performance import performance_bp
 from routes.auth import auth_bp
 from routes.time_clock import time_clock_bp
+from routes.announcements import announcements_bp  # Import the announcements blueprint
 
 # Load environment variables from .env file
 load_dotenv()
@@ -46,6 +48,7 @@ def create_app():
     app.register_blueprint(performance_bp, url_prefix='/api/performance')
     app.register_blueprint(absences_combined_bp, url_prefix='/api/absences')
     app.register_blueprint(time_clock_bp, url_prefix='/api/time-clock')
+    app.register_blueprint(announcements_bp, url_prefix='/api/announcements')  # Register the announcements blueprint
     
     @app.route('/')
     def hello():
