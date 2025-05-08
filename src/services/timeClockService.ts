@@ -1,6 +1,7 @@
 
 import { apiRequest, buildQueryParams } from './api';
 import { ApiResponse, PaginatedResponse } from '@/types';
+import { format } from 'date-fns';
 
 export interface TimeClockEntry {
   id: string;
@@ -92,6 +93,42 @@ export const clockOut = async (
     );
   } catch (error) {
     console.error('Error clocking out:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update a time clock entry
+ */
+export const updateTimeClockEntry = async (
+  id: string,
+  data: Partial<TimeClockEntry>
+): Promise<ApiResponse<TimeClockEntry>> => {
+  try {
+    return await apiRequest<ApiResponse<TimeClockEntry>, Partial<TimeClockEntry>>(
+      `${ENDPOINT}/${id}`,
+      'PUT',
+      data
+    );
+  } catch (error) {
+    console.error('Error updating time clock entry:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a time clock entry
+ */
+export const deleteTimeClockEntry = async (
+  id: string
+): Promise<ApiResponse<{message: string}>> => {
+  try {
+    return await apiRequest<ApiResponse<{message: string}>>(
+      `${ENDPOINT}/${id}`,
+      'DELETE'
+    );
+  } catch (error) {
+    console.error('Error deleting time clock entry:', error);
     throw error;
   }
 };

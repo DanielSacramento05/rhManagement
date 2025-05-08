@@ -33,7 +33,7 @@ export function TimeClock() {
       queryClient.invalidateQueries({ queryKey: ['timeclock'] });
       toast({
         title: "Clocked In",
-        description: `Successfully clocked in at ${format(new Date(), 'h:mm a')}`,
+        description: `Successfully clocked in at ${format(new Date(), 'HH:mm')}`,
       });
     },
   });
@@ -80,7 +80,7 @@ export function TimeClock() {
           const fullDateString = `${activeEntry.date}T${activeEntry.clockInTime}`;
           const parsedDate = parseISO(fullDateString);
           if (isValid(parsedDate)) {
-            return format(parsedDate, 'h:mm a');
+            return format(parsedDate, 'HH:mm');
           }
         }
         return "Invalid date";
@@ -89,7 +89,7 @@ export function TimeClock() {
       // For standard ISO format
       const parsedDate = parseISO(dateString);
       if (isValid(parsedDate)) {
-        return format(parsedDate, 'h:mm a');
+        return format(parsedDate, 'HH:mm');
       }
       return "Invalid date";
     } catch (error) {

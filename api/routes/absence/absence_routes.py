@@ -1,0 +1,161 @@
+
+from flask import Blueprint, request, jsonify
+import uuid
+from models import db, Absence, Employee
+from schemas import AbsenceSchema
+from .absence_utils import update_employee_statuses_based_on_absences, enrich_absence_with_employee
+
+absences_bp = Blueprint('absences', __name__)
+absence_schema = AbsenceSchema()
+absences_schema = AbsenceSchema(many=True)
+
+@absences_bp.route('', methods=['GET'])
+def get_absences():
+    # Get query parameters for filtering and pagination
+    page = request.args.get('page', 1, type=int)
+    page_size = request.args.get('pageSize', 10, type=int)
+    employee_id = request.args.get('employeeId', '')
+    type = request.args.get('type', '')
+    status = request.args.get('status', '')
+    start_date = request.args.get('startDate', '')
+    end_date = request.args.get('endDate', '')
+    
+    # Start building the query
+    query = Absence.query
+    
+    # Apply filters
+    if employee_id:
+        query = query.filter(Absence.employee_id == employee_id)
+    
+    if type:
+        query = query.filter(Absence.type == type)
+    
+    if status:
+        query = query.filter(Absence.status == status)
+    
+    if start_date:
+        query = query.filter(Absence.start_date >= start_date)
+    
+    if end_date:
+        query = query.filter(Absence.end_date <= end_date)
+    
+    # Get total count before pagination
+    total_count = query.count()
+    
+    # Apply pagination
+    absences = query.paginate(page=page, per_page=page_size, error_out=False).items
+    
+    # Prepare response with enhanced employee details
+    result_data = []
+    for absence in absences:
+        absence_data = absence_schema.dump(absence)
+        absence_data = enrich_absence_with_employee(absence_data, absence.employee_id)
+        result_data.append(absence_data)
+    
+    # Prepare response
+    result = {
+        'data': result_data,
+        'totalCount': total_count,
+        'page': page,
+        'pageSize': page_size
+    }
+    
+    return jsonify(result)
+
+@absences_bp.route('/<id>', methods=['GET'])
+def get_absence(id):
+    absence = Absence.query.get_or_404(id)
+    absence_data = absence_schema.dump(absence)
+    
+    # Enrich with employee details
+    absence_data = enrich_absence_with_employee(absence_data, absence.employee_id)
+    
+    return jsonify({'data': absence_data})
+
+@absences_bp.route('', methods=['POST'])
+def create_absence():
+    # Validate and deserialize input
+    json_data = request.get_json()
+    print("Received absence request data:", json_data)
+    
+    # Map frontend field names to backend field names
+    if json_data:
+        if 'employeeId' in json_data:
+            json_data['employee_id'] = json_data.pop('employeeId')
+        if 'startDate' in json_data:
+            json_data['start_date'] = json_data.pop('startDate')
+        if 'endDate' in json_data:
+            json_data['end_date'] = json_data.pop('endDate')
+    
+    try:
+        data = absence_schema.load(json_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+    
+    # Verify employee exists
+    employee = Employee.query.get(data['employee_id'])
+    if not employee:
+        return jsonify({'error': 'Employee not found'}), 404
+    
+    # Create new absence
+    new_absence = Absence(
+        id=str(uuid.uuid4()),
+        employee_id=data['employee_id'],
+        type=data['type'],
+        status=data.get('status', 'pending'),
+        start_date=data['start_date'],
+        end_date=data['end_date'],
+        notes=data.get('notes'),
+        approved_by=data.get('approved_by')
+    )
+    
+    db.session.add(new_absence)
+    
+    try:
+        db.session.commit()
+        
+        # Enrich the response with employee details
+        result = absence_schema.dump(new_absence)
+        result = enrich_absence_with_employee(result, employee.id)
+        
+        return jsonify({'data': result}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@absences_bp.route('/<id>', methods=['PUT'])
+def update_absence(id):
+    absence = Absence.query.get_or_404(id)
+    
+    # Get JSON data
+    json_data = request.get_json()
+    
+    # Map frontend field names to backend field names
+    if json_data:
+        if 'employeeId' in json_data:
+            json_data['employee_id'] = json_data.pop('employeeId')
+        if 'startDate' in json_data:
+            json_data['start_date'] = json_data.pop('startDate')
+        if 'endDate' in json_data:
+            json_data['end_date'] = json_data.pop('endDate')
+    
+    try:
+        data = absence_schema.load(json_data, partial=True)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+    
+    # Update absence fields
+    for key, value in data.items():
+        setattr(absence, key, value)
+    
+    try:
+        db.session.commit()
+        
+        # Enrich the response with employee details
+        result = absence_schema.dump(absence)
+        result = enrich_absence_with_employee(result, absence.employee_id)
+        
+        return jsonify({'data': result})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500

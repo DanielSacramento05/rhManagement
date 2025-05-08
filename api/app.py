@@ -1,4 +1,3 @@
-
 from flask import Flask
 from flask_cors import CORS
 from models import db
@@ -6,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from routes.employees import employees_bp
 from routes.departments import departments_bp
-from routes.absences import absences_bp
+from routes.absences import absences_combined_bp
 from routes.performance import performance_bp
 from routes.auth import auth_bp
 from routes.time_clock import time_clock_bp
@@ -41,11 +40,11 @@ def create_app():
         db.create_all()
     
     # Register blueprints
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(employees_bp, url_prefix='/api/employees')
     app.register_blueprint(departments_bp, url_prefix='/api/departments')
-    app.register_blueprint(absences_bp, url_prefix='/api/absences')
     app.register_blueprint(performance_bp, url_prefix='/api/performance')
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(absences_combined_bp, url_prefix='/api/absences')
     app.register_blueprint(time_clock_bp, url_prefix='/api/time-clock')
     
     @app.route('/')

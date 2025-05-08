@@ -35,13 +35,13 @@ export function TimeClockHistory() {
     try {
       // Handle cases where the API returns time as "HH:MM:SS" instead of ISO format
       if (timeString.includes('T')) {
-        return format(parseISO(timeString), 'h:mm a');
+        return format(parseISO(timeString), 'HH:mm');
       } else {
         // Handle format like "23:31:56"
         const [hours, minutes] = timeString.split(':').map(Number);
         const date = new Date();
         date.setHours(hours, minutes);
-        return format(date, 'h:mm a');
+        return format(date, 'HH:mm');
       }
     } catch (error) {
       console.error("Error formatting time:", error);
@@ -53,9 +53,9 @@ export function TimeClockHistory() {
     try {
       // Check if it's already in ISO format or just a date string
       if (timeString.includes('T')) {
-        return format(parseISO(timeString), 'MMM d, yyyy');
+        return format(parseISO(timeString), 'dd/MM/yyyy');
       } else {
-        return format(parseISO(timeString), 'MMM d, yyyy');
+        return format(parseISO(timeString), 'dd/MM/yyyy');
       }
     } catch (error) {
       console.error("Error formatting date:", error);
