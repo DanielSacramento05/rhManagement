@@ -38,7 +38,7 @@ export function EmployeeCard({
   // Use either imageUrl or image_url, whichever is available
   const profileImage = imageUrl || image_url;
 
-  // For debugging purposes
+  // For debugging purposes - will show in console each status for troubleshooting
   console.log(`Employee ${name} status:`, status);
 
   const getStatusBadge = () => {

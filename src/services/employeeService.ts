@@ -1,4 +1,3 @@
-
 import { apiRequest, buildQueryParams } from './api';
 import { 
   Employee, 
@@ -17,24 +16,32 @@ const ENDPOINT = '/employees';
 export const getEmployees = async (
   filters?: EmployeeFilters
 ): Promise<PaginatedResponse<Employee>> => {
-  const response = await apiRequest<PaginatedResponse<Employee>>(
-    ENDPOINT, 
-    'GET', 
-    undefined, 
-    buildQueryParams(filters)
-  );
-  
-  // Map image_url to imageUrl for frontend compatibility for each employee
-  if (response.data) {
-    response.data = response.data.map(employee => {
-      if (employee.image_url) {
-        employee.imageUrl = employee.image_url;
-      }
-      return employee;
-    });
+  try {
+    const response = await apiRequest<PaginatedResponse<Employee>>(
+      ENDPOINT, 
+      'GET', 
+      undefined, 
+      buildQueryParams(filters)
+    );
+    
+    // Map image_url to imageUrl for frontend compatibility for each employee
+    if (response.data) {
+      response.data = response.data.map(employee => {
+        if (employee.image_url) {
+          employee.imageUrl = employee.image_url;
+        }
+        return employee;
+      });
+    }
+    
+    // Log the employee statuses for debugging
+    console.log("Employee statuses:", response.data.map(e => `${e.name}: ${e.status}`));
+    
+    return response;
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    throw error;
   }
-  
-  return response;
 };
 
 /**

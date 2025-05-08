@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
@@ -202,20 +201,27 @@ def update_absence_status(id):
     if status == 'approved':
         absence.approved_by = json_data.get('approvedBy')
         
-        # Update employee status to on-leave if the absence starts today or is ongoing
+        # Update employee status to on-leave if the absence covers the current date
         employee = Employee.query.get(absence.employee_id)
         if employee:
             today = datetime.datetime.now().date().isoformat()
             
-            # Check if absence is current
-            is_current = (absence.start_date <= today and absence.end_date >= today)
+            # Check if absence is current OR starts in the future
+            is_current_or_future = (absence.start_date <= today and absence.end_date >= today) or \
+                                   (absence.start_date > today)
             
-            if is_current:
-                employee.status = 'on-leave'
-                print(f"Setting employee {employee.name} status to on-leave")
+            if is_current_or_future:
+                # If current, set to on-leave immediately
+                if absence.start_date <= today and absence.end_date >= today:
+                    employee.status = 'on-leave'
+                    print(f"Setting employee {employee.name} status to on-leave because absence is current")
     
     try:
         db.session.commit()
+        
+        # Now check if we need to update any employee statuses
+        # This ensures all employees with approved absences are properly marked
+        update_employee_statuses_based_on_absences()
         
         # Enrich the response with employee details
         employee = Employee.query.get(absence.employee_id)
@@ -241,3 +247,69 @@ def delete_absence(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+# Helper function to update employee statuses based on absences
+def update_employee_statuses_based_on_absences():
+    """
+    Updates all employee statuses based on current approved absences.
+    Should be run after absence approvals or on a regular schedule.
+    """
+    today = datetime.datetime.now().date().isoformat()
+    print(f"Checking for employees who should be on leave today: {today}")
+    
+    # Get all employees
+    employees = Employee.query.all()
+    
+    for employee in employees:
+        # Skip inactive employees
+        if employee.status == 'inactive':
+            continue
+            
+        # Check if employee has an approved absence for today
+        current_absence = Absence.query.filter(
+            Absence.employee_id == employee.id,
+            Absence.status == 'approved',
+            Absence.start_date <= today,
+            Absence.end_date >= today
+        ).first()
+        
+        if current_absence:
+            # If there's an approved absence covering today, set status to on-leave
+            if employee.status != 'on-leave':
+                print(f"Setting employee {employee.name} to on-leave due to approved absence")
+                employee.status = 'on-leave'
+        elif employee.status == 'on-leave':
+            # If employee is marked as on-leave but doesn't have an absence for today
+            # Check if they've clocked in today
+            from models import TimeClock
+            
+            # Get today's date in YYYY-MM-DD format for comparison
+            today_date = datetime.datetime.now().strftime("%Y-%m-%d")
+            
+            # Check if employee has clocked in today
+            clock_entry = TimeClock.query.filter(
+                TimeClock.employee_id == employee.id,
+                TimeClock.date == today_date
+            ).first()
+            
+            if clock_entry:
+                if clock_entry.clock_out_time:
+                    employee.status = 'out-of-office'  # Clocked out
+                else:
+                    employee.status = 'active'  # Still clocked in
+            else:
+                employee.status = 'out-of-office'  # No absence and no clock-in
+    
+    try:
+        db.session.commit()
+        print("Employee statuses updated successfully")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating employee statuses: {str(e)}")
+
+# Run the update on module load to ensure we're starting with correct statuses
+try:
+    with db.app.app_context():
+        update_employee_statuses_based_on_absences()
+except Exception as e:
+    print(f"Could not update employee statuses on module load: {str(e)}")

@@ -117,11 +117,23 @@ export const updateAbsenceStatus = async (
   try {
     console.log(`Updating absence ${id} status to ${status} by ${approvedBy}`);
     
-    return await apiRequest<ApiResponse<Absence>, { status: string; approvedBy: string }>(
+    const response = await apiRequest<ApiResponse<Absence>, { status: string; approvedBy: string }>(
       `${ENDPOINT}/${id}/status`, 
       'PUT', 
       { status, approvedBy }
     );
+    
+    // After updating an absence status, refetch employees to get updated statuses
+    // This is especially important when approving a leave that starts today
+    try {
+      // We need to import these here to avoid circular dependencies
+      const { getEmployees } = await import('./employeeService');
+      await getEmployees();
+    } catch (err) {
+      console.error("Error refreshing employee data after absence status update:", err);
+    }
+    
+    return response;
   } catch (error) {
     console.error(`Error updating absence status ${id}:`, error);
     throw error;
