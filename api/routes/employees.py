@@ -85,7 +85,8 @@ def create_employee():
         status=data.get('status', 'active'),
         image_url=data.get('image_url'),
         hire_date=data.get('hire_date'),
-        manager_id=data.get('manager_id')
+        manager_id=data.get('manager_id'),
+        role=data.get('role', 'employee')  # Default role to employee
     )
     
     db.session.add(new_employee)
@@ -128,6 +129,31 @@ def delete_employee(id):
         db.session.delete(employee)
         db.session.commit()
         return jsonify({'data': {'message': f'Employee {id} deleted successfully'}}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# New endpoint for updating user roles
+@employees_bp.route('/<id>/role', methods=['PUT'])
+def update_employee_role(id):
+    employee = Employee.query.get_or_404(id)
+    
+    # Get JSON data
+    json_data = request.get_json()
+    if not json_data or 'role' not in json_data:
+        return jsonify({'error': 'Role is required'}), 400
+    
+    # Validate role
+    role = json_data['role']
+    valid_roles = ['admin', 'manager', 'employee']
+    if role not in valid_roles:
+        return jsonify({'error': f'Invalid role. Must be one of {", ".join(valid_roles)}'}), 400
+    
+    try:
+        # Update role
+        employee.role = role
+        db.session.commit()
+        return jsonify({'data': employee_schema.dump(employee)})
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500

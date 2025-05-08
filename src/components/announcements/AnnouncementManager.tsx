@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { BellRing, Edit, Trash, Plus, Users, Calendar, AlertCircle, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +33,14 @@ export function AnnouncementManager() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   
-  const [formData, setFormData] = useState({
+  // Fix TypeScript error by explicitly typing the priority
+  const [formData, setFormData] = useState<{
+    title: string;
+    content: string;
+    priority: 'low' | 'medium' | 'high';
+    icon: string;
+    isGlobal: boolean;
+  }>({
     title: '',
     content: '',
     priority: 'medium',
@@ -139,10 +145,12 @@ export function AnnouncementManager() {
     setIsDeleteDialogOpen(true);
   };
   
+  // Make sure we're using the correct type for priority when saving a new announcement
   const saveNewAnnouncement = () => {
     createMutation.mutate(formData);
   };
   
+  // Make sure we're using the correct type for priority when updating an announcement
   const saveEditedAnnouncement = () => {
     if (selectedAnnouncement) {
       updateMutation.mutate({

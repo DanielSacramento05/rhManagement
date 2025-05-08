@@ -31,6 +31,11 @@ export interface RegisterCredentials {
   phone?: string;
 }
 
+export interface UpdateRoleRequest {
+  userId: string;
+  role: 'admin' | 'manager' | 'employee';
+}
+
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   try {
     console.log('Login attempt with:', credentials.email);
@@ -115,4 +120,40 @@ export function saveUserToLocalStorage(authResponse: AuthResponse): void {
 
 export function logout(): void {
   localStorage.removeItem('user');
+}
+
+/**
+ * Update a user's role (admin only)
+ */
+export async function updateUserRole(request: UpdateRoleRequest): Promise<User> {
+  try {
+    const response = await apiRequest<{ data: User }, { role: string }>(
+      `/employees/${request.userId}/role`,
+      'PUT',
+      { role: request.role }
+    );
+    
+    // If the user updating their own role, update the local storage
+    const currentUser = getCurrentUser();
+    if (currentUser && currentUser.id === request.userId && response.data) {
+      const updatedUser = {
+        ...currentUser,
+        role: response.data.role
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check if the current user is an admin
+ */
+export function isAdmin(): boolean {
+  const user = getCurrentUser();
+  return user?.role === 'admin';
 }

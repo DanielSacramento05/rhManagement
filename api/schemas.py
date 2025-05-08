@@ -12,6 +12,7 @@ class EmployeeSchema(Schema):
     status = fields.Str()
     manager_id = fields.Str(allow_none=True)
     image_url = fields.Str(allow_none=True)
+    role = fields.Str()  # Added role field
 
 class DepartmentSchema(Schema):
     id = fields.Str()
@@ -80,3 +81,20 @@ class TimeClockSchema(Schema):
     clock_out_time = fields.Str(allow_none=True)
     total_hours = fields.Float(allow_none=True)
     status = fields.Str()
+
+# New schema for announcements
+class AnnouncementSchema(Schema):
+    id = fields.Str()
+    title = fields.Str()
+    content = fields.Str()
+    date = fields.Date()
+    priority = fields.Str()
+    icon = fields.Str(allow_none=True)
+    created_by = fields.Str()
+    created_by_name = fields.Str(allow_none=True)  # Populated from join
+    created_by_role = fields.Str(allow_none=True)  # Populated from join
+    is_global = fields.Bool()
+    department_id = fields.Str(allow_none=True)
+    department_name = fields.Str(allow_none=True)  # Populated from join
+    created_at = fields.DateTime(allow_none=True)
+    updated_at = fields.DateTime(allow_none=True)

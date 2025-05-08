@@ -19,11 +19,15 @@ class Employee(db.Model):
     image_url = db.Column(db.String(255), nullable=True)
     password_hash = db.Column(db.String(255), nullable=True)
     
+    # Role field to determine if user is admin, manager, or employee
+    role = db.Column(db.String(20), default='employee')
+    
     # Relationships
     manager = db.relationship('Employee', remote_side=[id], backref='reports')
     absences = db.relationship('Absence', foreign_keys='Absence.employee_id', backref='employee', lazy='dynamic')
     performance_reviews = db.relationship('PerformanceReview', foreign_keys='PerformanceReview.employee_id', backref='employee', lazy='dynamic')
     time_clock_entries = db.relationship('TimeClock', backref='employee', lazy='dynamic')
+    created_announcements = db.relationship('Announcement', backref='creator', lazy='dynamic')
 
 class Department(db.Model):
     __tablename__ = 'departments'
@@ -35,6 +39,7 @@ class Department(db.Model):
     
     # Relationships
     manager = db.relationship('Employee', backref='managed_departments')
+    announcements = db.relationship('Announcement', backref='department', lazy='dynamic')
 
 class Absence(db.Model):
     __tablename__ = 'absences'
@@ -101,3 +106,25 @@ class TimeClock(db.Model):
     clock_out_time = db.Column(db.String(8), nullable=True)  # Format: HH:MM:SS
     total_hours = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(20), default='active')  # active or completed
+
+# New Announcement model
+class Announcement(db.Model):
+    __tablename__ = 'announcements'
+    
+    id = db.Column(db.String(36), primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    date = db.Column(db.Date, default=datetime.utcnow().date)
+    priority = db.Column(db.String(20), default='medium')  # low, medium, high
+    icon = db.Column(db.String(50), default='bell')
+    
+    # Who created this announcement
+    created_by = db.Column(db.String(36), db.ForeignKey('employees.id'), nullable=False)
+    
+    # Is this announcement global (company-wide) or just for a specific department
+    is_global = db.Column(db.Boolean, default=False)
+    department_id = db.Column(db.String(36), db.ForeignKey('departments.id'), nullable=True)
+    
+    # Audit timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
