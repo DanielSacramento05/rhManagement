@@ -24,6 +24,27 @@ export interface TimeClockFilters {
 
 const ENDPOINT = '/time-clock';
 
+// Custom error handler for time clock operations
+const handleTimeClockError = (error: any, operation: string) => {
+  console.error(`Error during time clock operation (${operation}):`, error);
+  
+  // Check for specific time clock errors
+  if (error.message.includes('already clocked in')) {
+    throw new Error('This employee is already clocked in. Please clock out first.');
+  }
+  
+  if (error.message.includes('No active time clock entry found')) {
+    throw new Error('No active time clock found. The employee must clock in first.');
+  }
+  
+  if (error.message.includes('on leave')) {
+    throw new Error('Cannot perform this operation. Employee is currently on leave.');
+  }
+  
+  // Forward the original error if it's not a specific case we handle
+  throw error;
+};
+
 /**
  * Get time clock entries with optional filtering
  */
@@ -74,8 +95,7 @@ export const clockIn = async (
       { employeeId }
     );
   } catch (error) {
-    console.error('Error clocking in:', error);
-    throw error;
+    return handleTimeClockError(error, 'clock-in');
   }
 };
 
@@ -92,8 +112,7 @@ export const clockOut = async (
       { employeeId }
     );
   } catch (error) {
-    console.error('Error clocking out:', error);
-    throw error;
+    return handleTimeClockError(error, 'clock-out');
   }
 };
 
@@ -112,7 +131,7 @@ export const updateTimeClockEntry = async (
     );
   } catch (error) {
     console.error('Error updating time clock entry:', error);
-    throw error;
+    throw new Error(`Failed to update time clock entry: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
@@ -129,6 +148,6 @@ export const deleteTimeClockEntry = async (
     );
   } catch (error) {
     console.error('Error deleting time clock entry:', error);
-    throw error;
+    throw new Error(`Failed to delete time clock entry: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };

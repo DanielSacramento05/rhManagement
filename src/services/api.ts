@@ -15,6 +15,39 @@ const getHeaders = () => {
   };
 };
 
+// Error handling helper
+const handleApiError = (error: any, url: string, method: string) => {
+  console.error(`API request failed for ${method} ${url}:`, error);
+  
+  if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+    if (error.message.includes('CORS')) {
+      throw new Error('Cross-Origin Request Blocked: The server has CORS configuration issues. Please contact your administrator.');
+    } else {
+      throw new Error('Network connection error. Please check your internet connection and try again.');
+    }
+  }
+  
+  // Handle specific HTTP error codes
+  if (error.status === 401) {
+    throw new Error('Authentication error: Your session may have expired. Please log in again.');
+  }
+  
+  if (error.status === 403) {
+    throw new Error('Permission denied: You do not have access to this resource.');
+  }
+  
+  if (error.status === 404) {
+    throw new Error('Resource not found: The requested data does not exist.');
+  }
+  
+  if (error.status >= 500) {
+    throw new Error('Server error: The server encountered an error. Please try again later.');
+  }
+  
+  // Default error message
+  throw new Error(error.message || 'An unexpected error occurred. Please try again.');
+};
+
 // Generic API request function
 export async function apiRequest<T, D = undefined>(
   endpoint: string,
@@ -38,10 +71,11 @@ export async function apiRequest<T, D = undefined>(
   console.log('Request headers:', getHeaders());
   if (data) console.log('Request data:', JSON.stringify(data));
 
-  // Prepare request options without credentials to avoid CORS issues
+  // Prepare request options
   const options: RequestInit = {
     method,
     headers: getHeaders(),
+    // Don't include credentials to avoid preflight issues
     mode: 'cors'
   };
 
@@ -61,7 +95,10 @@ export async function apiRequest<T, D = undefined>(
       console.log('Response data:', result);
       
       if (!response.ok) {
-        throw new Error(result.error || 'An error occurred while making the request');
+        const errorMessage = result.error || `Error ${response.status}: ${response.statusText}`;
+        const error = new Error(errorMessage);
+        (error as any).status = response.status;
+        throw error;
       }
       
       return result;
@@ -70,7 +107,10 @@ export async function apiRequest<T, D = undefined>(
       console.log('Response text:', text);
       
       if (!response.ok) {
-        throw new Error(text || 'An error occurred while making the request');
+        const errorMessage = text || `Error ${response.status}: ${response.statusText}`;
+        const error = new Error(errorMessage);
+        (error as any).status = response.status;
+        throw error;
       }
       
       // If the API returns a non-JSON response but it's successful, 
@@ -82,8 +122,7 @@ export async function apiRequest<T, D = undefined>(
       }
     }
   } catch (error) {
-    console.error('API request failed:', error);
-    throw error;
+    return handleApiError(error, url.toString(), method);
   }
 }
 
