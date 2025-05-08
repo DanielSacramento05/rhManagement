@@ -204,8 +204,10 @@ def update_absence_status(id):
         # Update employee status to on-leave if the absence covers the current date
         employee = Employee.query.get(absence.employee_id)
         if employee:
-            today = datetime.datetime.now().date().isoformat()
+            # Get today's date as a datetime.date object
+            today = datetime.datetime.now().date()
             
+            # Make sure we're comparing date objects to date objects, not strings
             # Check if absence is current OR starts in the future
             is_current_or_future = (absence.start_date <= today and absence.end_date >= today) or \
                                    (absence.start_date > today)
@@ -254,7 +256,8 @@ def update_employee_statuses_based_on_absences():
     Updates all employee statuses based on current approved absences.
     Should be run after absence approvals or on a regular schedule.
     """
-    today = datetime.datetime.now().date().isoformat()
+    # Get today's date as a datetime.date object, not a string
+    today = datetime.datetime.now().date()
     print(f"Checking for employees who should be on leave today: {today}")
     
     # Get all employees
