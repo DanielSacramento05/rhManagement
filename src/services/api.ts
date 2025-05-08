@@ -19,10 +19,10 @@ const getHeaders = () => {
 const handleApiError = (error: any, url: string, method: string) => {
   console.error(`API request failed for ${method} ${url}:`, error);
   
-  if (error.name === 'TypeError' && error.message.includes('NetworkError')) {
+  if (error instanceof TypeError && error.message.includes('NetworkError')) {
     // Special handling for CORS issues
     if (error.message.includes('CORS') || 
-        error.name === 'NetworkError') {
+        error.message.includes('Access-Control-Allow-Origin')) {
       const errorMessage = 'Cross-Origin Request Blocked: The server has CORS configuration issues. ' +
                           'This may be caused by multiple Access-Control-Allow-Origin headers. ' + 
                           'Please contact your administrator.';

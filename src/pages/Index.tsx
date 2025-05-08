@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -31,12 +32,14 @@ const Index = () => {
   const isMobile = useIsMobile();
   const currentUser = getCurrentUser();
   const isManager = isUserManager();
+  const isTeamLeader = currentUser?.role === 'manager';
+  const isHRManager = currentUser?.role === 'admin';
 
   // Fetch employees data (only for managers)
   const { data: employeesData } = useQuery({
     queryKey: ['employees', { page: 1, pageSize: 50 }],
     queryFn: () => getEmployees({ page: 1, pageSize: 50 }),
-    enabled: isManager,
+    enabled: isTeamLeader || isHRManager,
   });
   
   // Fetch upcoming absences (only for managers)
@@ -47,7 +50,7 @@ const Index = () => {
       startDate: format(today, 'yyyy-MM-dd'),
       status: 'approved',
     }),
-    enabled: isManager,
+    enabled: isTeamLeader || isHRManager,
   });
   
   // Get employees by department for chart (only for managers)
@@ -55,7 +58,7 @@ const Index = () => {
   const employees = employeesData?.data || [];
   const totalEmployees = employeesData?.totalCount || 0;
   
-  if (isManager) {
+  if (isTeamLeader || isHRManager) {
     employees.forEach(employee => {
       if (employee.department) {
         departmentCounts[employee.department] = (departmentCounts[employee.department] || 0) + 1;
@@ -69,7 +72,7 @@ const Index = () => {
     .slice(0, 6); // Get top 6 departments
   
   // Get upcoming leave requests - with null/undefined safety checks (only for managers)
-  const upcomingLeave = isManager ? (absencesData?.data || [])
+  const upcomingLeave = (isTeamLeader || isHRManager) ? (absencesData?.data || [])
     .filter(absence => {
       // Skip any absences with missing startDate
       if (!absence.startDate) return false;
@@ -96,7 +99,7 @@ const Index = () => {
     .slice(0, 5) : [];
   
   // Get recent employees (sort by hire date if available) (only for managers)
-  const recentEmployees = isManager ? [...employees]
+  const recentEmployees = (isTeamLeader || isHRManager) ? [...employees]
     .filter(employee => employee.hireDate)
     .sort((a, b) => {
       if (!a.hireDate || !b.hireDate) return 0;
@@ -121,12 +124,7 @@ const Index = () => {
         <p className="text-muted-foreground mb-8">Welcome back to your HR management portal.</p>
       </div>
 
-      {/* Announcements section - visible to all users */}
-      <div className="mb-8 animate-in">
-        <Announcements />
-      </div>
-
-      {/* Employee time clock section - all users */}
+      {/* Employee time clock section - all users (positioned first) */}
       <div className="mb-8 animate-in">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div>
@@ -138,7 +136,12 @@ const Index = () => {
         </div>
       </div>
 
-      {isManager ? (
+      {/* Announcements section - visible to all users */}
+      <div className="mb-8 animate-in">
+        <Announcements />
+      </div>
+
+      {isTeamLeader || isHRManager ? (
         <>
           {/* Manager Dashboard View */}
           
