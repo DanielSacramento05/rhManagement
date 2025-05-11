@@ -1,8 +1,13 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { Book, Home, Users, Calendar, BarChart } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
-import { ProfileMenu } from "./ProfileMenu";
+import { 
+  Book, 
+  Home, 
+  Users, 
+  Calendar, 
+  BarChart,
+  UserCircle
+} from "lucide-react";
 import { getCurrentUser } from "@/services/authService";
 import {
   Sidebar,
@@ -56,6 +61,12 @@ export function AppSidebar() {
       icon: Book, 
       showTo: ["admin", "manager", "employee"] 
     },
+    { 
+      path: "/profile", 
+      label: "My Profile", 
+      icon: UserCircle, 
+      showTo: ["admin", "manager", "employee"] 
+    },
   ];
 
   // Filter nav items based on user role
@@ -71,9 +82,14 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarRail />
       <SidebarHeader>
-        <div className="flex items-center h-16 px-4">
-          <Link to="/" className="text-xl font-semibold text-sidebar-primary">
-            HR Management
+        <div className="flex items-center h-20 px-6 py-2">
+          <Link to="/" className="flex items-center gap-3 text-xl font-semibold text-sidebar-primary">
+            <div className="w-10 h-10 flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-full h-full fill-current text-sidebar-primary">
+                <path d="M11.997 24a2.803 2.803 0 0 1-1.468-.4c-1.645-1-3.593-2.405-5.313-3.881C1.701 16.56 0 13.798 0 11.143V4.297a1.315 1.315 0 0 1 .695-1.174A21.754 21.754 0 0 1 11.997 0a21.758 21.758 0 0 1 11.303 3.123c.414.244.7.72.7 1.174v6.846c0 2.654-1.701 5.417-5.209 8.576-1.72 1.471-3.669 2.88-5.327 3.881a2.78 2.78 0 0 1-1.467.4zm-5.402-8.375v-.99h3.169v-1.16H6.595v-.99h3.169v-1.159H6.595v-.99h2.504v-.968l1.054-.977h-3.56v-.99h4.715l1.27 1.152 1.54-1.152h4.287v.99h-3.12l-1.1.835v.11h2.405v.99H14.56v1.162h2.626v.99H14.56v1.16h2.626v.99H9.809v-.99h3.169v-1.16H9.809v-.99h3.169v-1.16H9.809v-.99h2.132l-.99-.842-1.32.842H6.595z"/>
+              </svg>
+            </div>
+            <span>HR Management</span>
           </Link>
         </div>
       </SidebarHeader>
@@ -88,10 +104,11 @@ export function AppSidebar() {
                     asChild
                     isActive={isActive(item.path)}
                     tooltip={item.label}
+                    size="lg"
                   >
-                    <Link to={item.path}>
+                    <Link to={item.path} className="flex items-center gap-3">
                       <item.icon className="h-5 w-5" />
-                      <span>{item.label}</span>
+                      <span className="text-base">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -101,9 +118,10 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex items-center justify-between p-4">
-          <ThemeToggle />
-          <ProfileMenu />
+        <div className="p-4">
+          <p className="text-xs text-sidebar-foreground/60 text-center">
+            &copy; {new Date().getFullYear()} HR Management
+          </p>
         </div>
       </SidebarFooter>
     </Sidebar>

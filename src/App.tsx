@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +7,7 @@ import { Suspense, lazy, useState, useEffect, createContext } from "react";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { isAuthenticated } from "./services/authService";
 import { AppSidebar } from "./components/AppSidebar";
+import { TopNavigation } from "./components/TopNavigation";
 import { SidebarProvider, SidebarInset } from "./components/ui/sidebar";
 
 // Create auth context to share authentication state across components
@@ -82,7 +82,8 @@ const App = () => {
                 <SidebarProvider>
                   <div className="flex min-h-screen w-full">
                     <AppSidebar />
-                    <SidebarInset className="pt-6 pb-16">
+                    <TopNavigation />
+                    <SidebarInset className="pt-16 pb-16">
                       <Suspense fallback={<PageLoader />}>
                         <Routes>
                           <Route
