@@ -46,8 +46,8 @@ def update_employee_statuses_based_on_absences():
                 print(f"Setting employee {employee.name} to on-leave due to approved absence")
                 employee.status = 'on-leave'
         elif employee.status == 'on-leave':
-            # If employee is marked as on-leave but doesn't have an absence for today
-            # Check if they've clocked in today
+            # Employee is marked as on-leave but doesn't have an active absence for today
+            # This means their leave has ended - check if they've clocked in today
             
             # Get today's date in YYYY-MM-DD format for comparison
             today_date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -64,6 +64,7 @@ def update_employee_statuses_based_on_absences():
                 else:
                     employee.status = 'active'  # Still clocked in
             else:
+                print(f"Leave ended for {employee.name} - setting status to out-of-office")
                 employee.status = 'out-of-office'  # No absence and no clock-in
     
     try:

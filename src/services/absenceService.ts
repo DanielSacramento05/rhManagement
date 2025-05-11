@@ -130,6 +130,7 @@ export const updateAbsenceStatus = async (
     
     // After updating an absence status, refetch employees to get updated statuses
     // This is especially important when approving a leave that starts today
+    // or when declining an absence that's currently active
     try {
       // We need to import these here to avoid circular dependencies
       const { getEmployees } = await import('./employeeService');

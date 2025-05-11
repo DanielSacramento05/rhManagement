@@ -46,6 +46,12 @@ def update_absence_status(id):
                 if absence.start_date <= today and absence.end_date >= today:
                     employee.status = 'on-leave'
                     print(f"Setting employee {employee.name} status to on-leave because absence is current")
+    elif status == 'declined' and absence.start_date <= datetime.datetime.now().date() <= absence.end_date:
+        # If declining an absence that would be active today, make sure employee status is updated
+        employee = Employee.query.get(absence.employee_id)
+        if employee and employee.status == 'on-leave':
+            employee.status = 'out-of-office'
+            print(f"Declined absence for {employee.name} - setting status to out-of-office")
     
     try:
         db.session.commit()
