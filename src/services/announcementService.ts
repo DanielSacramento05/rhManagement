@@ -9,11 +9,11 @@ export interface Announcement {
   priority?: 'low' | 'medium' | 'high';
   icon?: string;
   date: string;
-  created_by: string;  // Changed from camelCase to snake_case to match backend
+  created_by: string;
   created_by_name?: string;
   created_by_role?: 'admin' | 'manager' | 'employee';
   department_id?: string;
-  is_global?: boolean;  // Changed from camelCase to snake_case to match backend
+  is_global?: boolean;
 }
 
 export interface AnnouncementFilters {
@@ -103,12 +103,12 @@ export const getAnnouncements = async (
 export const createAnnouncement = async (announcement: Partial<Announcement>): Promise<{ data: Announcement }> => {
   const currentUser = getCurrentUser();
   
-  // Add metadata to the announcement and convert to snake_case fields for backend
+  // Add metadata to the announcement and ensure we're using snake_case fields for backend
   const newAnnouncement = {
     ...announcement,
-    created_by: currentUser?.id || '', // Changed: Now sending user ID instead of name
+    created_by: currentUser?.id || '',
     date: new Date().toISOString().split('T')[0],
-    is_global: announcement.isGlobal || false, // Map from camelCase prop to snake_case
+    is_global: announcement.is_global || false,
     department_id: currentUser?.role !== 'admin' ? currentUser?.departmentId : undefined
   };
 
@@ -141,11 +141,11 @@ export const updateAnnouncement = async (
   id: string,
   data: Partial<Announcement>
 ): Promise<{ data: Announcement }> => {
-  // Convert camelCase to snake_case for backend
+  // Ensure we're using snake_case fields for backend
   const updateData = {
     ...data,
-    is_global: data.isGlobal,
-    department_id: data.departmentId
+    is_global: data.is_global,
+    department_id: data.department_id
   };
   
   try {

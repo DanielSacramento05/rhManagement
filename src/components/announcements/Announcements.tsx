@@ -28,9 +28,9 @@ export function Announcements() {
 
   // Function to render announcement source based on role
   const renderAnnouncementSource = (announcement: Announcement) => {
-    if (announcement.isGlobal) {
+    if (announcement.is_global) {
       return <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">Company-wide</span>;
-    } else if (announcement.departmentId) {
+    } else if (announcement.department_id) {
       return <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full px-2 py-0.5">Team</span>;
     }
     return null;

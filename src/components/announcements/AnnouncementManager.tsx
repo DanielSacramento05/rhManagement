@@ -34,19 +34,19 @@ export function AnnouncementManager() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   
-  // Properly type the formData
+  // Form data with proper typing
   const [formData, setFormData] = useState<{
     title: string;
     content: string;
     priority: 'low' | 'medium' | 'high';
     icon: string;
-    isGlobal: boolean; // Keep camelCase for form state
+    is_global: boolean; // Changed to snake_case to match Announcement interface
   }>({
     title: '',
     content: '',
     priority: 'medium',
     icon: 'bell',
-    isGlobal: isAdmin // Only admins can create global announcements by default
+    is_global: isAdmin // Changed to snake_case to match Announcement interface
   });
   
   // Query announcements that the current user manages
@@ -124,7 +124,7 @@ export function AnnouncementManager() {
       content: '',
       priority: 'medium',
       icon: 'bell',
-      isGlobal: isAdmin
+      is_global: isAdmin // Changed to snake_case
     });
     setIsAddDialogOpen(true);
   };
@@ -136,7 +136,7 @@ export function AnnouncementManager() {
       content: announcement.content,
       priority: announcement.priority || 'medium',
       icon: announcement.icon || 'bell',
-      isGlobal: announcement.is_global || false // Convert from snake_case to camelCase for form
+      is_global: announcement.is_global || false // Changed to snake_case
     });
     setIsEditDialogOpen(true);
   };
@@ -324,8 +324,8 @@ export function AnnouncementManager() {
               <div className="flex items-center space-x-2">
                 <Label htmlFor="visibility">Visibility:</Label>
                 <Select
-                  value={formData.isGlobal ? "global" : "team"}
-                  onValueChange={(value) => setFormData({...formData, isGlobal: value === "global"})}
+                  value={formData.is_global ? "global" : "team"}
+                  onValueChange={(value) => setFormData({...formData, is_global: value === "global"})}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue />
@@ -411,8 +411,8 @@ export function AnnouncementManager() {
               <div className="flex items-center space-x-2">
                 <Label htmlFor="visibility">Visibility:</Label>
                 <Select
-                  value={formData.isGlobal ? "global" : "team"}
-                  onValueChange={(value) => setFormData({...formData, isGlobal: value === "global"})}
+                  value={formData.is_global ? "global" : "team"}
+                  onValueChange={(value) => setFormData({...formData, is_global: value === "global"})}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue />

@@ -140,7 +140,7 @@ export function AnnouncementTable() {
                   </TableCell>
                   <TableCell>{formatDate(announcement.date)}</TableCell>
                   <TableCell>{renderPriorityBadge(announcement.priority || 'medium')}</TableCell>
-                  <TableCell>{renderScopeBadge(announcement.isGlobal || false)}</TableCell>
+                  <TableCell>{renderScopeBadge(announcement.is_global || false)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
