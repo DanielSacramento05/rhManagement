@@ -5,9 +5,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Suspense, lazy, useState, useEffect, createContext } from "react";
-import Navbar from "./components/Navbar";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { isAuthenticated } from "./services/authService";
+import { AppSidebar } from "./components/AppSidebar";
+import { SidebarProvider, SidebarInset } from "./components/ui/sidebar";
 
 // Create auth context to share authentication state across components
 export const AuthContext = createContext<{
@@ -77,63 +78,82 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <div className="min-h-screen">
-                {authState && <Navbar />}
-                <div className={authState ? "pt-16 min-h-[calc(100vh-4rem)]" : "min-h-screen"}>
+              {authState ? (
+                <SidebarProvider>
+                  <div className="flex min-h-screen w-full">
+                    <AppSidebar />
+                    <SidebarInset className="pt-6 pb-16">
+                      <Suspense fallback={<PageLoader />}>
+                        <Routes>
+                          <Route
+                            path="/"
+                            element={
+                              <ProtectedRoute>
+                                <Index />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/employees"
+                            element={
+                              <ProtectedRoute>
+                                <Employees />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/absences"
+                            element={
+                              <ProtectedRoute>
+                                <Absences />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/performance"
+                            element={
+                              <ProtectedRoute>
+                                <Performance />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/profile"
+                            element={
+                              <ProtectedRoute>
+                                <Profile />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/tutorial"
+                            element={
+                              <ProtectedRoute>
+                                <Tutorial />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </Suspense>
+                    </SidebarInset>
+                  </div>
+                </SidebarProvider>
+              ) : (
+                <div className="min-h-screen">
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/login" element={<Login />} />
-                      <Route path="/tutorial" element={<Tutorial />} />
                       <Route path="/profile-setup" element={
                         <ProtectedRoute>
                           <ProfileSetup />
                         </ProtectedRoute>
                       } />
-                      <Route
-                        path="/"
-                        element={
-                          <ProtectedRoute>
-                            <Index />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/employees"
-                        element={
-                          <ProtectedRoute>
-                            <Employees />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/absences"
-                        element={
-                          <ProtectedRoute>
-                            <Absences />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/performance"
-                        element={
-                          <ProtectedRoute>
-                            <Performance />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route
-                        path="/profile"
-                        element={
-                          <ProtectedRoute>
-                            <Profile />
-                          </ProtectedRoute>
-                        }
-                      />
-                      <Route path="*" element={<NotFound />} />
+                      <Route path="*" element={<Navigate to="/login" replace />} />
                     </Routes>
                   </Suspense>
                 </div>
-              </div>
+              )}
             </BrowserRouter>
           </TooltipProvider>
         </AuthContext.Provider>
