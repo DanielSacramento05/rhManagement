@@ -1,4 +1,3 @@
-
 import { apiRequest, buildQueryParams } from './api';
 import { 
   Employee, 
@@ -38,9 +37,6 @@ export const getEmployees = async (
         return employee;
       });
     }
-    
-    // Log the employee statuses for debugging
-    console.log("Employee statuses:", response.data.map(e => `${e.name}: ${e.status}`));
     
     return response;
   } catch (error) {

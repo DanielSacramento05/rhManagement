@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,13 +12,14 @@ import { getDepartments } from "@/services/departmentService";
 import { Employee, Department, EmployeeFilters } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AddEmployeeForm from "@/components/employees/AddEmployeeForm";
 import { getCurrentUser } from "@/services/authService";
 
 const Employees = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
@@ -37,6 +37,16 @@ const Employees = () => {
       navigate('/login');
     }
   }, [navigate]);
+  
+  // Set up regular data refresh
+  useEffect(() => {
+    // Refresh employee data every 2 minutes to keep statuses current
+    const refreshInterval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    }, 2 * 60 * 1000);
+    
+    return () => clearInterval(refreshInterval);
+  }, [queryClient]);
 
   // Build filter parameters for API
   const buildFilters = (): EmployeeFilters => {

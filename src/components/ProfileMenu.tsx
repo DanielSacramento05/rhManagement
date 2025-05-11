@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, Moon, Sun, User } from "lucide-react";
 import { getCurrentUser, logout } from "@/services/authService";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getEmployeeById } from "@/services/employeeService";
 import { useTheme } from "./ThemeProvider";
 
@@ -29,6 +29,7 @@ export function ProfileMenu() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const queryClient = useQueryClient();
   
   // Fetch employee data to get profile picture if available
   const { data: employeeData, isLoading } = useQuery({
@@ -54,8 +55,22 @@ export function ProfileMenu() {
     };
     
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    
+    // Refresh employee data every 5 minutes to ensure status is current
+    const refreshInterval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+    }, 5 * 60 * 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(refreshInterval);
+    };
+  }, [queryClient]);
+  
+  // Force refresh employee data on component mount
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['employees'] });
+  }, [queryClient]);
   
   const handleLogout = () => {
     logout();

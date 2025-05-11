@@ -40,6 +40,14 @@ def create_app():
     # Create all database tables if they don't exist
     with app.app_context():
         db.create_all()
+        
+        # Run the employee status update after the app is fully initialized
+        try:
+            from routes.absence.absence_utils import update_employee_statuses_based_on_absences
+            update_employee_statuses_based_on_absences()
+            print("Employee statuses updated successfully on application start")
+        except Exception as e:
+            print(f"Error updating employee statuses on application start: {str(e)}")
     
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
