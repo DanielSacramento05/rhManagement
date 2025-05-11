@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,13 +34,13 @@ export function AnnouncementManager() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   
-  // Fix TypeScript error by explicitly typing the priority
+  // Properly type the formData
   const [formData, setFormData] = useState<{
     title: string;
     content: string;
     priority: 'low' | 'medium' | 'high';
     icon: string;
-    isGlobal: boolean;
+    isGlobal: boolean; // Keep camelCase for form state
   }>({
     title: '',
     content: '',
@@ -135,7 +136,7 @@ export function AnnouncementManager() {
       content: announcement.content,
       priority: announcement.priority || 'medium',
       icon: announcement.icon || 'bell',
-      isGlobal: announcement.isGlobal || false
+      isGlobal: announcement.is_global || false // Convert from snake_case to camelCase for form
     });
     setIsEditDialogOpen(true);
   };
@@ -145,12 +146,12 @@ export function AnnouncementManager() {
     setIsDeleteDialogOpen(true);
   };
   
-  // Make sure we're using the correct type for priority when saving a new announcement
+  // Save new announcement
   const saveNewAnnouncement = () => {
     createMutation.mutate(formData);
   };
   
-  // Make sure we're using the correct type for priority when updating an announcement
+  // Save edited announcement
   const saveEditedAnnouncement = () => {
     if (selectedAnnouncement) {
       updateMutation.mutate({
@@ -173,7 +174,7 @@ export function AnnouncementManager() {
   
   // Determine if an announcement is global or team-based
   const getAnnouncementScope = (announcement: Announcement) => {
-    if (announcement.isGlobal) {
+    if (announcement.is_global) {
       return <Badge className="bg-primary/20 text-primary hover:bg-primary/30">Company-wide</Badge>;
     }
     return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200">Team</Badge>;

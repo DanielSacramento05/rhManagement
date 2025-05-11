@@ -9,10 +9,11 @@ export interface Announcement {
   priority?: 'low' | 'medium' | 'high';
   icon?: string;
   date: string;
-  createdBy: string;
-  createdByRole?: 'admin' | 'manager' | 'employee';
-  departmentId?: string;
-  isGlobal?: boolean;
+  created_by: string;  // Changed from camelCase to snake_case to match backend
+  created_by_name?: string;
+  created_by_role?: 'admin' | 'manager' | 'employee';
+  department_id?: string;
+  is_global?: boolean;  // Changed from camelCase to snake_case to match backend
 }
 
 export interface AnnouncementFilters {
@@ -64,9 +65,9 @@ export const getAnnouncements = async (
         priority: 'medium',
         icon: 'bell',
         date: '2025-05-01',
-        createdBy: 'HR Department',
-        createdByRole: 'admin',
-        isGlobal: true
+        created_by: 'HR Department',
+        created_by_role: 'admin',
+        is_global: true
       },
       { 
         id: '2',
@@ -75,9 +76,9 @@ export const getAnnouncements = async (
         priority: 'high',
         icon: 'trending-up',
         date: '2025-04-28',
-        createdBy: 'HR Department',
-        createdByRole: 'admin',
-        isGlobal: true
+        created_by: 'HR Department',
+        created_by_role: 'admin',
+        is_global: true
       },
       { 
         id: '3',
@@ -86,9 +87,9 @@ export const getAnnouncements = async (
         priority: 'low',
         icon: 'calendar',
         date: '2025-05-05',
-        createdBy: 'Team Lead',
-        createdByRole: 'manager',
-        departmentId: currentUser?.departmentId || 'dev'
+        created_by: 'Team Lead',
+        created_by_role: 'manager',
+        department_id: currentUser?.departmentId || 'dev'
       }
     ];
 
@@ -102,14 +103,13 @@ export const getAnnouncements = async (
 export const createAnnouncement = async (announcement: Partial<Announcement>): Promise<{ data: Announcement }> => {
   const currentUser = getCurrentUser();
   
-  // Add metadata to the announcement
+  // Add metadata to the announcement and convert to snake_case fields for backend
   const newAnnouncement = {
     ...announcement,
-    createdBy: currentUser?.name || 'Unknown User',
-    createdByRole: currentUser?.role || 'employee',
+    created_by: currentUser?.id || '', // Changed: Now sending user ID instead of name
     date: new Date().toISOString().split('T')[0],
-    isGlobal: currentUser?.role === 'admin' ? true : false,
-    departmentId: currentUser?.role !== 'admin' ? currentUser?.departmentId : undefined
+    is_global: announcement.isGlobal || false, // Map from camelCase prop to snake_case
+    department_id: currentUser?.role !== 'admin' ? currentUser?.departmentId : undefined
   };
 
   try {
@@ -141,11 +141,18 @@ export const updateAnnouncement = async (
   id: string,
   data: Partial<Announcement>
 ): Promise<{ data: Announcement }> => {
+  // Convert camelCase to snake_case for backend
+  const updateData = {
+    ...data,
+    is_global: data.isGlobal,
+    department_id: data.departmentId
+  };
+  
   try {
     return await apiRequest<{ data: Announcement }, Partial<Announcement>>(
       `/announcements/${id}`,
       'PUT',
-      data
+      updateData
     );
   } catch (error) {
     console.error('Error updating announcement:', error);
