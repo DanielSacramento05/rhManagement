@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, User } from "lucide-react";
+import { LogOut, Moon, Sun, User } from "lucide-react";
 import { getCurrentUser, logout } from "@/services/authService";
 import { useQuery } from "@tanstack/react-query";
 import { getEmployeeById } from "@/services/employeeService";
+import { useTheme } from "./ThemeProvider";
 
 export function ProfileMenu() {
   const [user, setUser] = useState(() => getCurrentUser() || { 
@@ -26,6 +28,7 @@ export function ProfileMenu() {
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   
   // Fetch employee data to get profile picture if available
   const { data: employeeData, isLoading } = useQuery({
@@ -64,10 +67,18 @@ export function ProfileMenu() {
     window.location.href = '/login';
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button variant="ghost" className="flex items-center gap-3 px-3">
+          <div className="text-right mr-2">
+            <p className="text-sm font-medium leading-none">{user.name || user.email}</p>
+            <p className="text-xs text-muted-foreground capitalize mt-1">{user.role}</p>
+          </div>
           <Avatar className="h-10 w-10">
             {profilePicture ? (
               <AvatarImage 
@@ -86,18 +97,18 @@ export function ProfileMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel>
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name || user.email}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-            <p className="text-xs leading-none text-muted-foreground capitalize">
-              {user.role}
-            </p>
-          </div>
-        </DropdownMenuLabel>
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate('/profile')}>
-          <User className="mr-2 h-4 w-4" /> My Profile
+          <User className="mr-2 h-4 w-4" /> Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={toggleTheme}>
+          {theme === "light" ? (
+            <Moon className="mr-2 h-4 w-4" />
+          ) : (
+            <Sun className="mr-2 h-4 w-4" />
+          )}
+          {theme === "light" ? "Dark Mode" : "Light Mode"}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
