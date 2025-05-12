@@ -140,7 +140,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="page-container pb-16">
+    <div className="page-container pb-16 w-full">
       {/* Mobile Sidebar Toggle Button - Only visible on mobile */}
       {isMobile && (
         <div className="fixed bottom-4 right-4 z-50 shadow-lg rounded-full">
@@ -150,14 +150,14 @@ const Index = () => {
 
       <div className="animate-in">
         <h1 className="text-3xl font-semibold tracking-tight mb-1">Dashboard</h1>
-        <p className="text-muted-foreground mb-8">Welcome back to your HR management portal.</p>
+        <p className="text-muted-foreground mb-6">Welcome back to your HR management portal.</p>
       </div>
 
-      {/* Content grid with reduced maximum width for better space utilization */}
-      <div className="max-w-[1200px] mx-auto">
+      {/* Content grid now using full width */}
+      <div className="w-full mx-auto">
         {/* Employee time clock section - all users (positioned first) */}
-        <div className="mb-8 animate-in">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="mb-6 animate-in">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div>
               <TimeClock />
             </div>
@@ -168,7 +168,7 @@ const Index = () => {
         </div>
 
         {/* User's Leave Requests - visible to all users */}
-        <div className="mb-8 animate-in">
+        <div className="mb-6 animate-in">
           <h2 className="section-title flex items-center">
             <Clock3 className="h-5 w-5 mr-2 text-primary" />
             My Leave Requests
@@ -213,19 +213,19 @@ const Index = () => {
 
         {/* Time Clock Manager for managers */}
         {(isTeamLeader || isHRManager) && (
-          <div className="mb-8 animate-in">
+          <div className="mb-6 animate-in">
             <TimeClockManager />
           </div>
         )}
 
         {/* Announcements section - visible to all users */}
-        <div className="mb-8 animate-in">
+        <div className="mb-6 animate-in">
           <Announcements />
         </div>
 
         {/* Announcement Manager for managers */}
         {(isTeamLeader || isHRManager) && (
-          <div className="mb-8 animate-in">
+          <div className="mb-6 animate-in">
             <AnnouncementManager />
           </div>
         )}
@@ -235,7 +235,7 @@ const Index = () => {
             {/* Manager Dashboard View */}
             
             {/* Key metrics - managers only */}
-            <div className="dashboard-grid animate-in mb-6 gap-4">
+            <div className="dashboard-grid animate-in mb-5 gap-3">
               <DashboardCard 
                 title="Total Employees" 
                 value={totalEmployees.toString()} 
@@ -262,7 +262,7 @@ const Index = () => {
             </div>
 
             {/* Manager dashboard layout - charts and info */}
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in">
+            <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-3 animate-in">
               <div className="lg:col-span-2">
                 <h2 className="section-title flex items-center">
                   <BarChart className="h-5 w-5 mr-2 text-primary" />

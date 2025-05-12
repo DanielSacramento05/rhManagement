@@ -108,15 +108,15 @@
   }
 
   .dashboard-grid {
-    @apply grid grid-cols-1 md:grid-cols-3 gap-4;
+    @apply grid grid-cols-1 md:grid-cols-3 gap-3;
   }
 
   .page-container {
-    @apply w-full mx-auto px-3 sm:px-4 py-6 animate-fade-in;
+    @apply w-full mx-auto px-2 sm:px-3 py-5 animate-fade-in;
   }
 
   .section-title {
-    @apply text-xl font-medium tracking-tight mb-4;
+    @apply text-xl font-medium tracking-tight mb-3;
   }
 
   .btn-icon {
@@ -131,15 +131,15 @@
 /* Mobile optimizations */
 @media (max-width: 640px) {
   .page-container {
-    @apply px-3 py-3;
+    @apply px-2 py-3;
   }
   
   .dashboard-grid {
-    @apply gap-3;
+    @apply gap-2;
   }
   
   .section-title {
-    @apply text-lg mb-3;
+    @apply text-lg mb-2;
   }
 }
 
