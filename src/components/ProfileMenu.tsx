@@ -86,13 +86,27 @@ export function ProfileMenu() {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
+  // Function to display user-friendly role names
+  const getDisplayRole = (role: string) => {
+    switch(role.toLowerCase()) {
+      case 'admin':
+        return 'Administrator';
+      case 'manager':
+        return 'Team Leader';
+      case 'employee':
+        return 'Employee';
+      default:
+        return role;
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex items-center gap-3 px-3">
           <div className="text-right mr-2">
             <p className="text-sm font-medium leading-none">{user.name || user.email}</p>
-            <p className="text-xs text-muted-foreground capitalize mt-1">{user.role}</p>
+            <p className="text-xs text-muted-foreground mt-1">{getDisplayRole(user.role)}</p>
           </div>
           <Avatar className="h-10 w-10">
             {profilePicture ? (

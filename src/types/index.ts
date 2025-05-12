@@ -12,6 +12,8 @@ export interface Employee {
   image_url?: string; // Adding this to match the API response structure
   hireDate?: string;
   managerId?: string;
+  role?: string;
+  displayRole?: string; // Added for display purposes
 }
 
 // Department types

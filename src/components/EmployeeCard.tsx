@@ -19,6 +19,8 @@ interface EmployeeCardProps {
   image_url?: string;
   hireDate?: string;
   managerId?: string;
+  role?: string;
+  displayRole?: string;
 }
 
 export function EmployeeCard({
@@ -32,11 +34,30 @@ export function EmployeeCard({
   imageUrl,
   image_url,
   hireDate,
-  managerId
+  managerId,
+  role,
+  displayRole
 }: EmployeeCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   // Use either imageUrl or image_url, whichever is available
   const profileImage = imageUrl || image_url;
+  
+  // Format role for display if displayRole is not provided
+  const formattedRole = displayRole || (role ? formatRole(role) : '');
+
+  // Helper function to format role
+  function formatRole(role: string): string {
+    switch(role.toLowerCase()) {
+      case 'admin':
+        return 'Administrator';
+      case 'manager':
+        return 'Team Leader';
+      case 'employee':
+        return 'Employee';
+      default:
+        return role;
+    }
+  }
 
   const getStatusBadge = () => {
     switch (status) {
@@ -83,6 +104,7 @@ export function EmployeeCard({
               <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
                 <Badge variant="outline">{department}</Badge>
                 {getStatusBadge()}
+                {formattedRole && <Badge variant="secondary">{formattedRole}</Badge>}
               </div>
             </div>
           </div>
@@ -116,7 +138,9 @@ export function EmployeeCard({
           status,
           imageUrl: profileImage,
           hireDate,
-          managerId
+          managerId,
+          role,
+          displayRole: formattedRole
         }}
         isOpen={showDetails}
         onClose={() => setShowDetails(false)}

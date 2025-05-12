@@ -1,3 +1,4 @@
+
 import { apiRequest, buildQueryParams } from './api';
 import { 
   Employee, 
@@ -34,6 +35,10 @@ export const getEmployees = async (
         if (employee.image_url) {
           employee.imageUrl = employee.image_url;
         }
+        
+        // Add displayRole for frontend display purposes
+        employee.displayRole = formatRoleForDisplay(employee.role || 'employee');
+        
         return employee;
       });
     }
@@ -62,7 +67,28 @@ export const getEmployeeById = async (
     response.data.imageUrl = response.data.image_url;
   }
   
+  // Add displayRole for frontend display purposes
+  if (response.data) {
+    response.data.displayRole = formatRoleForDisplay(response.data.role || 'employee');
+  }
+  
   return response;
+};
+
+/**
+ * Format role for display purposes
+ */
+export const formatRoleForDisplay = (role: string): string => {
+  switch(role.toLowerCase()) {
+    case 'admin':
+      return 'Administrator';
+    case 'manager':
+      return 'Team Leader';
+    case 'employee':
+      return 'Employee';
+    default:
+      return role;
+  }
 };
 
 /**
@@ -80,6 +106,11 @@ export const createEmployee = async (
     delete apiEmployee.imageUrl;
   }
   
+  // Remove any display-only fields
+  if ('displayRole' in apiEmployee) {
+    delete apiEmployee.displayRole;
+  }
+  
   const response = await apiRequest<ApiResponse<Employee>, typeof apiEmployee>(
     ENDPOINT, 
     'POST', 
@@ -89,6 +120,11 @@ export const createEmployee = async (
   // Map image_url back to imageUrl for frontend compatibility
   if (response.data && response.data.image_url) {
     response.data.imageUrl = response.data.image_url;
+  }
+  
+  // Add displayRole for frontend display purposes
+  if (response.data) {
+    response.data.displayRole = formatRoleForDisplay(response.data.role || 'employee');
   }
   
   return response;
@@ -111,6 +147,11 @@ export const updateEmployee = async (
     delete apiEmployee.imageUrl;
   }
   
+  // Remove any display-only fields
+  if ('displayRole' in apiEmployee) {
+    delete apiEmployee.displayRole;
+  }
+  
   const response = await apiRequest<ApiResponse<Employee>, typeof apiEmployee>(
     `${ENDPOINT}/${id}`, 
     'PUT', 
@@ -120,6 +161,11 @@ export const updateEmployee = async (
   // Map image_url back to imageUrl for frontend compatibility
   if (response.data && response.data.image_url) {
     response.data.imageUrl = response.data.image_url;
+  }
+  
+  // Add displayRole for frontend display purposes
+  if (response.data) {
+    response.data.displayRole = formatRoleForDisplay(response.data.role || 'employee');
   }
   
   return response;
