@@ -119,9 +119,9 @@ const Index = () => {
   // Get user's latest leave requests
   const userLeaveRequests = (userAbsencesData?.data || [])
     .sort((a, b) => {
-      // Sort by created date (or submitted date) if available
-      if (a.createdAt && b.createdAt) {
-        return parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime();
+      // Sort by request date if available, otherwise by start date
+      if (a.requestDate && b.requestDate) {
+        return parseISO(b.requestDate).getTime() - parseISO(a.requestDate).getTime();
       }
       // Fallback to sorting by start date
       if (!a.startDate) return 1;
@@ -188,7 +188,7 @@ const Index = () => {
                   <Badge className={`
                     ${leave.status === 'approved' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
                     ${leave.status === 'pending' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : ''}
-                    ${leave.status === 'rejected' ? 'bg-red-100 text-red-800 hover:bg-red-200' : ''}
+                    ${leave.status === 'declined' ? 'bg-red-100 text-red-800 hover:bg-red-200' : ''}
                   `}>
                     {leave.status}
                   </Badge>

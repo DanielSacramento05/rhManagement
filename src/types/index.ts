@@ -40,7 +40,8 @@ export interface Absence {
   endDate?: string; // ISO date string
   notes?: string;
   approvedBy?: string;
-  requestDate?: string; // ISO date string
+  requestDate?: string; // ISO date string for when the request was made
+  createdAt?: string; // ISO date string
   imageUrl?: string; // For display purposes, not stored in DB
 }
 
