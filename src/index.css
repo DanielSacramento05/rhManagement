@@ -100,7 +100,7 @@
 
 @layer components {
   .glass-panel {
-    @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-lg rounded-2xl;
+    @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-lg rounded-2xl dark:bg-gray-800/70 dark:border-gray-700/50;
   }
   
   .card-hover {
@@ -112,7 +112,7 @@
   }
 
   .page-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 py-8 animate-fade-in;
   }
 
   .section-title {
@@ -121,6 +121,10 @@
 
   .btn-icon {
     @apply inline-flex items-center justify-center rounded-full p-2 transition-colors;
+  }
+  
+  .mobile-sidebar-trigger {
+    @apply fixed bottom-4 right-4 z-50 bg-primary text-white h-12 w-12 rounded-full flex items-center justify-center shadow-lg sm:hidden;
   }
 }
 
@@ -132,6 +136,10 @@
   
   .dashboard-grid {
     @apply gap-4;
+  }
+  
+  .section-title {
+    @apply text-xl mb-4;
   }
 }
 

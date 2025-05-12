@@ -6,7 +6,8 @@ import {
   Users, 
   Calendar, 
   BarChart,
-  UserCircle
+  UserCircle,
+  Menu
 } from "lucide-react";
 import { getCurrentUser } from "@/services/authService";
 import {
@@ -21,13 +22,19 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
+  useSidebar
 } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "./ui/button";
 
 export function AppSidebar() {
   const location = useLocation();
   const currentUser = getCurrentUser();
   const isHRManager = currentUser?.role === 'admin';
   const isTeamLeader = currentUser?.role === 'manager';
+  const isMobile = useIsMobile();
+  const { toggleSidebar } = useSidebar();
   
   // Define all possible nav items
   const navItems = [
@@ -82,7 +89,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarRail />
       <SidebarHeader>
-        <div className="flex items-center h-20 px-6 py-2">
+        <div className="flex items-center justify-between h-20 px-6 py-2">
           <Link to="/" className="flex items-center gap-3 text-xl font-semibold text-sidebar-primary">
             <div className="w-10 h-10 flex-shrink-0">
               <img 
@@ -94,8 +101,21 @@ export function AppSidebar() {
                 }}
               />
             </div>
-            <span>HR Management</span>
+            <span className="hidden sm:inline">HR Management</span>
           </Link>
+          
+          {/* Mobile Toggle Button Inside Header */}
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={toggleSidebar}
+              className="sm:hidden"
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle Menu</span>
+            </Button>
+          )}
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -110,6 +130,7 @@ export function AppSidebar() {
                     isActive={isActive(item.path)}
                     tooltip={item.label}
                     size="lg"
+                    onClick={() => isMobile && toggleSidebar()} // Close sidebar when clicking a link on mobile
                   >
                     <Link to={item.path} className="flex items-center gap-3">
                       <item.icon className="h-5 w-5" />
