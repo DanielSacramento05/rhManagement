@@ -14,6 +14,15 @@ const NotFound = () => {
     );
   }, [location.pathname]);
 
+  // Check for common routing issues
+  const isAuthRelatedRoute = location.pathname.includes("login") || 
+                             location.pathname.includes("register") || 
+                             location.pathname.includes("profile-setup");
+  
+  const possibleSolution = isAuthRelatedRoute 
+    ? "This might be an authentication issue. Try logging in first."
+    : "Please check the URL and try again.";
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
       <div className="max-w-md w-full text-center">
@@ -23,8 +32,11 @@ const NotFound = () => {
         
         <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-4">404</h1>
         <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">Page not found</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-8">
+        <p className="text-gray-600 dark:text-gray-300 mb-4">
           The page you are looking for ({location.pathname}) doesn't exist or has been moved.
+        </p>
+        <p className="text-gray-600 dark:text-gray-300 mb-8">
+          {possibleSolution}
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

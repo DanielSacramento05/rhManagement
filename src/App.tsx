@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -127,6 +128,14 @@ const App = () => {
                             }
                           />
                           <Route
+                            path="/profile-setup"
+                            element={
+                              <ProtectedRoute>
+                                <ProfileSetup />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
                             path="/tutorial"
                             element={
                               <ProtectedRoute>
@@ -145,11 +154,7 @@ const App = () => {
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/login" element={<Login />} />
-                      <Route path="/profile-setup" element={
-                        <ProtectedRoute>
-                          <ProfileSetup />
-                        </ProtectedRoute>
-                      } />
+                      <Route path="/profile-setup" element={<ProfileSetup />} />
                       <Route path="*" element={<Navigate to="/login" replace />} />
                     </Routes>
                   </Suspense>
