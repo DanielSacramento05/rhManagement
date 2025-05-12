@@ -100,7 +100,7 @@
 
 @layer components {
   .glass-panel {
-    @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-lg rounded-2xl dark:bg-gray-800/70 dark:border-gray-700/50;
+    @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-lg rounded-xl dark:bg-gray-800/70 dark:border-gray-700/50;
   }
   
   .card-hover {
@@ -108,15 +108,15 @@
   }
 
   .dashboard-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+    @apply grid grid-cols-1 md:grid-cols-3 gap-4;
   }
 
   .page-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 py-8 animate-fade-in;
+    @apply w-full mx-auto px-3 sm:px-4 py-6 animate-fade-in;
   }
 
   .section-title {
-    @apply text-2xl font-medium tracking-tight mb-6;
+    @apply text-xl font-medium tracking-tight mb-4;
   }
 
   .btn-icon {
@@ -131,15 +131,15 @@
 /* Mobile optimizations */
 @media (max-width: 640px) {
   .page-container {
-    @apply px-4 py-4;
+    @apply px-3 py-3;
   }
   
   .dashboard-grid {
-    @apply gap-4;
+    @apply gap-3;
   }
   
   .section-title {
-    @apply text-xl mb-4;
+    @apply text-lg mb-3;
   }
 }
 

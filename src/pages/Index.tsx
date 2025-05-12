@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -154,11 +153,11 @@ const Index = () => {
         <p className="text-muted-foreground mb-8">Welcome back to your HR management portal.</p>
       </div>
 
-      {/* Content grid with max width for desktop */}
-      <div className="max-w-[1400px] mx-auto">
+      {/* Content grid with reduced maximum width for better space utilization */}
+      <div className="max-w-[1200px] mx-auto">
         {/* Employee time clock section - all users (positioned first) */}
         <div className="mb-8 animate-in">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div>
               <TimeClock />
             </div>
@@ -176,7 +175,7 @@ const Index = () => {
           </h2>
           <div className="glass-panel divide-y">
             {userLeaveRequests.length > 0 ? userLeaveRequests.map((leave) => (
-              <div key={leave.id} className="p-4">
+              <div key={leave.id} className="p-3">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="font-medium">{leave.type || "Time Off"}</div>
@@ -200,11 +199,11 @@ const Index = () => {
                 )}
               </div>
             )) : (
-              <div className="p-6 text-center text-muted-foreground">
+              <div className="p-4 text-center text-muted-foreground">
                 You don't have any leave requests yet
               </div>
             )}
-            <div className="p-4 text-center">
+            <div className="p-3 text-center">
               <Button variant="outline" asChild>
                 <Link to="/absences">Manage Leave</Link>
               </Button>
@@ -236,7 +235,7 @@ const Index = () => {
             {/* Manager Dashboard View */}
             
             {/* Key metrics - managers only */}
-            <div className="dashboard-grid animate-in mb-8">
+            <div className="dashboard-grid animate-in mb-6 gap-4">
               <DashboardCard 
                 title="Total Employees" 
                 value={totalEmployees.toString()} 
@@ -263,16 +262,16 @@ const Index = () => {
             </div>
 
             {/* Manager dashboard layout - charts and info */}
-            <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in">
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 animate-in">
               <div className="lg:col-span-2">
                 <h2 className="section-title flex items-center">
                   <BarChart className="h-5 w-5 mr-2 text-primary" />
                   Department Overview
                 </h2>
                 
-                <div className="glass-panel p-6 space-y-4">
+                <div className="glass-panel p-4 space-y-3">
                   {sortedDepartments.map(([department, count]) => (
-                    <div key={department} className="space-y-2">
+                    <div key={department} className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>{department}</span>
                         <span className="font-medium">{count} employees</span>
@@ -283,7 +282,7 @@ const Index = () => {
                 </div>
               </div>
               
-              <div className="space-y-8">
+              <div className="space-y-6">
                 <div>
                   <h2 className="section-title flex items-center">
                     <Calendar className="h-5 w-5 mr-2 text-primary" />
@@ -292,7 +291,7 @@ const Index = () => {
                   
                   <div className="glass-panel divide-y">
                     {upcomingLeave.length > 0 ? upcomingLeave.map((leave) => (
-                      <div key={leave.id} className="p-4">
+                      <div key={leave.id} className="p-3">
                         <div className="font-medium">{leave.employeeName || "Employee"}</div>
                         <div className="text-sm text-muted-foreground">{leave.position || "Position"}</div>
                         <div className="mt-2 flex justify-between items-center">
@@ -306,11 +305,11 @@ const Index = () => {
                         </div>
                       </div>
                     )) : (
-                      <div className="p-4 text-center text-muted-foreground">
+                      <div className="p-3 text-center text-muted-foreground">
                         No upcoming leave requests
                       </div>
                     )}
-                    <div className="p-4 text-center">
+                    <div className="p-3 text-center">
                       <Button variant="ghost" asChild>
                         <Link to="/absences">View all leave</Link>
                       </Button>
@@ -326,7 +325,7 @@ const Index = () => {
                   
                   <div className="glass-panel divide-y">
                     {recentEmployees.length > 0 ? recentEmployees.map((employee) => (
-                      <div key={employee.id} className="p-4">
+                      <div key={employee.id} className="p-3">
                         <div className="font-medium">{employee.name}</div>
                         <div className="text-sm text-muted-foreground">{employee.position}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
@@ -334,11 +333,11 @@ const Index = () => {
                         </div>
                       </div>
                     )) : (
-                      <div className="p-4 text-center text-muted-foreground">
+                      <div className="p-3 text-center text-muted-foreground">
                         No recent hires
                       </div>
                     )}
-                    <div className="p-4 text-center">
+                    <div className="p-3 text-center">
                       <Button variant="ghost" asChild>
                         <Link to="/employees">View all employees</Link>
                       </Button>
