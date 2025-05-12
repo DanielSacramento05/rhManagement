@@ -24,8 +24,7 @@ const handleApiError = (error: any, url: string, method: string) => {
     if (error.message.includes('CORS') || 
         error.message.includes('Access-Control-Allow-Origin')) {
       const errorMessage = 'Cross-Origin Request Blocked: The server has CORS configuration issues. ' +
-                          'This may be caused by multiple Access-Control-Allow-Origin headers. ' + 
-                          'Please contact your administrator.';
+                          'This may be a temporary network issue. Please try again in a few moments.';
       console.error(errorMessage);
       throw new Error(errorMessage);
     } else {
@@ -77,12 +76,11 @@ export async function apiRequest<T, D = undefined>(
   console.log('Request headers:', getHeaders());
   if (data) console.log('Request data:', JSON.stringify(data));
 
-  // Prepare request options
+  // Prepare request options - FIXED CORS settings
   const options: RequestInit = {
     method,
     headers: getHeaders(),
-    // For CORS issues, try a more permissive approach
-    credentials: 'same-origin',
+    // Fix CORS handling - remove credentials setting that might conflict
     mode: 'cors'
   };
 

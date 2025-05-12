@@ -10,7 +10,7 @@ from routes.absence import absences_combined_bp
 from routes.performance import performance_bp
 from routes.auth import auth_bp
 from routes.time_clock import time_clock_bp
-from routes.announcements import announcements_bp  # Import the announcements blueprint
+from routes.announcements import announcements_bp
 
 # Load environment variables from .env file
 load_dotenv()
@@ -26,13 +26,12 @@ def create_app():
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # Apply CORS globally to all routes
+    # Apply CORS globally to all routes - FIXED to prevent duplicate headers
     CORS(app, 
          origins="*", 
          supports_credentials=True,
          allow_headers=["Content-Type", "Authorization", "Access-Control-Allow-Credentials"],
-         expose_headers=["Content-Type", "Authorization"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+         expose_headers=["Content-Type", "Authorization"])
     
     # Initialize database
     db.init_app(app)
@@ -56,20 +55,14 @@ def create_app():
     app.register_blueprint(performance_bp, url_prefix='/api/performance')
     app.register_blueprint(absences_combined_bp, url_prefix='/api/absences')
     app.register_blueprint(time_clock_bp, url_prefix='/api/time-clock')
-    app.register_blueprint(announcements_bp, url_prefix='/api/announcements')  # Register the announcements blueprint
+    app.register_blueprint(announcements_bp, url_prefix='/api/announcements')
     
     @app.route('/')
     def hello():
         return {'message': 'HR Management API is running!'}
     
-    # Ensure CORS headers are set on all responses
-    @app.after_request
-    def after_request(response):
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        return response
+    # Remove the after_request handler that was adding duplicate headers
+    # This was causing the CORS error by adding headers that were already added by flask-cors
     
     return app
 
