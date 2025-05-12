@@ -178,6 +178,56 @@ def get_time_clock_entry(id):
     entry = TimeClock.query.get_or_404(id)
     return jsonify({'data': time_clock_schema.dump(entry)})
 
+@time_clock_bp.route('/<id>', methods=['PUT'])
+def update_time_clock_entry(id):
+    # Check if entry exists
+    entry = TimeClock.query.get_or_404(id)
+    
+    # Get data from request
+    json_data = request.get_json()
+    
+    # Update entry fields if provided in the request
+    if 'date' in json_data:
+        entry.date = json_data['date']
+        
+    if 'clockInTime' in json_data:
+        entry.clock_in_time = json_data['clockInTime']
+        
+    if 'clockOutTime' in json_data:
+        entry.clock_out_time = json_data['clockOutTime']
+        
+    if 'status' in json_data:
+        entry.status = json_data['status']
+        
+    # Calculate total hours if both clock in and out times are present
+    if entry.clock_in_time and entry.clock_out_time:
+        try:
+            # Parse times
+            clock_in = datetime.datetime.strptime(entry.date + ' ' + entry.clock_in_time, '%Y-%m-%d %H:%M:%S')
+            clock_out = datetime.datetime.strptime(entry.date + ' ' + entry.clock_out_time, '%Y-%m-%d %H:%M:%S')
+            
+            # Handle overnight shifts
+            if clock_out < clock_in:
+                clock_out = clock_out + datetime.timedelta(days=1)
+            
+            # Calculate hours
+            hours_worked = (clock_out - clock_in).total_seconds() / 3600
+            entry.total_hours = round(hours_worked, 2)
+        except Exception as e:
+            # If there's an error in calculation, use the provided value or keep existing
+            if 'totalHours' in json_data:
+                entry.total_hours = json_data['totalHours']
+    elif 'totalHours' in json_data:
+        # If we can't calculate, use the provided value
+        entry.total_hours = json_data['totalHours']
+    
+    try:
+        db.session.commit()
+        return jsonify({'data': time_clock_schema.dump(entry)})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @time_clock_bp.route('/<id>', methods=['DELETE'])
 def delete_time_clock_entry(id):
     entry = TimeClock.query.get_or_404(id)

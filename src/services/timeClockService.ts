@@ -41,6 +41,11 @@ const handleTimeClockError = (error: any, operation: string) => {
     throw new Error('Cannot perform this operation. Employee is currently on leave.');
   }
   
+  // Check for method not allowed errors
+  if (error.message.includes('Method Not Allowed')) {
+    throw new Error('Server error: This operation is not allowed. Please contact support.');
+  }
+  
   // Forward the original error if it's not a specific case we handle
   throw error;
 };
@@ -124,6 +129,7 @@ export const updateTimeClockEntry = async (
   data: Partial<TimeClockEntry>
 ): Promise<ApiResponse<TimeClockEntry>> => {
   try {
+    console.log(`Updating time clock entry ${id} with data:`, data);
     return await apiRequest<ApiResponse<TimeClockEntry>, Partial<TimeClockEntry>>(
       `${ENDPOINT}/${id}`,
       'PUT',
@@ -131,7 +137,7 @@ export const updateTimeClockEntry = async (
     );
   } catch (error) {
     console.error('Error updating time clock entry:', error);
-    throw new Error(`Failed to update time clock entry: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return handleTimeClockError(error, 'update');
   }
 };
 
@@ -148,6 +154,6 @@ export const deleteTimeClockEntry = async (
     );
   } catch (error) {
     console.error('Error deleting time clock entry:', error);
-    throw new Error(`Failed to delete time clock entry: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return handleTimeClockError(error, 'delete');
   }
 };
