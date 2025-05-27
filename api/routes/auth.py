@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -30,7 +31,8 @@ def register():
         position=data.get('position', 'Employee'),
         department=data.get('department', 'General'),
         status='out-of-office',  # Set default status to out-of-office
-        hire_date=datetime.datetime.now().date()
+        hire_date=datetime.datetime.now().date(),
+        role='employee'  # Default role for new users
     )
     
     # Store password hash in a separate attribute
@@ -44,7 +46,7 @@ def register():
         token = jwt.encode({
             'user_id': new_user.id,
             'email': new_user.email,
-            'role': 'employee',  # Default role for new users
+            'role': new_user.role,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
         }, os.getenv('SECRET_KEY'), algorithm='HS256')
         
@@ -54,7 +56,7 @@ def register():
                 'id': new_user.id,
                 'email': new_user.email,
                 'name': new_user.name,
-                'role': 'employee',
+                'role': new_user.role,
                 'status': 'out-of-office'  # Return the correct status in the response
             },
             'token': token
@@ -81,8 +83,8 @@ def login():
     if user.status == 'inactive':
         return jsonify({'error': 'Account has been deactivated. Please contact an administrator.'}), 403
     
-    # Determine role based on position or department (customize as needed)
-    role = 'admin' if user.position.lower() == 'manager' else 'employee'
+    # Use the role from the database instead of determining it from position
+    user_role = user.role if user.role else 'employee'
     
     # Check if user is currently clocked in
     active_entry = TimeClock.query.filter_by(employee_id=user.id, status='active').first()
@@ -104,13 +106,13 @@ def login():
         # Not clocked in means out-of-office
         display_status = 'out-of-office'
     
-    print(f"Login: User {user.name}, Status: {employee_status}, Display Status: {display_status}, Clocked in: {active_entry is not None}")
+    print(f"Login: User {user.name}, Role: {user_role}, Status: {employee_status}, Display Status: {display_status}, Clocked in: {active_entry is not None}")
     
     # Generate token
     token = jwt.encode({
         'user_id': user.id,
         'email': user.email,
-        'role': role,
+        'role': user_role,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
     }, os.getenv('SECRET_KEY'), algorithm='HS256')
     
@@ -120,7 +122,7 @@ def login():
             'id': user.id,
             'email': user.email,
             'name': user.name,
-            'role': role,
+            'role': user_role,
             'status': display_status
         },
         'token': token
