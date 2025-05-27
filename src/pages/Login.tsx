@@ -36,7 +36,7 @@ export default function LoginPage() {
           </TabsContent>
         </Tabs>
         
-        <div className="mt-8 text-center">
+        <div className="mt-8 flex justify-center">
           <Button variant="outline" onClick={() => navigate('/tutorial')} className="flex items-center gap-2">
             <Book className="h-4 w-4" />
             <span>View App Tutorial</span>
