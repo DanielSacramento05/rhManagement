@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import AddEmployeeForm from "@/components/employees/AddEmployeeForm";
 import { getCurrentUser } from "@/services/authService";
+import { canManageUsers } from "@/services/permissionService";
 
 const Employees = () => {
   const { toast } = useToast();
@@ -28,7 +29,7 @@ const Employees = () => {
   const [pageSize] = useState(12);
   const [addEmployeeOpen, setAddEmployeeOpen] = useState(false);
   const currentUser = getCurrentUser();
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = canManageUsers(currentUser);
 
   // Check for authentication
   useEffect(() => {

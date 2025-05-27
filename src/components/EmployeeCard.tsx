@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
@@ -19,7 +18,7 @@ interface EmployeeCardProps {
   image_url?: string;
   hireDate?: string;
   managerId?: string;
-  role?: string;
+  role?: 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin';
   displayRole?: string;
 }
 
@@ -46,12 +45,14 @@ export function EmployeeCard({
   const formattedRole = displayRole || (role ? formatRole(role) : '');
 
   // Helper function to format role
-  function formatRole(role: string): string {
-    switch(role.toLowerCase()) {
-      case 'admin':
-        return 'Administrator';
-      case 'manager':
-        return 'Team Leader';
+  function formatRole(role: 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin'): string {
+    switch(role) {
+      case 'hr_admin':
+        return 'HR Administrator';
+      case 'dept_manager':
+        return 'Department Manager';
+      case 'system_admin':
+        return 'System Administrator';
       case 'employee':
         return 'Employee';
       default:

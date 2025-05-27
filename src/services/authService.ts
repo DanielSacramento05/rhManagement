@@ -1,6 +1,12 @@
-
 import { apiRequest } from './api';
-import { User, AuthResponse, LoginCredentials, RegisterCredentials, UpdateRoleRequest } from '@/types/auth';
+import { User, LoginCredentials, RegisterCredentials, UpdateRoleRequest } from '@/types/auth';
+
+// Export AuthResponse interface for use in other files
+export interface AuthResponse {
+  message: string;
+  user: User;
+  token: string;
+}
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   try {

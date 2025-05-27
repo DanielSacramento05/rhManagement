@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Announcement, createAnnouncement, deleteAnnouncement, getAnnouncements, updateAnnouncement } from "@/services/announcementService";
 import { getCurrentUser } from "@/services/authService";
 import { Badge } from "@/components/ui/badge";
+import { canCreateAnnouncements } from "@/services/permissionService";
 
 // Map icon names to Lucide components for display
 const iconMap = {
@@ -27,7 +27,7 @@ export function AnnouncementManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const currentUser = getCurrentUser();
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = canCreateAnnouncements('company', currentUser);
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);

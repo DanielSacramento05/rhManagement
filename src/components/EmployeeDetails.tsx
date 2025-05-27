@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { updateEmployee, deleteEmployee } from '@/services/employeeService';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/authService';
+import { canManageUsers } from '@/services/permissionService';
 
 interface EmployeeDetailsProps {
   employee: Employee;
@@ -24,7 +24,7 @@ export function EmployeeDetails({ employee, isOpen, onClose }: EmployeeDetailsPr
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const currentUser = getCurrentUser();
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = canManageUsers(currentUser);
 
   // Status badge style
   const getStatusBadge = () => {
