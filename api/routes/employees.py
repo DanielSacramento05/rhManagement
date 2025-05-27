@@ -133,7 +133,7 @@ def delete_employee(id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# New endpoint for updating user roles
+# Updated endpoint for updating user roles - now supports new role system
 @employees_bp.route('/<id>/role', methods=['PUT'])
 def update_employee_role(id):
     employee = Employee.query.get_or_404(id)
@@ -143,9 +143,9 @@ def update_employee_role(id):
     if not json_data or 'role' not in json_data:
         return jsonify({'error': 'Role is required'}), 400
     
-    # Validate role
+    # Validate role - updated to use new role system
     role = json_data['role']
-    valid_roles = ['admin', 'manager', 'employee']
+    valid_roles = ['hr_admin', 'dept_manager', 'employee', 'system_admin']
     if role not in valid_roles:
         return jsonify({'error': f'Invalid role. Must be one of {", ".join(valid_roles)}'}), 400
     
