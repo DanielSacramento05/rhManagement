@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +22,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getEmployees } from "@/services/employeeService";
 import { getAbsences } from "@/services/absenceService";
 import { format, parseISO, isAfter, isBefore, addDays } from "date-fns";
-import { getCurrentUser, isUserManager } from "@/services/authService";
+import { getCurrentUser } from "@/services/authService";
+import { hasPermission, isHRAdmin, isDepartmentManager, getRoleDisplayName } from "@/services/permissionService";
 import { TimeClock } from "@/components/timeclock/TimeClock";
 import { TimeClockHistory } from "@/components/timeclock/TimeClockHistory";
 import { TimeClockManager } from "@/components/timeclock/TimeClockManager";
@@ -32,18 +34,18 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 const Index = () => {
   const isMobile = useIsMobile();
   const currentUser = getCurrentUser();
-  const isManager = isUserManager();
-  const isTeamLeader = currentUser?.role === 'manager';
-  const isHRManager = currentUser?.role === 'admin';
+  const canViewEmployees = hasPermission('employees', 'read', 'department');
+  const canViewCompanyAnalytics = hasPermission('analytics', 'read', 'company');
+  const canManageAnnouncements = hasPermission('announcements', 'create', 'department');
 
-  // Fetch employees data (only for managers)
+  // Fetch employees data (only for users with permission)
   const { data: employeesData } = useQuery({
     queryKey: ['employees', { page: 1, pageSize: 50 }],
     queryFn: () => getEmployees({ page: 1, pageSize: 50 }),
-    enabled: isTeamLeader || isHRManager,
+    enabled: canViewEmployees,
   });
   
-  // Fetch upcoming absences (for all users)
+  // Fetch upcoming absences (based on permissions)
   const today = new Date();
   const { data: absencesData } = useQuery({
     queryKey: ['absences', { startDate: format(today, 'yyyy-MM-dd'), status: 'approved' }],
@@ -61,12 +63,12 @@ const Index = () => {
     }),
   });
   
-  // Get employees by department for chart (only for managers)
+  // Get employees by department for chart (only for users with permission)
   const departmentCounts: Record<string, number> = {};
   const employees = employeesData?.data || [];
   const totalEmployees = employeesData?.totalCount || 0;
   
-  if (isTeamLeader || isHRManager) {
+  if (canViewEmployees) {
     employees.forEach(employee => {
       if (employee.department) {
         departmentCounts[employee.department] = (departmentCounts[employee.department] || 0) + 1;
@@ -80,7 +82,7 @@ const Index = () => {
     .slice(0, 6); // Get top 6 departments
   
   // Get upcoming leave requests - with null/undefined safety checks (only for managers)
-  const upcomingLeave = (isTeamLeader || isHRManager) ? (absencesData?.data || [])
+  const upcomingLeave = canViewEmployees ? (absencesData?.data || [])
     .filter(absence => {
       // Skip any absences with missing startDate
       if (!absence.startDate) return false;
@@ -107,7 +109,7 @@ const Index = () => {
     .slice(0, 5) : [];
   
   // Get recent employees (sort by hire date if available) (only for managers)
-  const recentEmployees = (isTeamLeader || isHRManager) ? [...employees]
+  const recentEmployees = canViewEmployees ? [...employees]
     .filter(employee => employee.hireDate)
     .sort((a, b) => {
       if (!a.hireDate || !b.hireDate) return 0;
@@ -150,7 +152,8 @@ const Index = () => {
 
       <div className="animate-in">
         <h1 className="text-3xl font-semibold tracking-tight mb-1">Dashboard</h1>
-        <p className="text-muted-foreground mb-6">Welcome back to your HR management portal.</p>
+        <p className="text-muted-foreground mb-2">Welcome back, {getRoleDisplayName(currentUser?.role || 'employee')}.</p>
+        <p className="text-muted-foreground mb-6">Manage your HR tasks and stay updated with company information.</p>
       </div>
 
       {/* Content grid now using full width */}
@@ -212,7 +215,7 @@ const Index = () => {
         </div>
 
         {/* Time Clock Manager for managers */}
-        {(isTeamLeader || isHRManager) && (
+        {hasPermission('timeclock', 'read', 'department') && (
           <div className="mb-6 animate-in">
             <TimeClockManager />
           </div>
@@ -223,25 +226,25 @@ const Index = () => {
           <Announcements />
         </div>
 
-        {/* Announcement Manager for managers */}
-        {(isTeamLeader || isHRManager) && (
+        {/* Announcement Manager for users with permission */}
+        {canManageAnnouncements && (
           <div className="mb-6 animate-in">
             <AnnouncementManager />
           </div>
         )}
 
-        {isTeamLeader || isHRManager ? (
+        {canViewCompanyAnalytics ? (
           <>
-            {/* Manager Dashboard View */}
+            {/* Manager/HR Admin Dashboard View */}
             
-            {/* Key metrics - managers only */}
+            {/* Key metrics - for users with analytics permission */}
             <div className="dashboard-grid animate-in mb-5 gap-3">
               <DashboardCard 
                 title="Total Employees" 
                 value={totalEmployees.toString()} 
                 icon={<Users className="h-5 w-5" />}
                 trend={{ value: 4.6, isPositive: true }}
-                footer={<Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View all employees <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+                footer={canViewEmployees ? <Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View all employees <ChevronRight className="h-4 w-4 ml-1" /></Link> : <span className="text-muted-foreground">Company employees</span>}
               />
               
               <DashboardCard 

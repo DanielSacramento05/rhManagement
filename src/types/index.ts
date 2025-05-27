@@ -1,4 +1,7 @@
 
+// Re-export auth types
+export * from './auth';
+
 // Employee types
 export interface Employee {
   id: string;
@@ -12,7 +15,7 @@ export interface Employee {
   image_url?: string; // Adding this to match the API response structure
   hireDate?: string;
   managerId?: string;
-  role?: string;
+  role?: 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin';
   displayRole?: string; // Added for display purposes
 }
 

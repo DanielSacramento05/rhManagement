@@ -1,40 +1,6 @@
 
 import { apiRequest } from './api';
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'manager' | 'employee';
-  status?: 'active' | 'remote' | 'inactive' | 'out-of-office' | 'on-leave';
-  departmentId?: string;
-  departmentName?: string;
-  managerId?: string;
-  token?: string;
-}
-
-export interface AuthResponse {
-  message: string;
-  user: User;
-  token: string;
-}
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface RegisterCredentials {
-  name: string;
-  email: string;
-  password: string;
-  phone?: string;
-}
-
-export interface UpdateRoleRequest {
-  userId: string;
-  role: 'admin' | 'manager' | 'employee';
-}
+import { User, AuthResponse, LoginCredentials, RegisterCredentials, UpdateRoleRequest } from '@/types/auth';
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   try {
@@ -70,19 +36,20 @@ export async function register(credentials: RegisterCredentials): Promise<AuthRe
   return response;
 }
 
-export const getCurrentUser = () => {
+export const getCurrentUser = (): User | null => {
   try {
     const user = localStorage.getItem('user');
     if (!user) return null;
     
     const userData = JSON.parse(user);
     
-    // Make sure role is properly set
-    if (!userData.role && userData.position) {
-      // Use position to determine role if role is not explicitly set
-      userData.role = userData.position.toLowerCase().includes('manager') || 
-                     userData.position.toLowerCase().includes('director') || 
-                     userData.position.toLowerCase().includes('admin') ? 'manager' : 'employee';
+    // Migrate old role system to new role system
+    if (userData.role === 'admin') {
+      userData.role = 'hr_admin';
+    } else if (userData.role === 'manager') {
+      userData.role = 'dept_manager';
+    } else if (!userData.role || userData.role === 'employee') {
+      userData.role = 'employee';
     }
     
     return userData;
@@ -92,9 +59,10 @@ export const getCurrentUser = () => {
   }
 };
 
+// Legacy compatibility functions
 export const isUserManager = () => {
   const user = getCurrentUser();
-  return user?.role === 'manager' || user?.role === 'admin';
+  return user?.role === 'dept_manager' || user?.role === 'hr_admin' || user?.role === 'system_admin';
 };
 
 export function isAuthenticated(): boolean {
@@ -109,7 +77,7 @@ export function saveUserToLocalStorage(authResponse: AuthResponse): void {
     name: authResponse.user.name,
     email: authResponse.user.email,
     role: authResponse.user.role,
-    status: authResponse.user.status || 'out-of-office', // Default to out-of-office if no status
+    status: authResponse.user.status || 'out-of-office',
     departmentId: authResponse.user.departmentId,
     departmentName: authResponse.user.departmentName,
     managerId: authResponse.user.managerId,
@@ -123,7 +91,7 @@ export function logout(): void {
 }
 
 /**
- * Update a user's role (admin only)
+ * Update a user's role (system admin only)
  */
 export async function updateUserRole(request: UpdateRoleRequest): Promise<User> {
   try {
@@ -151,9 +119,33 @@ export async function updateUserRole(request: UpdateRoleRequest): Promise<User> 
 }
 
 /**
- * Check if the current user is an admin
+ * Check if the current user is an admin (HR Admin or System Admin)
  */
 export function isAdmin(): boolean {
   const user = getCurrentUser();
-  return user?.role === 'admin';
+  return user?.role === 'hr_admin' || user?.role === 'system_admin';
+}
+
+/**
+ * Check if the current user is HR Admin
+ */
+export function isHRAdmin(): boolean {
+  const user = getCurrentUser();
+  return user?.role === 'hr_admin';
+}
+
+/**
+ * Check if the current user is System Admin
+ */
+export function isSystemAdmin(): boolean {
+  const user = getCurrentUser();
+  return user?.role === 'system_admin';
+}
+
+/**
+ * Check if the current user is Department Manager
+ */
+export function isDepartmentManager(): boolean {
+  const user = getCurrentUser();
+  return user?.role === 'dept_manager';
 }

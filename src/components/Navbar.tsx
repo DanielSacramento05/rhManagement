@@ -3,31 +3,49 @@ import { Link, useLocation } from "react-router-dom";
 import { ProfileMenu } from "./ProfileMenu";
 import { Book } from "lucide-react";
 import { getCurrentUser } from "@/services/authService";
+import { hasPermission } from "@/services/permissionService";
 import { ThemeToggle } from "./ThemeToggle";
 
 const Navbar = () => {
   const location = useLocation();
   const currentUser = getCurrentUser();
-  const isHRManager = currentUser?.role === 'admin';
-  const isTeamLeader = currentUser?.role === 'manager';
   
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
-  // Define all possible nav items
+  // Define all possible nav items with permission checks
   const allNavItems = [
-    { path: "/", label: "Dashboard", showTo: ["admin", "manager", "employee"] },
-    { path: "/employees", label: "Employees", showTo: ["admin", "manager"] },
-    { path: "/absences", label: "Absences", showTo: ["admin", "manager", "employee"] },
-    { path: "/performance", label: "Performance", showTo: ["admin", "manager"] },
-    { path: "/tutorial", label: "Tutorial", icon: Book, showTo: ["admin", "manager", "employee"] },
+    { 
+      path: "/", 
+      label: "Dashboard", 
+      show: true // Everyone can see dashboard
+    },
+    { 
+      path: "/employees", 
+      label: "Employees", 
+      show: hasPermission('employees', 'read', 'department')
+    },
+    { 
+      path: "/absences", 
+      label: "Absences", 
+      show: hasPermission('absences', 'read', 'own')
+    },
+    { 
+      path: "/performance", 
+      label: "Performance", 
+      show: hasPermission('performance', 'read', 'own')
+    },
+    { 
+      path: "/tutorial", 
+      label: "Tutorial", 
+      icon: Book, 
+      show: true // Everyone can see tutorial
+    },
   ];
 
-  // Filter nav items based on user role
-  const navItems = allNavItems.filter(item => 
-    item.showTo.includes(currentUser?.role || 'employee')
-  );
+  // Filter nav items based on permissions
+  const navItems = allNavItems.filter(item => item.show);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-10 bg-background border-b border-border shadow-sm">
