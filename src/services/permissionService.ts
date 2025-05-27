@@ -12,19 +12,28 @@ export function hasPermission(
   user?: User
 ): boolean {
   const currentUser = user || getCurrentUser();
-  if (!currentUser) return false;
+  if (!currentUser) {
+    console.log('No current user found for permission check');
+    return false;
+  }
 
+  console.log(`Checking permission: ${resource}.${action} (${scope}) for user role: ${currentUser.role}`);
+  
   const userPermissions = ROLE_PERMISSIONS[currentUser.role] || [];
+  console.log('User permissions:', userPermissions);
   
   // Check for wildcard permissions (system admin)
   const hasWildcard = userPermissions.some(
     p => p.resource === '*' && (p.action === action || p.action === '*' as any)
   );
   
-  if (hasWildcard) return true;
+  if (hasWildcard) {
+    console.log('User has wildcard permissions');
+    return true;
+  }
 
   // Check for specific resource permissions
-  return userPermissions.some(permission => {
+  const hasSpecificPermission = userPermissions.some(permission => {
     const resourceMatch = permission.resource === resource;
     const actionMatch = permission.action === action;
     const scopeMatch = 
@@ -32,8 +41,12 @@ export function hasPermission(
       (permission.scope === 'department' && (scope === 'department' || scope === 'own')) ||
       (permission.scope === 'own' && scope === 'own');
     
+    console.log(`Permission check: resource=${resourceMatch}, action=${actionMatch}, scope=${scopeMatch}`);
     return resourceMatch && actionMatch && scopeMatch;
   });
+  
+  console.log(`Final permission result: ${hasSpecificPermission}`);
+  return hasSpecificPermission;
 }
 
 /**

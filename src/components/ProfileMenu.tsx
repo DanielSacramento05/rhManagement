@@ -17,6 +17,7 @@ import { getCurrentUser, logout } from "@/services/authService";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getEmployeeById } from "@/services/employeeService";
 import { useTheme } from "./ThemeProvider";
+import { getRoleDisplayName } from "@/services/permissionService";
 
 export function ProfileMenu() {
   const [user, setUser] = useState(() => getCurrentUser() || { 
@@ -46,7 +47,9 @@ export function ProfileMenu() {
   // Listen for changes to user data in localStorage
   useEffect(() => {
     const handleStorageChange = () => {
-      setUser(getCurrentUser() || { 
+      const updatedUser = getCurrentUser();
+      console.log('ProfileMenu: Storage changed, new user:', updatedUser);
+      setUser(updatedUser || { 
         id: '',
         email: 'user@example.com', 
         role: 'employee', 
@@ -54,6 +57,16 @@ export function ProfileMenu() {
       });
     };
     
+    // Check for updates every second
+    const checkForUpdates = () => {
+      const currentUserData = getCurrentUser();
+      if (currentUserData && JSON.stringify(currentUserData) !== JSON.stringify(user)) {
+        console.log('ProfileMenu: User data changed, updating:', currentUserData);
+        setUser(currentUserData);
+      }
+    };
+    
+    const interval = setInterval(checkForUpdates, 1000);
     window.addEventListener('storage', handleStorageChange);
     
     // Refresh employee data every 5 minutes to ensure status is current
@@ -62,10 +75,11 @@ export function ProfileMenu() {
     }, 5 * 60 * 1000);
     
     return () => {
+      clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(refreshInterval);
     };
-  }, [queryClient]);
+  }, [queryClient, user]);
   
   // Force refresh employee data on component mount
   useEffect(() => {
@@ -86,27 +100,13 @@ export function ProfileMenu() {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
-  // Function to display user-friendly role names
-  const getDisplayRole = (role: string) => {
-    switch(role.toLowerCase()) {
-      case 'admin':
-        return 'Administrator';
-      case 'manager':
-        return 'Team Leader';
-      case 'employee':
-        return 'Employee';
-      default:
-        return role;
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex items-center gap-3 px-3">
           <div className="text-right mr-2">
             <p className="text-sm font-medium leading-none">{user.name || user.email}</p>
-            <p className="text-xs text-muted-foreground mt-1">{getDisplayRole(user.role)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{getRoleDisplayName(user.role)}</p>
           </div>
           <Avatar className="h-10 w-10">
             {profilePicture ? (

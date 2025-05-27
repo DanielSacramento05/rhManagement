@@ -1,3 +1,4 @@
+
 import { apiRequest } from './api';
 import { User, LoginCredentials, RegisterCredentials, UpdateRoleRequest } from '@/types/auth';
 
@@ -48,16 +49,9 @@ export const getCurrentUser = (): User | null => {
     if (!user) return null;
     
     const userData = JSON.parse(user);
+    console.log('Current user from localStorage:', userData);
     
-    // Migration logic for old role system - only migrate if the role is actually old
-    if (userData.role === 'admin') {
-      userData.role = 'system_admin';  // Admin should be system_admin
-    } else if (userData.role === 'manager') {
-      userData.role = 'dept_manager';
-    }
-    // Don't migrate valid new roles - keep them as is
-    // Valid roles: 'hr_admin', 'dept_manager', 'employee', 'system_admin'
-    
+    // Don't migrate roles - use exactly what's stored
     return userData;
   } catch (error) {
     console.error('Error getting current user:', error);
@@ -101,11 +95,14 @@ export function logout(): void {
  */
 export async function updateUserRole(request: UpdateRoleRequest): Promise<User> {
   try {
+    console.log('Updating user role:', request);
     const response = await apiRequest<{ data: User }, { role: string }>(
       `/employees/${request.userId}/role`,
       'PUT',
       { role: request.role }
     );
+    
+    console.log('Role update response:', response);
     
     // If the user updating their own role, update the local storage
     const currentUser = getCurrentUser();
@@ -114,7 +111,13 @@ export async function updateUserRole(request: UpdateRoleRequest): Promise<User> 
         ...currentUser,
         role: response.data.role
       };
+      console.log('Updating localStorage with new role:', updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Force a page reload to ensure all components pick up the new role
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     }
     
     return response.data;
@@ -129,6 +132,7 @@ export async function updateUserRole(request: UpdateRoleRequest): Promise<User> 
  */
 export function isAdmin(): boolean {
   const user = getCurrentUser();
+  console.log('Checking isAdmin for user:', user);
   return user?.role === 'hr_admin' || user?.role === 'system_admin';
 }
 
