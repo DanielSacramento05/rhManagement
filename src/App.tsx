@@ -135,14 +135,7 @@ const App = () => {
                               </ProtectedRoute>
                             }
                           />
-                          <Route
-                            path="/tutorial"
-                            element={
-                              <ProtectedRoute>
-                                <Tutorial />
-                              </ProtectedRoute>
-                            }
-                          />
+                          <Route path="/tutorial" element={<Tutorial />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </Suspense>
@@ -154,6 +147,7 @@ const App = () => {
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       <Route path="/login" element={<Login />} />
+                      <Route path="/tutorial" element={<Tutorial />} />
                       <Route path="/profile-setup" element={<ProfileSetup />} />
                       <Route path="*" element={<Navigate to="/login" replace />} />
                     </Routes>
