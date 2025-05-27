@@ -1,4 +1,3 @@
-
 import { apiRequest } from './api';
 import { User, LoginCredentials, RegisterCredentials, UpdateRoleRequest } from '@/types/auth';
 
@@ -50,14 +49,14 @@ export const getCurrentUser = (): User | null => {
     
     const userData = JSON.parse(user);
     
-    // Migrate old role system to new role system
+    // Migration logic for old role system - only migrate if the role is actually old
     if (userData.role === 'admin') {
-      userData.role = 'system_admin';  // Admin should be system_admin, not hr_admin
+      userData.role = 'system_admin';  // Admin should be system_admin
     } else if (userData.role === 'manager') {
       userData.role = 'dept_manager';
-    } else if (!userData.role || userData.role === 'employee') {
-      userData.role = 'employee';
     }
+    // Don't migrate valid new roles - keep them as is
+    // Valid roles: 'hr_admin', 'dept_manager', 'employee', 'system_admin'
     
     return userData;
   } catch (error) {
