@@ -1,6 +1,7 @@
 
 import { apiRequest, buildQueryParams } from './api';
 import { getCurrentUser } from './authService';
+import { canCreateAnnouncements } from './permissionService';
 
 export interface Announcement {
   id: string;
@@ -37,7 +38,7 @@ export const getAnnouncements = async (
     let params = { ...filters };
 
     // When fetching as a regular employee or manager, filter for announcements applicable to them
-    if (currentUser && currentUser.role !== 'admin' && !params.departmentId) {
+    if (currentUser && !canCreateAnnouncements('company', currentUser) && !params.departmentId) {
       params.departmentId = currentUser.departmentId || 'none';
     }
 
@@ -109,7 +110,7 @@ export const createAnnouncement = async (announcement: Partial<Announcement>): P
     created_by: currentUser?.id || '',
     date: new Date().toISOString().split('T')[0],
     is_global: announcement.is_global || false,
-    department_id: currentUser?.role !== 'admin' ? currentUser?.departmentId : undefined
+    department_id: !canCreateAnnouncements('company', currentUser) ? currentUser?.departmentId : undefined
   };
 
   try {
