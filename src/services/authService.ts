@@ -1,3 +1,4 @@
+
 import { apiRequest } from './api';
 import { User, LoginCredentials, RegisterCredentials, UpdateRoleRequest } from '@/types/auth';
 
@@ -51,7 +52,7 @@ export const getCurrentUser = (): User | null => {
     
     // Migrate old role system to new role system
     if (userData.role === 'admin') {
-      userData.role = 'hr_admin';
+      userData.role = 'system_admin';  // Admin should be system_admin, not hr_admin
     } else if (userData.role === 'manager') {
       userData.role = 'dept_manager';
     } else if (!userData.role || userData.role === 'employee') {
