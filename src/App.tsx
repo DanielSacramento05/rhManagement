@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +29,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Tutorial = lazy(() => import("./pages/Tutorial"));
 const Profile = lazy(() => import("./pages/Profile"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
+const SystemConfig = lazy(() => import("./pages/SystemConfig"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
 
 // Loading fallback
 const PageLoader = () => (
@@ -132,6 +133,22 @@ const App = () => {
                             element={
                               <ProtectedRoute>
                                 <ProfileSetup />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/system-config"
+                            element={
+                              <ProtectedRoute>
+                                <SystemConfig />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/user-management"
+                            element={
+                              <ProtectedRoute>
+                                <UserManagement />
                               </ProtectedRoute>
                             }
                           />
