@@ -33,10 +33,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+type RoleType = 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin';
+
 const UserManagement = () => {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
 
   const { data: employeesData, isLoading, refetch } = useQuery({
     queryKey: ['employees', search, roleFilter],
@@ -55,7 +57,7 @@ const UserManagement = () => {
     return true;
   });
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: RoleType) => {
     try {
       await updateUserRole({ userId, role: newRole });
       toast({
