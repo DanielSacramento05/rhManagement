@@ -19,16 +19,21 @@ import { UserPlus } from "lucide-react";
 import { register as registerUser, setPassword, saveUserToLocalStorage, AuthResponse, checkUserExists } from "@/services/authService";
 import { RegisterCredentials, SetPasswordCredentials } from "@/types/auth";
 
-const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }).optional(),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  confirmPassword: z.string(),
-  phone: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+// Create a dynamic schema based on whether it's an existing user
+const createFormSchema = (isExistingUser: boolean) => {
+  return z.object({
+    name: isExistingUser 
+      ? z.string().optional()
+      : z.string().min(2, { message: "Name must be at least 2 characters" }),
+    email: z.string().email({ message: "Please enter a valid email address" }),
+    password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+    confirmPassword: z.string(),
+    phone: z.string().optional(),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+};
 
 interface RegisterFormProps {
   updateAuthState: () => void;
@@ -41,8 +46,9 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  // Create form with dynamic schema
+  const form = useForm<z.infer<ReturnType<typeof createFormSchema>>>({
+    resolver: zodResolver(createFormSchema(isExistingUser)),
     defaultValues: {
       name: "",
       email: "",
@@ -51,6 +57,23 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       phone: ""
     },
   });
+
+  // Re-create form when user type changes
+  const updateFormSchema = (existingUser: boolean) => {
+    setIsExistingUser(existingUser);
+    
+    // Get current form values
+    const currentValues = form.getValues();
+    
+    // Create new form with updated schema
+    const newForm = useForm<z.infer<ReturnType<typeof createFormSchema>>>({
+      resolver: zodResolver(createFormSchema(existingUser)),
+      defaultValues: currentValues,
+    });
+    
+    // Replace form methods
+    Object.assign(form, newForm);
+  };
 
   const handleEmailBlur = async () => {
     console.log('🔍 Email blur handler triggered');
@@ -69,7 +92,7 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       
       if (userCheck.exists && !userCheck.hasPassword) {
         console.log('👤 Existing user without password found');
-        setIsExistingUser(true);
+        updateFormSchema(true);
         setExistingUserName(userCheck.name || "");
         // Clear name field since it's not needed for existing users
         form.setValue('name', '');
@@ -79,7 +102,7 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
         });
       } else if (userCheck.exists && userCheck.hasPassword) {
         console.log('👤 User with password already exists');
-        setIsExistingUser(false);
+        updateFormSchema(false);
         setExistingUserName("");
         toast({
           variant: "destructive",
@@ -89,19 +112,19 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
         return;
       } else {
         console.log('🆕 New user - can proceed with registration');
-        setIsExistingUser(false);
+        updateFormSchema(false);
         setExistingUserName("");
       }
     } catch (error) {
       console.error('❌ Error checking user:', error);
-      setIsExistingUser(false);
+      updateFormSchema(false);
       setExistingUserName("");
       // Don't show error toast for network issues during email check
       // The user can still proceed with registration
     }
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<ReturnType<typeof createFormSchema>>) => {
     console.log('🚀 Form submission started');
     console.log('📝 Form values:', values);
     console.log('👤 Is existing user:', isExistingUser);
