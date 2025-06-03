@@ -1,5 +1,5 @@
 import { apiRequest } from './api';
-import { User, LoginCredentials, RegisterCredentials, UpdateRoleRequest } from '@/types/auth';
+import { User, LoginCredentials, RegisterCredentials, SetPasswordCredentials, UpdateRoleRequest } from '@/types/auth';
 
 // Export AuthResponse interface for use in other files
 export interface AuthResponse {
@@ -40,8 +40,8 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
   }
 }
 
-export async function register(credentials: RegisterCredentials): Promise<AuthResponse> {
-  const response = await apiRequest<AuthResponse, RegisterCredentials>('/auth/register', 'POST', credentials);
+export async function register(credentials: RegisterCredentials | SetPasswordCredentials): Promise<AuthResponse> {
+  const response = await apiRequest<AuthResponse, RegisterCredentials | SetPasswordCredentials>('/auth/register', 'POST', credentials);
   if (response && response.token) {
     // Ensure the user has the out-of-office status
     if (response.user && !response.user.status) {

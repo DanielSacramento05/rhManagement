@@ -141,6 +141,11 @@ export interface RegisterCredentials {
   phone?: string;
 }
 
+export interface SetPasswordCredentials {
+  email: string;
+  password: string;
+}
+
 export interface UpdateRoleRequest {
   userId: string;
   role: 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin';

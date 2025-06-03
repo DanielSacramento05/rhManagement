@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -17,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
 import { register as registerUser, saveUserToLocalStorage, AuthResponse, checkUserExists } from "@/services/authService";
+import { RegisterCredentials, SetPasswordCredentials } from "@/types/auth";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }).optional(),
@@ -86,17 +86,17 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
     
     try {
       // For existing users, only send email and password
-      const registrationData = isExistingUser 
+      const registrationData: RegisterCredentials | SetPasswordCredentials = isExistingUser 
         ? {
             email: values.email,
             password: values.password
-          }
+          } as SetPasswordCredentials
         : {
             name: values.name!,
             email: values.email,
             password: values.password,
             phone: values.phone
-          };
+          } as RegisterCredentials;
 
       const response = await registerUser(registrationData);
       
