@@ -44,6 +44,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { 
   Search, 
@@ -55,11 +56,13 @@ import {
   Phone,
   Calendar,
   MoreHorizontal,
-  User
+  User,
+  UserX,
+  UserCheck
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getEmployees, formatRoleForDisplay } from "@/services/employeeService";
+import { getEmployees, formatRoleForDisplay, updateEmployee } from "@/services/employeeService";
 import { updateUserRole } from "@/services/authService";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -121,9 +124,35 @@ const UserManagement = () => {
     }
   });
 
+  // Status update mutation
+  const statusUpdateMutation = useMutation({
+    mutationFn: ({ userId, status }: { userId: string; status: string }) => 
+      updateEmployee(userId, { status }),
+    onSuccess: () => {
+      toast({
+        title: "Status updated",
+        description: "User status has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      refetch();
+    },
+    onError: (error) => {
+      console.error('Status update error:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update user status.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleRoleChange = async (userId: string, newRole: RoleType) => {
     console.log('Updating role for user:', userId, 'to:', newRole);
     roleUpdateMutation.mutate({ userId, role: newRole });
+  };
+
+  const handleStatusChange = (userId: string, newStatus: string) => {
+    statusUpdateMutation.mutate({ userId, status: newStatus });
   };
 
   const getRoleColor = (role: string) => {
@@ -278,7 +307,7 @@ const UserManagement = () => {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" disabled={roleUpdateMutation.isPending}>
+                        <Button variant="ghost" size="sm" disabled={roleUpdateMutation.isPending || statusUpdateMutation.isPending}>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -307,6 +336,26 @@ const UserManagement = () => {
                         >
                           Set as System Admin
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {employee.status === 'active' ? (
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(employee.id, 'inactive')}
+                            disabled={statusUpdateMutation.isPending}
+                            className="text-red-600"
+                          >
+                            <UserX className="h-4 w-4 mr-2" />
+                            Deactivate User
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(employee.id, 'active')}
+                            disabled={statusUpdateMutation.isPending}
+                            className="text-green-600"
+                          >
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            Reactivate User
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
