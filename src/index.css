@@ -113,6 +113,8 @@
 
   .page-container {
     @apply w-full mx-auto px-2 sm:px-3 py-5 animate-fade-in;
+    /* Add top padding to account for fixed header */
+    padding-top: 5rem;
   }
 
   .section-title {
@@ -132,6 +134,8 @@
 @media (max-width: 640px) {
   .page-container {
     @apply px-2 py-3;
+    /* Ensure proper spacing on mobile too */
+    padding-top: 5rem;
   }
   
   .dashboard-grid {
