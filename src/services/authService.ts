@@ -1,4 +1,3 @@
-
 import { apiRequest } from './api';
 import { User, LoginCredentials, RegisterCredentials, UpdateRoleRequest } from '@/types/auth';
 
@@ -7,6 +6,16 @@ export interface AuthResponse {
   message: string;
   user: User;
   token: string;
+}
+
+export interface CheckUserResponse {
+  exists: boolean;
+  hasPassword: boolean;
+  name?: string;
+}
+
+export async function checkUserExists(email: string): Promise<CheckUserResponse> {
+  return await apiRequest<CheckUserResponse, { email: string }>('/auth/check-user', 'POST', { email });
 }
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {

@@ -16,10 +16,10 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
-import { register as registerUser, saveUserToLocalStorage, AuthResponse } from "@/services/authService";
+import { register as registerUser, saveUserToLocalStorage, AuthResponse, checkUserExists } from "@/services/authService";
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }).optional(),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   confirmPassword: z.string(),
@@ -35,6 +35,8 @@ interface RegisterFormProps {
 
 export function RegisterForm({ updateAuthState }: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isExistingUser, setIsExistingUser] = useState(false);
+  const [existingUserName, setExistingUserName] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,40 +51,79 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
     },
   });
 
+  const handleEmailBlur = async () => {
+    const email = form.getValues('email');
+    if (!email || !email.includes('@')) return;
+
+    try {
+      const userCheck = await checkUserExists(email);
+      if (userCheck.exists && !userCheck.hasPassword) {
+        setIsExistingUser(true);
+        setExistingUserName(userCheck.name || "");
+        // Clear name field since it's not needed for existing users
+        form.setValue('name', '');
+        toast({
+          title: "Employee found",
+          description: `Welcome ${userCheck.name}! Please set your password to complete your account setup.`,
+        });
+      } else if (userCheck.exists && userCheck.hasPassword) {
+        toast({
+          variant: "destructive",
+          title: "Account exists",
+          description: "This email is already registered. Please use the login form instead.",
+        });
+      } else {
+        setIsExistingUser(false);
+        setExistingUserName("");
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     
     try {
-      // Submit registration to API
-      const response = await registerUser({
-        name: values.name,
-        email: values.email,
-        password: values.password,
-        phone: values.phone
-      });
+      // For existing users, only send email and password
+      const registrationData = isExistingUser 
+        ? {
+            email: values.email,
+            password: values.password
+          }
+        : {
+            name: values.name!,
+            email: values.email,
+            password: values.password,
+            phone: values.phone
+          };
+
+      const response = await registerUser(registrationData);
       
-      // Make sure we include the out-of-office status
       const userData: AuthResponse = {
         ...response,
         user: {
           ...response.user,
-          status: 'out-of-office' as const // Use const assertion to ensure it matches the union type
+          status: 'out-of-office' as const
         }
       };
       
-      // Save user data to localStorage
       saveUserToLocalStorage(userData);
       
       toast({
-        title: "Registration successful",
-        description: "Please complete your profile setup.",
+        title: isExistingUser ? "Password set successfully" : "Registration successful",
+        description: isExistingUser 
+          ? "You can now access your account." 
+          : "Please complete your profile setup.",
       });
       
-      // Update auth state context
       updateAuthState();
       
-      // Redirect to profile setup
-      navigate('/profile-setup');
+      if (isExistingUser) {
+        navigate('/');
+      } else {
+        navigate('/profile-setup');
+      }
     } catch (error) {
       console.error("Registration error:", error);
       toast({
@@ -98,27 +139,35 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
   return (
     <div className="mx-auto max-w-sm space-y-6">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Create an account</h1>
+        <h1 className="text-2xl font-bold">
+          {isExistingUser ? "Set Your Password" : "Create an account"}
+        </h1>
         <p className="text-gray-500 dark:text-gray-400">
-          Enter your details to create a new account
+          {isExistingUser 
+            ? `Hello ${existingUserName}! Set your password to access your account.`
+            : "Enter your details to create a new account"
+          }
         </p>
       </div>
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John Doe" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {!isExistingUser && (
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          
           <FormField
             control={form.control}
             name="email"
@@ -126,25 +175,34 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="name@example.com" {...field} />
+                  <Input 
+                    placeholder="name@example.com" 
+                    {...field} 
+                    onBlur={handleEmailBlur}
+                    disabled={isExistingUser}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone (optional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="+1 (555) 123-4567" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          
+          {!isExistingUser && (
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="+1 (555) 123-4567" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          
           <FormField
             control={form.control}
             name="password"
@@ -179,12 +237,12 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
             {isLoading ? (
               <div className="flex items-center">
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                <span>Creating Account</span>
+                <span>{isExistingUser ? "Setting Password" : "Creating Account"}</span>
               </div>
             ) : (
               <div className="flex items-center">
                 <UserPlus className="mr-2 h-4 w-4" />
-                <span>Register</span>
+                <span>{isExistingUser ? "Set Password" : "Register"}</span>
               </div>
             )}
           </Button>

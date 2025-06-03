@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -14,15 +13,51 @@ def register():
     data = request.get_json()
     
     # Check if required fields are provided
-    if not data or not data.get('email') or not data.get('password') or not data.get('name'):
+    if not data or not data.get('email') or not data.get('password'):
         return jsonify({'error': 'Missing required fields'}), 400
     
     # Check if user already exists
     existing_user = Employee.query.filter_by(email=data['email']).first()
-    if existing_user:
-        return jsonify({'error': 'Email already registered'}), 409
     
-    # Create new user with hashed password
+    if existing_user:
+        # If user exists but has no password, allow them to set one
+        if not hasattr(existing_user, 'password_hash') or not existing_user.password_hash:
+            # Set the password for the existing user
+            existing_user.password_hash = generate_password_hash(data['password'])
+            
+            try:
+                db.session.commit()
+                
+                # Generate token
+                token = jwt.encode({
+                    'user_id': existing_user.id,
+                    'email': existing_user.email,
+                    'role': existing_user.role,
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
+                }, os.getenv('SECRET_KEY'), algorithm='HS256')
+                
+                return jsonify({
+                    'message': 'Password set successfully',
+                    'user': {
+                        'id': existing_user.id,
+                        'email': existing_user.email,
+                        'name': existing_user.name,
+                        'role': existing_user.role,
+                        'status': existing_user.status or 'out-of-office'
+                    },
+                    'token': token
+                }), 200
+                
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'error': str(e)}), 500
+        else:
+            return jsonify({'error': 'Email already registered with a password'}), 409
+    
+    # Create new user if name is provided
+    if not data.get('name'):
+        return jsonify({'error': 'Name is required for new users'}), 400
+    
     new_user = Employee(
         id=str(uuid.uuid4()),
         name=data['name'],
@@ -30,19 +65,17 @@ def register():
         phone=data.get('phone', ''),
         position=data.get('position', 'Employee'),
         department=data.get('department', 'General'),
-        status='out-of-office',  # Set default status to out-of-office
+        status='out-of-office',
         hire_date=datetime.datetime.now().date(),
-        role='employee'  # Default role for new users
+        role='employee'
     )
     
-    # Store password hash in a separate attribute
     new_user.password_hash = generate_password_hash(data['password'])
     
     try:
         db.session.add(new_user)
         db.session.commit()
         
-        # Generate token
         token = jwt.encode({
             'user_id': new_user.id,
             'email': new_user.email,
@@ -57,7 +90,7 @@ def register():
                 'email': new_user.email,
                 'name': new_user.name,
                 'role': new_user.role,
-                'status': 'out-of-office'  # Return the correct status in the response
+                'status': 'out-of-office'
             },
             'token': token
         }), 201
@@ -65,6 +98,26 @@ def register():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@auth_bp.route('/check-user', methods=['POST'])
+def check_user():
+    data = request.get_json()
+    
+    if not data or not data.get('email'):
+        return jsonify({'error': 'Email is required'}), 400
+    
+    user = Employee.query.filter_by(email=data['email']).first()
+    
+    if not user:
+        return jsonify({'exists': False, 'hasPassword': False}), 200
+    
+    has_password = hasattr(user, 'password_hash') and user.password_hash is not None
+    
+    return jsonify({
+        'exists': True,
+        'hasPassword': has_password,
+        'name': user.name if user else None
+    }), 200
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
