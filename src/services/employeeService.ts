@@ -101,11 +101,19 @@ export const formatRoleForDisplay = (role: string): string => {
 export const createEmployee = async (
   employee: Omit<Employee, 'id'>
 ): Promise<ApiResponse<Employee>> => {
-  // Convert imageUrl to image_url for API compatibility
+  // Convert frontend fields to API fields
   const apiEmployee: Record<string, any> = { ...employee };
+  
+  // Map imageUrl to image_url for API compatibility
   if (apiEmployee.imageUrl) {
     apiEmployee.image_url = apiEmployee.imageUrl;
     delete apiEmployee.imageUrl;
+  }
+  
+  // Map hireDate to hire_date for API compatibility
+  if (apiEmployee.hireDate) {
+    apiEmployee.hire_date = apiEmployee.hireDate;
+    delete apiEmployee.hireDate;
   }
   
   // Remove any display-only fields
@@ -119,13 +127,13 @@ export const createEmployee = async (
     apiEmployee
   );
   
-  // Map image_url back to imageUrl for frontend compatibility
-  if (response.data && response.data.image_url) {
-    response.data.imageUrl = response.data.image_url;
-  }
-  
-  // Add displayRole for frontend display purposes
+  // Map API fields back to frontend fields
   if (response.data) {
+    if (response.data.image_url) {
+      response.data.imageUrl = response.data.image_url;
+    }
+    
+    // Add displayRole for frontend display purposes
     response.data.displayRole = formatRoleForDisplay(response.data.role || 'employee');
   }
   
@@ -142,11 +150,19 @@ export const updateEmployee = async (
   id: string, 
   employee: Partial<Employee>
 ): Promise<ApiResponse<Employee>> => {
-  // Convert imageUrl to image_url for API compatibility
+  // Convert frontend fields to API fields
   const apiEmployee: Record<string, any> = { ...employee };
+  
+  // Map imageUrl to image_url for API compatibility
   if (apiEmployee.imageUrl) {
     apiEmployee.image_url = apiEmployee.imageUrl;
     delete apiEmployee.imageUrl;
+  }
+  
+  // Map hireDate to hire_date for API compatibility
+  if (apiEmployee.hireDate) {
+    apiEmployee.hire_date = apiEmployee.hireDate;
+    delete apiEmployee.hireDate;
   }
   
   // Remove any display-only fields
@@ -160,13 +176,13 @@ export const updateEmployee = async (
     apiEmployee
   );
   
-  // Map image_url back to imageUrl for frontend compatibility
-  if (response.data && response.data.image_url) {
-    response.data.imageUrl = response.data.image_url;
-  }
-  
-  // Add displayRole for frontend display purposes
+  // Map API fields back to frontend fields
   if (response.data) {
+    if (response.data.image_url) {
+      response.data.imageUrl = response.data.image_url;
+    }
+    
+    // Add displayRole for frontend display purposes
     response.data.displayRole = formatRoleForDisplay(response.data.role || 'employee');
   }
   
