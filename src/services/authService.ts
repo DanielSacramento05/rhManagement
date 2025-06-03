@@ -1,3 +1,4 @@
+
 import { apiRequest } from './api';
 import { User, LoginCredentials, RegisterCredentials, SetPasswordCredentials, UpdateRoleRequest } from '@/types/auth';
 
@@ -40,8 +41,22 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
   }
 }
 
-export async function register(credentials: RegisterCredentials | SetPasswordCredentials): Promise<AuthResponse> {
-  const response = await apiRequest<AuthResponse, RegisterCredentials | SetPasswordCredentials>('/auth/register', 'POST', credentials);
+export async function setPassword(credentials: SetPasswordCredentials): Promise<AuthResponse> {
+  console.log('Setting password for existing user:', credentials);
+  const response = await apiRequest<AuthResponse, SetPasswordCredentials>('/auth/set-password', 'POST', credentials);
+  if (response && response.token) {
+    // Ensure the user has the out-of-office status
+    if (response.user && !response.user.status) {
+      response.user.status = 'out-of-office';
+    }
+    saveUserToLocalStorage(response);
+  }
+  return response;
+}
+
+export async function register(credentials: RegisterCredentials): Promise<AuthResponse> {
+  console.log('Registering new user:', credentials);
+  const response = await apiRequest<AuthResponse, RegisterCredentials>('/auth/register', 'POST', credentials);
   if (response && response.token) {
     // Ensure the user has the out-of-office status
     if (response.user && !response.user.status) {

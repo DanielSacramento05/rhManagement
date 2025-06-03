@@ -1,4 +1,5 @@
 
+
 from flask import Blueprint, request, jsonify
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,6 +9,55 @@ import datetime
 import os
 
 auth_bp = Blueprint('auth', __name__)
+
+@auth_bp.route('/set-password', methods=['POST'])
+def set_password():
+    data = request.get_json()
+    
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({'error': 'Missing email or password'}), 400
+    
+    # Find existing user
+    user = Employee.query.filter_by(email=data['email']).first()
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    if user.password_hash:
+        return jsonify({'error': 'User already has a password set'}), 409
+    
+    # Set the password for the existing user
+    user.password_hash = generate_password_hash(data['password'])
+    
+    try:
+        db.session.commit()
+        
+        # Generate token
+        token = jwt.encode({
+            'user_id': user.id,
+            'email': user.email,
+            'role': user.role,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
+        }, os.getenv('SECRET_KEY'), algorithm='HS256')
+        
+        return jsonify({
+            'message': 'Password set successfully',
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'name': user.name,
+                'role': user.role,
+                'status': user.status or 'out-of-office',
+                'departmentId': user.department_id,
+                'departmentName': user.department,
+                'managerId': user.manager_id
+            },
+            'token': token
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -21,41 +71,9 @@ def register():
     existing_user = Employee.query.filter_by(email=data['email']).first()
     
     if existing_user:
-        # If user exists but has no password, allow them to set one
-        if not existing_user.password_hash:
-            # Set the password for the existing user
-            existing_user.password_hash = generate_password_hash(data['password'])
-            
-            try:
-                db.session.commit()
-                
-                # Generate token
-                token = jwt.encode({
-                    'user_id': existing_user.id,
-                    'email': existing_user.email,
-                    'role': existing_user.role,
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=30)
-                }, os.getenv('SECRET_KEY'), algorithm='HS256')
-                
-                return jsonify({
-                    'message': 'Password set successfully',
-                    'user': {
-                        'id': existing_user.id,
-                        'email': existing_user.email,
-                        'name': existing_user.name,
-                        'role': existing_user.role,
-                        'status': existing_user.status or 'out-of-office'
-                    },
-                    'token': token
-                }), 200
-                
-            except Exception as e:
-                db.session.rollback()
-                return jsonify({'error': str(e)}), 500
-        else:
-            return jsonify({'error': 'Email already registered'}), 409
+        return jsonify({'error': 'Email already registered'}), 409
     
-    # Create new user if name is provided
+    # Create new user - name is required for new users
     if not data.get('name'):
         return jsonify({'error': 'Name is required for new users'}), 400
     
@@ -91,7 +109,10 @@ def register():
                 'email': new_user.email,
                 'name': new_user.name,
                 'role': new_user.role,
-                'status': 'out-of-office'
+                'status': 'out-of-office',
+                'departmentId': new_user.department_id,
+                'departmentName': new_user.department,
+                'managerId': new_user.manager_id
             },
             'token': token
         }), 201
@@ -186,7 +207,11 @@ def login():
             'email': user.email,
             'name': user.name,
             'role': user_role,
-            'status': display_status
+            'status': display_status,
+            'departmentId': user.department_id,
+            'departmentName': user.department,
+            'managerId': user.manager_id
         },
         'token': token
     }), 200
+

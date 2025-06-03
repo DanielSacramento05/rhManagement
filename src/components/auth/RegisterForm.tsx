@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus } from "lucide-react";
-import { register as registerUser, saveUserToLocalStorage, AuthResponse, checkUserExists } from "@/services/authService";
+import { register as registerUser, setPassword, saveUserToLocalStorage, AuthResponse, checkUserExists } from "@/services/authService";
 import { RegisterCredentials, SetPasswordCredentials } from "@/types/auth";
 
 const formSchema = z.object({
@@ -98,13 +97,13 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       let response: AuthResponse;
       
       if (isExistingUser) {
-        // For existing users setting password, only send email and password
+        // For existing users setting password, use the setPassword function
         const setPasswordData: SetPasswordCredentials = {
           email: values.email,
           password: values.password
         };
         console.log('Setting password for existing user:', setPasswordData);
-        response = await registerUser(setPasswordData);
+        response = await setPassword(setPasswordData);
       } else {
         // For new users, send all registration data
         const registrationData: RegisterCredentials = {
