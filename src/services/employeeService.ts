@@ -80,10 +80,12 @@ export const getEmployeeById = async (
  */
 export const formatRoleForDisplay = (role: string): string => {
   switch(role.toLowerCase()) {
-    case 'admin':
-      return 'Administrator';
-    case 'manager':
-      return 'Team Leader';
+    case 'hr_admin':
+      return 'HR Administrator';
+    case 'dept_manager':
+      return 'Department Manager';
+    case 'system_admin':
+      return 'System Administrator';
     case 'employee':
       return 'Employee';
     default:

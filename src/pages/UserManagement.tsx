@@ -58,8 +58,9 @@ import {
   User
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getEmployees, formatRoleForDisplay } from "@/services/employeeService";
+import { updateUserRole } from "@/services/authService";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -70,6 +71,7 @@ type RoleType = 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin';
 const UserManagement = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -96,22 +98,32 @@ const UserManagement = () => {
     return true;
   });
 
-  const handleRoleChange = async (userId: string, newRole: RoleType) => {
-    try {
-      // This would call an actual API to update user roles
-      // await updateUserRole({ userId, role: newRole });
+  // Role update mutation
+  const roleUpdateMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: RoleType }) => 
+      updateUserRole({ userId, role }),
+    onSuccess: (updatedUser) => {
       toast({
         title: "Role updated",
-        description: "User role has been updated successfully.",
+        description: `User role has been updated to ${formatRoleForDisplay(updatedUser.role || 'employee')}.`,
       });
+      // Invalidate and refetch the employees data
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       refetch();
-    } catch (error) {
+    },
+    onError: (error) => {
+      console.error('Role update error:', error);
       toast({
         title: "Error",
-        description: "Failed to update user role.",
+        description: error instanceof Error ? error.message : "Failed to update user role.",
         variant: "destructive",
       });
     }
+  });
+
+  const handleRoleChange = async (userId: string, newRole: RoleType) => {
+    console.log('Updating role for user:', userId, 'to:', newRole);
+    roleUpdateMutation.mutate({ userId, role: newRole });
   };
 
   const getRoleColor = (role: string) => {
@@ -168,7 +180,7 @@ const UserManagement = () => {
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
             <SelectItem value="employee">Employee</SelectItem>
-            <SelectItem value="manager">Manager</SelectItem>
+            <SelectItem value="dept_manager">Department Manager</SelectItem>
             <SelectItem value="hr_admin">HR Admin</SelectItem>
             <SelectItem value="system_admin">System Admin</SelectItem>
           </SelectContent>
@@ -182,7 +194,7 @@ const UserManagement = () => {
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="on-leave">On Leave</SelectItem>
           </SelectContent>
         </Select>
 
@@ -266,32 +278,32 @@ const UserManagement = () => {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" disabled={roleUpdateMutation.isPending}>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           onClick={() => handleRoleChange(employee.id, 'employee')}
-                          disabled={employee.role === 'employee'}
+                          disabled={employee.role === 'employee' || roleUpdateMutation.isPending}
                         >
                           Set as Employee
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleRoleChange(employee.id, 'dept_manager')}
-                          disabled={employee.role === 'dept_manager'}
+                          disabled={employee.role === 'dept_manager' || roleUpdateMutation.isPending}
                         >
                           Set as Dept Manager
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleRoleChange(employee.id, 'hr_admin')}
-                          disabled={employee.role === 'hr_admin'}
+                          disabled={employee.role === 'hr_admin' || roleUpdateMutation.isPending}
                         >
                           Set as HR Admin
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleRoleChange(employee.id, 'system_admin')}
-                          disabled={employee.role === 'system_admin'}
+                          disabled={employee.role === 'system_admin' || roleUpdateMutation.isPending}
                         >
                           Set as System Admin
                         </DropdownMenuItem>
