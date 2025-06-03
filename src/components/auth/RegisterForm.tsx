@@ -46,7 +46,7 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Create form with dynamic schema
+  // Create form with initial schema
   const form = useForm<z.infer<ReturnType<typeof createFormSchema>>>({
     resolver: zodResolver(createFormSchema(isExistingUser)),
     defaultValues: {
@@ -57,23 +57,6 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       phone: ""
     },
   });
-
-  // Re-create form when user type changes
-  const updateFormSchema = (existingUser: boolean) => {
-    setIsExistingUser(existingUser);
-    
-    // Get current form values
-    const currentValues = form.getValues();
-    
-    // Create new form with updated schema
-    const newForm = useForm<z.infer<ReturnType<typeof createFormSchema>>>({
-      resolver: zodResolver(createFormSchema(existingUser)),
-      defaultValues: currentValues,
-    });
-    
-    // Replace form methods
-    Object.assign(form, newForm);
-  };
 
   const handleEmailBlur = async () => {
     console.log('🔍 Email blur handler triggered');
@@ -92,18 +75,55 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       
       if (userCheck.exists && !userCheck.hasPassword) {
         console.log('👤 Existing user without password found');
-        updateFormSchema(true);
+        
+        // Store current form values
+        const currentValues = form.getValues();
+        
+        // Update state
+        setIsExistingUser(true);
         setExistingUserName(userCheck.name || "");
-        // Clear name field since it's not needed for existing users
-        form.setValue('name', '');
+        
+        // Reset form with new schema and preserved values
+        form.reset({
+          name: "", // Clear name for existing users
+          email: currentValues.email,
+          password: "",
+          confirmPassword: "",
+          phone: currentValues.phone || ""
+        });
+        
+        // Update the resolver with new schema
+        const newResolver = zodResolver(createFormSchema(true));
+        form.setValue = form.setValue;
+        (form as any)._resolver = newResolver;
+        
         toast({
           title: "Employee found",
           description: `Welcome ${userCheck.name}! Please set your password to complete your account setup.`,
         });
       } else if (userCheck.exists && userCheck.hasPassword) {
         console.log('👤 User with password already exists');
-        updateFormSchema(false);
+        
+        // Store current form values
+        const currentValues = form.getValues();
+        
+        // Update state
+        setIsExistingUser(false);
         setExistingUserName("");
+        
+        // Reset form with new schema
+        form.reset({
+          name: currentValues.name || "",
+          email: currentValues.email,
+          password: "",
+          confirmPassword: "",
+          phone: currentValues.phone || ""
+        });
+        
+        // Update the resolver with new schema
+        const newResolver = zodResolver(createFormSchema(false));
+        (form as any)._resolver = newResolver;
+        
         toast({
           variant: "destructive",
           title: "Account exists",
@@ -112,12 +132,30 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
         return;
       } else {
         console.log('🆕 New user - can proceed with registration');
-        updateFormSchema(false);
+        
+        // Store current form values
+        const currentValues = form.getValues();
+        
+        // Update state
+        setIsExistingUser(false);
         setExistingUserName("");
+        
+        // Reset form with new schema
+        form.reset({
+          name: currentValues.name || "",
+          email: currentValues.email,
+          password: "",
+          confirmPassword: "",
+          phone: currentValues.phone || ""
+        });
+        
+        // Update the resolver with new schema
+        const newResolver = zodResolver(createFormSchema(false));
+        (form as any)._resolver = newResolver;
       }
     } catch (error) {
       console.error('❌ Error checking user:', error);
-      updateFormSchema(false);
+      setIsExistingUser(false);
       setExistingUserName("");
       // Don't show error toast for network issues during email check
       // The user can still proceed with registration
