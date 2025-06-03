@@ -34,7 +34,7 @@ const Absences = () => {
   // Fetch team absences if user has permission
   const { data: teamAbsences, isLoading: teamAbsencesLoading } = useQuery({
     queryKey: ['team-absences'],
-    queryFn: () => getAbsences({ department: currentUser?.department }),
+    queryFn: () => getAbsences({ department: currentUser?.departmentName }),
     enabled: canViewAllAbsences,
   });
 
