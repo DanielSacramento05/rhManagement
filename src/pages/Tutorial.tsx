@@ -306,30 +306,6 @@ export default function Tutorial() {
                     </li>
                   </ol>
 
-                  <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-md mt-4">
-                    <p className="font-medium text-blue-700 dark:text-blue-300">Demo Accounts</p>
-                    <p className="text-blue-600 dark:text-blue-400 text-sm mt-1">
-                      For demonstration purposes, you can use these accounts:
-                    </p>
-                    <div className="mt-2 space-y-2 text-sm">
-                      <div className="flex flex-col sm:flex-row sm:gap-2">
-                        <Badge variant="outline" className="w-fit">Admin</Badge>
-                        <span>Email: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">admin@example.com</code></span>
-                        <span>Password: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">admin123</code></span>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:gap-2">
-                        <Badge variant="outline" className="w-fit">Manager</Badge>
-                        <span>Email: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">manager1@example.com</code></span>
-                        <span>Password: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">manager123</code></span>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:gap-2">
-                        <Badge variant="outline" className="w-fit">Employee</Badge>
-                        <span>Email: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">employee1@example.com</code></span>
-                        <span>Password: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">employee123</code></span>
-                      </div>
-                    </div>
-                  </div>
-
                   <h3 className="text-lg font-semibold pt-4">Logging In</h3>
                   <ol className="list-decimal pl-6 space-y-3">
                     <li>
@@ -534,7 +510,7 @@ export default function Tutorial() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          
           <TabsContent value="timeclock">
             <Card>
               <CardHeader>
