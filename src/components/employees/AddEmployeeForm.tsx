@@ -1,10 +1,14 @@
+
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -20,9 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { createEmployee } from "@/services/employeeService";
 import { useToast } from "@/hooks/use-toast";
 import { Department } from "@/types";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -30,9 +40,7 @@ const formSchema = z.object({
   department: z.string().min(1, { message: "Department is required" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   phone: z.string().min(5, { message: "Phone number is required" }),
-  status: z.enum(["active", "remote", "on-leave"], { 
-    required_error: "Status is required" 
-  }),
+  hireDate: z.date({ required_error: "Hire date is required" }),
   imageUrl: z.string().url({ message: "Please enter a valid URL" }).optional(),
 });
 
@@ -54,8 +62,8 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
       department: "",
       email: "",
       phone: "",
-      status: "active",
-      imageUrl: "https://randomuser.me/api/portraits/men/1.jpg", // Default image
+      hireDate: new Date(),
+      imageUrl: "https://randomuser.me/api/portraits/men/1.jpg",
     },
   });
 
@@ -69,9 +77,9 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
         department: values.department,
         email: values.email,
         phone: values.phone,
-        status: values.status,
+        status: "active" as const,
         imageUrl: values.imageUrl || "https://randomuser.me/api/portraits/men/1.jpg",
-        hireDate: new Date().toISOString().split('T')[0],
+        hireDate: values.hireDate.toISOString().split('T')[0],
       };
       
       await createEmployee(newEmployee);
@@ -81,7 +89,6 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
         description: "Employee has been added successfully.",
       });
       
-      // Invalidate and refetch employees query
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       
       onClose();
@@ -190,25 +197,42 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
         
         <FormField
           control={form.control}
-          name="status"
+          name="hireDate"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <Select 
-                onValueChange={field.onChange} 
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="active">In Office</SelectItem>
-                  <SelectItem value="remote">Remote</SelectItem>
-                  <SelectItem value="on-leave">On Leave</SelectItem>
-                </SelectContent>
-              </Select>
+            <FormItem className="flex flex-col">
+              <FormLabel>Hire Date</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
