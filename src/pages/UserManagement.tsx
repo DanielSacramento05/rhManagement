@@ -126,7 +126,7 @@ const UserManagement = () => {
 
   // Status update mutation
   const statusUpdateMutation = useMutation({
-    mutationFn: ({ userId, status }: { userId: string; status: string }) => 
+    mutationFn: ({ userId, status }: { userId: string; status: 'active' | 'on-leave' | 'remote' | 'inactive' | 'out-of-office' }) => 
       updateEmployee(userId, { status }),
     onSuccess: () => {
       toast({
@@ -151,7 +151,7 @@ const UserManagement = () => {
     roleUpdateMutation.mutate({ userId, role: newRole });
   };
 
-  const handleStatusChange = (userId: string, newStatus: string) => {
+  const handleStatusChange = (userId: string, newStatus: 'active' | 'on-leave' | 'remote' | 'inactive' | 'out-of-office') => {
     statusUpdateMutation.mutate({ userId, status: newStatus });
   };
 
