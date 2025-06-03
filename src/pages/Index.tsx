@@ -150,10 +150,11 @@ const Index = () => {
         </div>
       )}
 
-      <div className="animate-in">
+      {/* Page Title Section */}
+      <div className="w-full mb-6 animate-in">
         <h1 className="text-3xl font-semibold tracking-tight mb-1">Dashboard</h1>
         <p className="text-muted-foreground mb-2">Welcome back, {getRoleDisplayName(currentUser?.role || 'employee')}.</p>
-        <p className="text-muted-foreground mb-6">Manage your HR tasks and stay updated with company information.</p>
+        <p className="text-muted-foreground">Manage your HR tasks and stay updated with company information.</p>
       </div>
 
       {/* Content grid now using full width */}
