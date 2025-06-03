@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -52,14 +53,22 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
   });
 
   const handleEmailBlur = async () => {
+    console.log('🔍 Email blur handler triggered');
     const email = form.getValues('email');
-    if (!email || !email.includes('@')) return;
+    console.log('📧 Email value:', email);
+    
+    if (!email || !email.includes('@')) {
+      console.log('⚠️ Invalid email, skipping check');
+      return;
+    }
 
     try {
+      console.log('🔄 Checking if user exists...');
       const userCheck = await checkUserExists(email);
-      console.log('User check result:', userCheck);
+      console.log('✅ User check result:', userCheck);
       
       if (userCheck.exists && !userCheck.hasPassword) {
+        console.log('👤 Existing user without password found');
         setIsExistingUser(true);
         setExistingUserName(userCheck.name || "");
         // Clear name field since it's not needed for existing users
@@ -69,6 +78,7 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
           description: `Welcome ${userCheck.name}! Please set your password to complete your account setup.`,
         });
       } else if (userCheck.exists && userCheck.hasPassword) {
+        console.log('👤 User with password already exists');
         setIsExistingUser(false);
         setExistingUserName("");
         toast({
@@ -78,11 +88,12 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
         });
         return;
       } else {
+        console.log('🆕 New user - can proceed with registration');
         setIsExistingUser(false);
         setExistingUserName("");
       }
     } catch (error) {
-      console.error('Error checking user:', error);
+      console.error('❌ Error checking user:', error);
       setIsExistingUser(false);
       setExistingUserName("");
       // Don't show error toast for network issues during email check
@@ -91,6 +102,10 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    console.log('🚀 Form submission started');
+    console.log('📝 Form values:', values);
+    console.log('👤 Is existing user:', isExistingUser);
+    
     setIsLoading(true);
     
     try {
@@ -102,8 +117,9 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
           email: values.email,
           password: values.password
         };
-        console.log('Setting password for existing user:', setPasswordData);
+        console.log('🔑 Setting password for existing user:', setPasswordData);
         response = await setPassword(setPasswordData);
+        console.log('✅ Set password response:', response);
       } else {
         // For new users, send all registration data
         const registrationData: RegisterCredentials = {
@@ -112,8 +128,9 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
           password: values.password,
           phone: values.phone || ""
         };
-        console.log('Registering new user:', registrationData);
+        console.log('📝 Registering new user:', registrationData);
         response = await registerUser(registrationData);
+        console.log('✅ Registration response:', response);
       }
       
       const userData: AuthResponse = {
@@ -124,6 +141,7 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
         }
       };
       
+      console.log('💾 Saving user to localStorage:', userData);
       saveUserToLocalStorage(userData);
       
       toast({
@@ -133,15 +151,18 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
           : "Please complete your profile setup.",
       });
       
+      console.log('🔄 Updating auth state');
       updateAuthState();
       
       if (isExistingUser) {
+        console.log('🏠 Navigating to home page');
         navigate('/');
       } else {
+        console.log('👤 Navigating to profile setup');
         navigate('/profile-setup');
       }
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("❌ Registration error:", error);
       
       let errorMessage = "Something went wrong. Please try again.";
       if (error instanceof Error) {
@@ -158,8 +179,16 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
         description: errorMessage,
       });
     } finally {
+      console.log('🏁 Form submission finished, setting loading to false');
       setIsLoading(false);
     }
+  };
+
+  const handleButtonClick = () => {
+    console.log('🖱️ Submit button clicked!');
+    console.log('⏳ Current loading state:', isLoading);
+    console.log('📋 Form is valid:', form.formState.isValid);
+    console.log('❌ Form errors:', form.formState.errors);
   };
 
   return (
@@ -259,6 +288,7 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
             type="submit" 
             className="w-full" 
             disabled={isLoading}
+            onClick={handleButtonClick}
           >
             {isLoading ? (
               <div className="flex items-center">

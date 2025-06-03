@@ -1,4 +1,3 @@
-
 import { apiRequest } from './api';
 import { User, LoginCredentials, RegisterCredentials, SetPasswordCredentials, UpdateRoleRequest } from '@/types/auth';
 
@@ -16,14 +15,17 @@ export interface CheckUserResponse {
 }
 
 export async function checkUserExists(email: string): Promise<CheckUserResponse> {
-  return await apiRequest<CheckUserResponse, { email: string }>('/auth/check-user', 'POST', { email });
+  console.log('🔍 AuthService: Checking if user exists for email:', email);
+  const response = await apiRequest<CheckUserResponse, { email: string }>('/auth/check-user', 'POST', { email });
+  console.log('✅ AuthService: Check user response:', response);
+  return response;
 }
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   try {
-    console.log('Login attempt with:', credentials.email);
+    console.log('🔐 AuthService: Login attempt with:', credentials.email);
     const response = await apiRequest<AuthResponse, LoginCredentials>('/auth/login', 'POST', credentials);
-    console.log('Login response received:', response);
+    console.log('✅ AuthService: Login response received:', response);
     
     // Check if the user status is inactive/deactivated
     if (response?.user?.status === 'inactive') {
@@ -36,32 +38,38 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
     
     return response;
   } catch (error) {
-    console.error('Login error details:', error);
+    console.error('❌ AuthService: Login error details:', error);
     throw error;
   }
 }
 
 export async function setPassword(credentials: SetPasswordCredentials): Promise<AuthResponse> {
-  console.log('Setting password for existing user:', credentials);
+  console.log('🔑 AuthService: Setting password for existing user:', credentials);
   const response = await apiRequest<AuthResponse, SetPasswordCredentials>('/auth/set-password', 'POST', credentials);
+  console.log('✅ AuthService: Set password response:', response);
+  
   if (response && response.token) {
     // Ensure the user has the out-of-office status
     if (response.user && !response.user.status) {
       response.user.status = 'out-of-office';
     }
+    console.log('💾 AuthService: Saving user to localStorage after password set');
     saveUserToLocalStorage(response);
   }
   return response;
 }
 
 export async function register(credentials: RegisterCredentials): Promise<AuthResponse> {
-  console.log('Registering new user:', credentials);
+  console.log('📝 AuthService: Registering new user:', credentials);
   const response = await apiRequest<AuthResponse, RegisterCredentials>('/auth/register', 'POST', credentials);
+  console.log('✅ AuthService: Registration response:', response);
+  
   if (response && response.token) {
     // Ensure the user has the out-of-office status
     if (response.user && !response.user.status) {
       response.user.status = 'out-of-office';
     }
+    console.log('💾 AuthService: Saving user to localStorage after registration');
     saveUserToLocalStorage(response);
   }
   return response;
@@ -95,7 +103,7 @@ export function isAuthenticated(): boolean {
 }
 
 export function saveUserToLocalStorage(authResponse: AuthResponse): void {
-  console.log('Saving user to localStorage:', authResponse);
+  console.log('💾 AuthService: Saving user to localStorage:', authResponse);
   localStorage.setItem('user', JSON.stringify({
     id: authResponse.user.id,
     name: authResponse.user.name,
@@ -108,6 +116,7 @@ export function saveUserToLocalStorage(authResponse: AuthResponse): void {
     token: authResponse.token,
     isAuthenticated: true
   }));
+  console.log('✅ AuthService: User saved to localStorage successfully');
 }
 
 export function logout(): void {
