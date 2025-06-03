@@ -1,5 +1,6 @@
 
 
+
 from flask import Blueprint, request, jsonify
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -48,7 +49,7 @@ def set_password():
                 'name': user.name,
                 'role': user.role,
                 'status': user.status or 'out-of-office',
-                'departmentId': user.department_id,
+                'departmentId': None,  # No department_id field in model
                 'departmentName': user.department,
                 'managerId': user.manager_id
             },
@@ -110,7 +111,7 @@ def register():
                 'name': new_user.name,
                 'role': new_user.role,
                 'status': 'out-of-office',
-                'departmentId': new_user.department_id,
+                'departmentId': None,  # No department_id field in model
                 'departmentName': new_user.department,
                 'managerId': new_user.manager_id
             },
@@ -208,10 +209,11 @@ def login():
             'name': user.name,
             'role': user_role,
             'status': display_status,
-            'departmentId': user.department_id,
+            'departmentId': None,  # No department_id field in model
             'departmentName': user.department,
             'managerId': user.manager_id
         },
         'token': token
     }), 200
+
 
