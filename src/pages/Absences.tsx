@@ -8,18 +8,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RequestTimeOffForm } from "@/components/absences/RequestTimeOffForm";
 import { Plus, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { getAbsences } from "@/services/absenceService";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getAbsences, updateAbsenceStatus } from "@/services/absenceService";
 import { format, parseISO } from "date-fns";
 import { getCurrentUser } from "@/services/authService";
 import { hasPermission } from "@/services/permissionService";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { toast } from "sonner";
 
 const Absences = () => {
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   
   const currentUser = getCurrentUser();
   const canViewAllAbsences = hasPermission('absences', 'read', 'department');
@@ -37,6 +39,27 @@ const Absences = () => {
     queryFn: () => getAbsences({ department: currentUser?.departmentName }),
     enabled: canViewAllAbsences,
   });
+
+  // Handle approve/decline actions
+  const handleStatusUpdate = async (absenceId: string, status: 'approved' | 'declined') => {
+    if (!currentUser?.id) {
+      toast.error("User not found");
+      return;
+    }
+
+    try {
+      await updateAbsenceStatus(absenceId, status, currentUser.id);
+      
+      // Invalidate and refetch queries to update the UI
+      queryClient.invalidateQueries({ queryKey: ['absences'] });
+      queryClient.invalidateQueries({ queryKey: ['team-absences'] });
+      
+      toast.success(`Absence request ${status} successfully`);
+    } catch (error) {
+      console.error(`Error ${status} absence:`, error);
+      toast.error(`Failed to ${status === 'approved' ? 'approve' : 'decline'} absence request`);
+    }
+  };
 
   // Filter absences based on status
   const filterAbsencesByStatus = (absences: any[] = []) => {
@@ -110,6 +133,7 @@ const Absences = () => {
                     size="sm" 
                     variant="outline" 
                     className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                    onClick={() => handleStatusUpdate(absence.id, 'approved')}
                   >
                     <CheckCircle className="h-4 w-4" />
                     Approve
@@ -118,6 +142,7 @@ const Absences = () => {
                     size="sm" 
                     variant="outline" 
                     className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleStatusUpdate(absence.id, 'declined')}
                   >
                     <XCircle className="h-4 w-4" />
                     Decline
@@ -199,22 +224,11 @@ const Absences = () => {
           )}
         </div>
       ) : (
-        /* For non-employees: Show tabs with My Requests and Team Requests */
-        <Tabs defaultValue="my-requests" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="my-requests">My Requests</TabsTrigger>
+        /* For non-employees: Show tabs with Team Requests */
+        <Tabs defaultValue="team-requests" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-1">
             {canViewAllAbsences && <TabsTrigger value="team-requests">Team Requests</TabsTrigger>}
           </TabsList>
-          
-          <TabsContent value="my-requests">
-            <div className="space-y-4">
-              {renderAbsenceCards(
-                filteredUserAbsences, 
-                userAbsencesLoading, 
-                "You don't have any absence requests yet"
-              )}
-            </div>
-          </TabsContent>
           
           {canViewAllAbsences && (
             <TabsContent value="team-requests">
