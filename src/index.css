@@ -134,8 +134,8 @@
 @media (max-width: 640px) {
   .page-container {
     @apply px-2 py-3;
-    /* Ensure proper spacing on mobile too */
-    padding-top: 5rem;
+    /* Increase top padding significantly for mobile to account for header */
+    padding-top: 6rem;
   }
   
   .dashboard-grid {
