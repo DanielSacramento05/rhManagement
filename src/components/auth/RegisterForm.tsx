@@ -58,6 +58,8 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
 
     try {
       const userCheck = await checkUserExists(email);
+      console.log('User check result:', userCheck);
+      
       if (userCheck.exists && !userCheck.hasPassword) {
         setIsExistingUser(true);
         setExistingUserName(userCheck.name || "");
@@ -73,7 +75,7 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
         toast({
           variant: "destructive",
           title: "Account exists",
-          description: "This email is already registered. Please use the login form instead.",
+          description: "This email is already registered with a password. Please use the login form instead.",
         });
         return;
       } else {
@@ -82,6 +84,8 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       }
     } catch (error) {
       console.error('Error checking user:', error);
+      setIsExistingUser(false);
+      setExistingUserName("");
       // Don't show error toast for network issues during email check
       // The user can still proceed with registration
     }
@@ -91,20 +95,27 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
     setIsLoading(true);
     
     try {
-      // For existing users, only send email and password
-      const registrationData: RegisterCredentials | SetPasswordCredentials = isExistingUser 
-        ? {
-            email: values.email,
-            password: values.password
-          } as SetPasswordCredentials
-        : {
-            name: values.name!,
-            email: values.email,
-            password: values.password,
-            phone: values.phone
-          } as RegisterCredentials;
-
-      const response = await registerUser(registrationData);
+      let response: AuthResponse;
+      
+      if (isExistingUser) {
+        // For existing users setting password, only send email and password
+        const setPasswordData: SetPasswordCredentials = {
+          email: values.email,
+          password: values.password
+        };
+        console.log('Setting password for existing user:', setPasswordData);
+        response = await registerUser(setPasswordData);
+      } else {
+        // For new users, send all registration data
+        const registrationData: RegisterCredentials = {
+          name: values.name!,
+          email: values.email,
+          password: values.password,
+          phone: values.phone || ""
+        };
+        console.log('Registering new user:', registrationData);
+        response = await registerUser(registrationData);
+      }
       
       const userData: AuthResponse = {
         ...response,
@@ -144,7 +155,7 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       
       toast({
         variant: "destructive",
-        title: "Registration failed",
+        title: isExistingUser ? "Password setup failed" : "Registration failed",
         description: errorMessage,
       });
     } finally {
@@ -253,7 +264,7 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
             {isLoading ? (
               <div className="flex items-center">
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                <span>{isExistingUser ? "Setting Password" : "Creating Account"}</span>
+                <span>{isExistingUser ? "Setting Password..." : "Creating Account..."}</span>
               </div>
             ) : (
               <div className="flex items-center">
