@@ -1,49 +1,67 @@
-
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+  DialogDescription 
+} from "@/components/ui/dialog";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from "@/components/ui/select";
-import { Shield, Search, UserPlus, MoreHorizontal, User } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { 
+  Search, 
+  UserPlus, 
+  Edit, 
+  Trash2, 
+  Shield, 
+  Mail, 
+  Phone,
+  Calendar
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { getEmployees } from "@/services/employeeService";
-import { updateUserRole } from "@/services/authService";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { getRoleDisplayName } from "@/services/permissionService";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { format, parseISO } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 type RoleType = 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin';
 
 const UserManagement = () => {
   const { toast } = useToast();
-  const [search, setSearch] = useState("");
+  const isMobile = useIsMobile();
+  const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const { data: employeesData, isLoading, refetch } = useQuery({
-    queryKey: ['employees', search, roleFilter],
+    queryKey: ['employees', searchTerm, roleFilter, statusFilter],
     queryFn: () => getEmployees({ 
-      search: search || undefined,
+      search: searchTerm || undefined,
       pageSize: 100 // Get more users for management view
     }),
   });
@@ -52,6 +70,9 @@ const UserManagement = () => {
 
   const filteredEmployees = employees.filter(employee => {
     if (roleFilter !== "all" && employee.role !== roleFilter) {
+      return false;
+    }
+    if (statusFilter !== "all" && employee.status !== statusFilter) {
       return false;
     }
     return true;
@@ -101,153 +122,169 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Shield className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage user accounts, roles, and permissions</p>
+    <div className="page-container pb-16">
+      {/* Mobile Sidebar Toggle Button - Only visible on mobile */}
+      {isMobile && (
+        <div className="fixed bottom-4 right-4 z-50 shadow-lg rounded-full">
+          <SidebarTrigger className="bg-primary text-white h-12 w-12 flex items-center justify-center rounded-full shadow-lg" />
         </div>
-      </div>
+      )}
 
-      {/* Filters and Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle>User Directory</CardTitle>
-          <CardDescription>
-            Search and manage all user accounts in the system
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search users by name or email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="system_admin">System Admin</SelectItem>
-                <SelectItem value="hr_admin">HR Admin</SelectItem>
-                <SelectItem value="dept_manager">Department Manager</SelectItem>
-                <SelectItem value="employee">Employee</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button>
-              <UserPlus className="mr-2 h-4 w-4" />
+      {/* Search and Filters */}
+      <div className="flex flex-col lg:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-full lg:w-48">
+            <SelectValue placeholder="Filter by role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Roles</SelectItem>
+            <SelectItem value="employee">Employee</SelectItem>
+            <SelectItem value="manager">Manager</SelectItem>
+            <SelectItem value="hr_admin">HR Admin</SelectItem>
+            <SelectItem value="system_admin">System Admin</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full lg:w-48">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center gap-2 w-full lg:w-auto">
+              <UserPlus className="h-4 w-4" />
               Add User
             </Button>
-          </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+              <DialogDescription>
+                Create a new user account with appropriate permissions.
+              </DialogDescription>
+            </DialogHeader>
+            {/* Add user form */}
+          </DialogContent>
+        </Dialog>
+      </div>
 
-          {/* Users Table */}
-          <div className="border rounded-md">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+      {/* Users Table */}
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Department</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  Loading users...
+                </TableCell>
+              </TableRow>
+            ) : filteredEmployees.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  No users found matching your criteria
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredEmployees.map((employee) => (
+                <TableRow key={employee.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={employee.imageUrl} />
+                        <AvatarFallback>
+                          {employee.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{employee.name}</p>
+                        <p className="text-sm text-muted-foreground">{employee.email}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getRoleColor(employee.role)}>
+                      {getRoleDisplayName(employee.role)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{employee.department}</p>
+                      <p className="text-sm text-muted-foreground">{employee.position}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusColor(employee.status)}>
+                      {employee.status || 'active'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleRoleChange(employee.id, 'employee')}
+                          disabled={employee.role === 'employee'}
+                        >
+                          Set as Employee
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleRoleChange(employee.id, 'dept_manager')}
+                          disabled={employee.role === 'dept_manager'}
+                        >
+                          Set as Dept Manager
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleRoleChange(employee.id, 'hr_admin')}
+                          disabled={employee.role === 'hr_admin'}
+                        >
+                          Set as HR Admin
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleRoleChange(employee.id, 'system_admin')}
+                          disabled={employee.role === 'system_admin'}
+                        >
+                          Set as System Admin
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      Loading users...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredEmployees.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      No users found matching your criteria
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredEmployees.map((employee) => (
-                    <TableRow key={employee.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={employee.imageUrl} />
-                            <AvatarFallback>
-                              {employee.name.substring(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{employee.name}</p>
-                            <p className="text-sm text-muted-foreground">{employee.email}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleColor(employee.role)}>
-                          {getRoleDisplayName(employee.role)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{employee.department}</p>
-                          <p className="text-sm text-muted-foreground">{employee.position}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(employee.status)}>
-                          {employee.status || 'active'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleRoleChange(employee.id, 'employee')}
-                              disabled={employee.role === 'employee'}
-                            >
-                              Set as Employee
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleRoleChange(employee.id, 'dept_manager')}
-                              disabled={employee.role === 'dept_manager'}
-                            >
-                              Set as Dept Manager
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleRoleChange(employee.id, 'hr_admin')}
-                              disabled={employee.role === 'hr_admin'}
-                            >
-                              Set as HR Admin
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleRoleChange(employee.id, 'system_admin')}
-                              disabled={employee.role === 'system_admin'}
-                            >
-                              Set as System Admin
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* User Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

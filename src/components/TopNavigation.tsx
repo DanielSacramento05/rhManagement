@@ -1,5 +1,4 @@
 
-
 import { useLocation } from "react-router-dom";
 import { ProfileMenu } from "./ProfileMenu";
 import { 
@@ -48,7 +47,7 @@ export function TopNavigation() {
   return (
     <div className="fixed top-0 left-0 right-0 w-full h-16 bg-background border-b border-border flex items-center justify-between px-4 z-40 shadow-sm md:pl-[calc(16rem+1rem)]">
       <div className="flex items-center gap-3">
-        <IconComponent className="h-6 w-6 text-foreground" />
+        <IconComponent className="h-6 w-6 text-foreground dark:text-white" />
         <h1 className="text-xl font-semibold text-foreground">
           {pageInfo.title}
         </h1>
@@ -57,4 +56,3 @@ export function TopNavigation() {
     </div>
   );
 }
-
