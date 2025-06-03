@@ -11,7 +11,10 @@ import {
   UserPlus, 
   Home, 
   Pencil,
-  HelpCircle
+  HelpCircle,
+  Clock,
+  Megaphone,
+  Settings
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,6 +88,16 @@ export default function Tutorial() {
                     </div>
                   </TabsTrigger>
                   <TabsTrigger
+                    value="timeclock"
+                    className="justify-start"
+                    onClick={() => handleTabChange("timeclock")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>Time Clock</span>
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="absences"
                     className="justify-start"
                     onClick={() => handleTabChange("absences")}
@@ -105,6 +118,16 @@ export default function Tutorial() {
                     </div>
                   </TabsTrigger>
                   <TabsTrigger
+                    value="announcements"
+                    className="justify-start"
+                    onClick={() => handleTabChange("announcements")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Megaphone className="h-4 w-4" />
+                      <span>Announcements</span>
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="profile"
                     className="justify-start"
                     onClick={() => handleTabChange("profile")}
@@ -112,6 +135,16 @@ export default function Tutorial() {
                     <div className="flex items-center gap-2">
                       <Pencil className="h-4 w-4" />
                       <span>User Profile</span>
+                    </div>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="admin"
+                    className="justify-start"
+                    onClick={() => handleTabChange("admin")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      <span>Admin Features</span>
                     </div>
                   </TabsTrigger>
                 </TabsList>
@@ -153,8 +186,9 @@ export default function Tutorial() {
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold">Welcome to the HR Management System</h3>
                   <p>
-                    This application helps organizations manage their employees, track absences, and conduct performance reviews.
-                    It provides a comprehensive suite of tools for human resource management tasks.
+                    This comprehensive application helps organizations manage their employees, track time, 
+                    handle absences, conduct performance reviews, and maintain communication through announcements.
+                    It provides a complete suite of tools for modern human resource management.
                   </p>
                   <div className="bg-muted p-4 rounded-md flex items-start gap-3 mt-4">
                     <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
@@ -171,36 +205,44 @@ export default function Tutorial() {
                   <ul className="list-disc pl-6 space-y-2">
                     <li>
                       <span className="font-medium">Employee Management</span>
-                      <p className="text-muted-foreground">View and manage employee information, add new employees, and deactivate former employees.</p>
+                      <p className="text-muted-foreground">Complete employee lifecycle management with profiles, departments, and status tracking.</p>
                     </li>
                     <li>
-                      <span className="font-medium">Absence Tracking</span>
-                      <p className="text-muted-foreground">Review and manage employee time off requests, vacations, and sick leave.</p>
+                      <span className="font-medium">Time Clock System</span>
+                      <p className="text-muted-foreground">Digital time tracking with clock-in/out functionality and comprehensive reporting.</p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Absence Management</span>
+                      <p className="text-muted-foreground">Streamlined time-off requests, approvals, and calendar integration.</p>
                     </li>
                     <li>
                       <span className="font-medium">Performance Reviews</span>
-                      <p className="text-muted-foreground">Conduct and track employee performance reviews and goal-setting.</p>
+                      <p className="text-muted-foreground">Structured performance evaluations with goal setting and progress tracking.</p>
                     </li>
                     <li>
-                      <span className="font-medium">User Profiles</span>
-                      <p className="text-muted-foreground">Manage your own profile information and account settings.</p>
+                      <span className="font-medium">Announcements</span>
+                      <p className="text-muted-foreground">Company-wide communication and important notifications management.</p>
+                    </li>
+                    <li>
+                      <span className="font-medium">User Management</span>
+                      <p className="text-muted-foreground">Role-based access control and user administration.</p>
                     </li>
                   </ul>
                   
-                  <h3 className="text-lg font-semibold pt-4">User Roles</h3>
-                  <p>The system supports different user roles with varying permissions:</p>
+                  <h3 className="text-lg font-semibold pt-4">User Roles & Permissions</h3>
+                  <p>The system supports hierarchical user roles with specific permissions:</p>
                   <ul className="list-disc pl-6 space-y-2">
                     <li>
                       <span className="font-medium">Admin</span>
-                      <p className="text-muted-foreground">Full system access including employee management, department configuration, and system settings.</p>
+                      <p className="text-muted-foreground">Full system access including user management, system configuration, and all employee operations.</p>
                     </li>
                     <li>
                       <span className="font-medium">Manager</span>
-                      <p className="text-muted-foreground">Can manage team members, approve absences, and conduct performance reviews.</p>
+                      <p className="text-muted-foreground">Team management capabilities including approving absences, conducting reviews, and viewing team analytics.</p>
                     </li>
                     <li>
                       <span className="font-medium">Employee</span>
-                      <p className="text-muted-foreground">Can view their own information, request time off, and participate in performance reviews.</p>
+                      <p className="text-muted-foreground">Self-service features including time tracking, absence requests, and profile management.</p>
                     </li>
                   </ul>
 
@@ -348,6 +390,7 @@ export default function Tutorial() {
                           <li>Employees</li>
                           <li>Absences</li>
                           <li>Performance</li>
+                          <li>Announcements</li>
                         </ul>
                       </p>
                     </li>
@@ -482,6 +525,114 @@ export default function Tutorial() {
                   <div className="pt-4 flex justify-between">
                     <Button variant="outline" onClick={() => handleTabChange("dashboard")}>
                       Previous: Dashboard
+                    </Button>
+                    <Button onClick={() => handleTabChange("timeclock")}>
+                      Next: Time Clock
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="timeclock">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-6 w-6 text-primary" />
+                  <CardTitle>Time Clock System</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Digital Time Tracking</h3>
+                  <p>
+                    The Time Clock system provides accurate time tracking for all employees with 
+                    digital clock-in/out functionality and comprehensive reporting capabilities.
+                  </p>
+                  
+                  <h3 className="text-lg font-semibold">Key Features</h3>
+                  <ul className="list-disc pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">Digital clock-in/out</span>
+                      <p className="text-muted-foreground">
+                        Simple one-click time tracking with automatic timestamp recording.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Real-time status updates</span>
+                      <p className="text-muted-foreground">
+                        Employee status automatically updates based on clock-in/out actions:
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Active (In Office)</Badge>
+                          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Remote</Badge>
+                          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">Out of Office</Badge>
+                        </div>
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Time tracking history</span>
+                      <p className="text-muted-foreground">
+                        Complete history of all clock-in/out events with duration calculations.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Reporting and analytics</span>
+                      <p className="text-muted-foreground">
+                        Detailed reports on work hours, attendance patterns, and time analysis.
+                      </p>
+                    </li>
+                  </ul>
+                  
+                  <h3 className="text-lg font-semibold pt-4">How to Use</h3>
+                  <ol className="list-decimal pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">Clock In</span>
+                      <p className="text-muted-foreground">
+                        Click the "Clock In" button when you start work. Your status will automatically 
+                        update to "Active" and the timestamp will be recorded.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Clock Out</span>
+                      <p className="text-muted-foreground">
+                        Click the "Clock Out" button when you finish work. Your status will update 
+                        to "Out of Office" and total work time will be calculated.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">View History</span>
+                      <p className="text-muted-foreground">
+                        Access your time tracking history to review past entries and total hours worked.
+                      </p>
+                    </li>
+                  </ol>
+                  
+                  <h3 className="text-lg font-semibold pt-4">Manager Features</h3>
+                  <ul className="list-disc pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">Team overview</span>
+                      <p className="text-muted-foreground">
+                        View real-time status of all team members and their current activity.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Time reports</span>
+                      <p className="text-muted-foreground">
+                        Generate detailed time reports for individuals or teams across different periods.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Attendance monitoring</span>
+                      <p className="text-muted-foreground">
+                        Track attendance patterns and identify potential issues or trends.
+                      </p>
+                    </li>
+                  </ul>
+
+                  <div className="pt-4 flex justify-between">
+                    <Button variant="outline" onClick={() => handleTabChange("employees")}>
+                      Previous: Managing Employees
                     </Button>
                     <Button onClick={() => handleTabChange("absences")}>
                       Next: Absences
@@ -694,6 +845,118 @@ export default function Tutorial() {
                     <Button variant="outline" onClick={() => handleTabChange("absences")}>
                       Previous: Absences
                     </Button>
+                    <Button onClick={() => handleTabChange("announcements")}>
+                      Next: Announcements
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="announcements">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Megaphone className="h-6 w-6 text-primary" />
+                  <CardTitle>Announcements System</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Company Communication Hub</h3>
+                  <p>
+                    The Announcements system provides a centralized platform for sharing important 
+                    company news, updates, and information with all employees.
+                  </p>
+                  
+                  <h3 className="text-lg font-semibold">Key Features</h3>
+                  <ul className="list-disc pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">Company-wide announcements</span>
+                      <p className="text-muted-foreground">
+                        Broadcast important messages to all employees with priority levels and categorization.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Priority levels</span>
+                      <p className="text-muted-foreground">
+                        Set announcement priority to ensure important messages get proper attention:
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Badge className="bg-red-100 text-red-800 hover:bg-red-200">High Priority</Badge>
+                          <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">Medium Priority</Badge>
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Low Priority</Badge>
+                        </div>
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Rich text formatting</span>
+                      <p className="text-muted-foreground">
+                        Create announcements with formatted text, links, and structured content.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Publication scheduling</span>
+                      <p className="text-muted-foreground">
+                        Schedule announcements for future publication or set expiration dates.
+                      </p>
+                    </li>
+                  </ul>
+                  
+                  <h3 className="text-lg font-semibold pt-4">Employee View</h3>
+                  <ul className="list-disc pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">Dashboard integration</span>
+                      <p className="text-muted-foreground">
+                        Recent announcements appear prominently on the main dashboard.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Announcement archive</span>
+                      <p className="text-muted-foreground">
+                        Access past announcements and search through company communications.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Read status tracking</span>
+                      <p className="text-muted-foreground">
+                        System tracks which announcements you've read for better organization.
+                      </p>
+                    </li>
+                  </ul>
+                  
+                  <h3 className="text-lg font-semibold pt-4">Admin/Manager Functions</h3>
+                  <ul className="list-disc pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">Create announcements</span>
+                      <p className="text-muted-foreground">
+                        Draft and publish company-wide announcements with rich formatting options.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Manage publications</span>
+                      <p className="text-muted-foreground">
+                        Edit, update, or remove existing announcements as needed.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Engagement analytics</span>
+                      <p className="text-muted-foreground">
+                        Track which employees have read announcements and engagement metrics.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Category management</span>
+                      <p className="text-muted-foreground">
+                        Organize announcements by categories like "Policy Updates", "Events", "General News".
+                      </p>
+                    </li>
+                  </ul>
+
+                  <div className="pt-4 flex justify-between">
+                    <Button variant="outline" onClick={() => handleTabChange("performance")}>
+                      Previous: Performance Reviews
+                    </Button>
                     <Button onClick={() => handleTabChange("profile")}>
                       Next: User Profile
                     </Button>
@@ -773,6 +1036,131 @@ export default function Tutorial() {
                   <div className="pt-4 flex justify-between">
                     <Button variant="outline" onClick={() => handleTabChange("performance")}>
                       Previous: Performance Reviews
+                    </Button>
+                    <Button onClick={() => handleTabChange("getting-started")}>
+                      Back to Getting Started
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="admin">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Settings className="h-6 w-6 text-primary" />
+                  <CardTitle>Admin Features</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">System Administration</h3>
+                  <p>
+                    Admin users have access to advanced system management features for configuring 
+                    and maintaining the HR Management System.
+                  </p>
+                  
+                  <h3 className="text-lg font-semibold">User Management</h3>
+                  <ul className="list-disc pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">User role assignment</span>
+                      <p className="text-muted-foreground">
+                        Assign and modify user roles (Admin, Manager, Employee) to control system access.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Account activation/deactivation</span>
+                      <p className="text-muted-foreground">
+                        Enable or disable user accounts while preserving historical data.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Bulk user operations</span>
+                      <p className="text-muted-foreground">
+                        Perform operations on multiple users simultaneously for efficiency.
+                      </p>
+                    </li>
+                  </ul>
+                  
+                  <h3 className="text-lg font-semibold pt-4">System Configuration</h3>
+                  <ul className="list-disc pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">Department management</span>
+                      <p className="text-muted-foreground">
+                        Create, modify, and organize company departments and organizational structure.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">System settings</span>
+                      <p className="text-muted-foreground">
+                        Configure application-wide settings including time zones, work schedules, and policies.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Data management</span>
+                      <p className="text-muted-foreground">
+                        Import/export employee data and maintain data integrity across the system.
+                      </p>
+                    </li>
+                  </ul>
+                  
+                  <h3 className="text-lg font-semibold pt-4">Advanced Reporting</h3>
+                  <ul className="list-disc pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">System analytics</span>
+                      <p className="text-muted-foreground">
+                        Comprehensive analytics dashboard with insights across all HR functions.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Audit trails</span>
+                      <p className="text-muted-foreground">
+                        Track all system changes and user activities for compliance and security.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Custom reports</span>
+                      <p className="text-muted-foreground">
+                        Generate custom reports combining data from multiple system modules.
+                      </p>
+                    </li>
+                  </ul>
+                  
+                  <h3 className="text-lg font-semibold pt-4">Security & Compliance</h3>
+                  <ul className="list-disc pl-6 space-y-3">
+                    <li>
+                      <span className="font-medium">Access control</span>
+                      <p className="text-muted-foreground">
+                        Fine-grained permission management and role-based access controls.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Data privacy</span>
+                      <p className="text-muted-foreground">
+                        GDPR compliance tools and data privacy management features.
+                      </p>
+                    </li>
+                    <li>
+                      <span className="font-medium">Backup and recovery</span>
+                      <p className="text-muted-foreground">
+                        System backup management and data recovery procedures.
+                      </p>
+                    </li>
+                  </ul>
+
+                  <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-md mt-4">
+                    <p className="font-medium text-amber-700 dark:text-amber-300">Admin Access Required</p>
+                    <p className="text-amber-600 dark:text-amber-400 text-sm mt-1">
+                      These features are only available to users with Admin role. Contact your system 
+                      administrator if you need access to these functions.
+                    </p>
+                  </div>
+
+                  <div className="pt-4 flex justify-between">
+                    <Button variant="outline" onClick={() => handleTabChange("profile")}>
+                      Previous: User Profile
                     </Button>
                     <Button onClick={() => handleTabChange("getting-started")}>
                       Back to Getting Started
