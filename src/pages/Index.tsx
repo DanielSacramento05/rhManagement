@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -149,13 +148,6 @@ const Index = () => {
           <SidebarTrigger className="bg-primary text-white h-12 w-12 flex items-center justify-center rounded-full shadow-lg" />
         </div>
       )}
-
-      {/* Page Title Section */}
-      <div className="w-full mb-6 animate-in">
-        <h1 className="text-3xl font-semibold tracking-tight mb-1">Dashboard</h1>
-        <p className="text-muted-foreground mb-2">Welcome back, {getRoleDisplayName(currentUser?.role || 'employee')}.</p>
-        <p className="text-muted-foreground">Manage your HR tasks and stay updated with company information.</p>
-      </div>
 
       {/* Content grid now using full width */}
       <div className="w-full mx-auto">
