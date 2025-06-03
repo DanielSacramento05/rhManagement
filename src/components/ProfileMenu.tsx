@@ -57,16 +57,7 @@ export function ProfileMenu() {
       });
     };
     
-    // Check for updates every second
-    const checkForUpdates = () => {
-      const currentUserData = getCurrentUser();
-      if (currentUserData && JSON.stringify(currentUserData) !== JSON.stringify(user)) {
-        console.log('ProfileMenu: User data changed, updating:', currentUserData);
-        setUser(currentUserData);
-      }
-    };
-    
-    const interval = setInterval(checkForUpdates, 1000);
+    // Only listen to storage events from other tabs/windows
     window.addEventListener('storage', handleStorageChange);
     
     // Refresh employee data every 5 minutes to ensure status is current
@@ -75,11 +66,10 @@ export function ProfileMenu() {
     }, 5 * 60 * 1000);
     
     return () => {
-      clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(refreshInterval);
     };
-  }, [queryClient, user]);
+  }, [queryClient]);
   
   // Force refresh employee data on component mount
   useEffect(() => {
