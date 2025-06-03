@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -67,17 +68,22 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
           description: `Welcome ${userCheck.name}! Please set your password to complete your account setup.`,
         });
       } else if (userCheck.exists && userCheck.hasPassword) {
+        setIsExistingUser(false);
+        setExistingUserName("");
         toast({
           variant: "destructive",
           title: "Account exists",
           description: "This email is already registered. Please use the login form instead.",
         });
+        return;
       } else {
         setIsExistingUser(false);
         setExistingUserName("");
       }
     } catch (error) {
       console.error('Error checking user:', error);
+      // Don't show error toast for network issues during email check
+      // The user can still proceed with registration
     }
   };
 
@@ -126,10 +132,20 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       }
     } catch (error) {
       console.error("Registration error:", error);
+      
+      let errorMessage = "Something went wrong. Please try again.";
+      if (error instanceof Error) {
+        if (error.message.includes("already registered")) {
+          errorMessage = "This email is already registered with a password. Please use the login form instead.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         variant: "destructive",
         title: "Registration failed",
-        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);

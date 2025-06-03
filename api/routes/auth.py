@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify
 import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -21,7 +22,7 @@ def register():
     
     if existing_user:
         # If user exists but has no password, allow them to set one
-        if not hasattr(existing_user, 'password_hash') or not existing_user.password_hash:
+        if not existing_user.password_hash:
             # Set the password for the existing user
             existing_user.password_hash = generate_password_hash(data['password'])
             
@@ -52,7 +53,7 @@ def register():
                 db.session.rollback()
                 return jsonify({'error': str(e)}), 500
         else:
-            return jsonify({'error': 'Email already registered with a password'}), 409
+            return jsonify({'error': 'Email already registered'}), 409
     
     # Create new user if name is provided
     if not data.get('name'):
@@ -111,7 +112,7 @@ def check_user():
     if not user:
         return jsonify({'exists': False, 'hasPassword': False}), 200
     
-    has_password = hasattr(user, 'password_hash') and user.password_hash is not None
+    has_password = user.password_hash is not None and user.password_hash != ''
     
     return jsonify({
         'exists': True,
@@ -129,7 +130,16 @@ def login():
     # Find user by email
     user = Employee.query.filter_by(email=data['email']).first()
     
-    if not user or not hasattr(user, 'password_hash') or not check_password_hash(user.password_hash, data['password']):
+    # Check if user exists and has a password set
+    if not user:
+        return jsonify({'error': 'Invalid email or password'}), 401
+    
+    # Check if user has a password hash set
+    if not user.password_hash:
+        return jsonify({'error': 'No password set for this account. Please use the registration form to set your password.'}), 401
+    
+    # Verify password
+    if not check_password_hash(user.password_hash, data['password']):
         return jsonify({'error': 'Invalid email or password'}), 401
     
     # Check if user is inactive
