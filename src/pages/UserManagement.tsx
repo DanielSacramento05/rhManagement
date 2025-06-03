@@ -337,16 +337,7 @@ const UserManagement = () => {
                           Set as System Admin
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        {employee.status === 'active' ? (
-                          <DropdownMenuItem
-                            onClick={() => handleStatusChange(employee.id, 'inactive')}
-                            disabled={statusUpdateMutation.isPending}
-                            className="text-red-600"
-                          >
-                            <UserX className="h-4 w-4 mr-2" />
-                            Deactivate User
-                          </DropdownMenuItem>
-                        ) : (
+                        {employee.status === 'inactive' ? (
                           <DropdownMenuItem
                             onClick={() => handleStatusChange(employee.id, 'active')}
                             disabled={statusUpdateMutation.isPending}
@@ -354,6 +345,15 @@ const UserManagement = () => {
                           >
                             <UserCheck className="h-4 w-4 mr-2" />
                             Reactivate User
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={() => handleStatusChange(employee.id, 'inactive')}
+                            disabled={statusUpdateMutation.isPending}
+                            className="text-red-600"
+                          >
+                            <UserX className="h-4 w-4 mr-2" />
+                            Deactivate User
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
