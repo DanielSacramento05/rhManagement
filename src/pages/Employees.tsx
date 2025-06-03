@@ -13,6 +13,13 @@ import { hasPermission } from "@/services/permissionService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription 
+} from "@/components/ui/dialog";
 
 const Employees = () => {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -133,10 +140,20 @@ const Employees = () => {
       )}
 
       {/* Add employee form modal */}
-      <AddEmployeeForm 
-        departments={departments} 
-        onClose={() => setShowAddForm(false)} 
-      />
+      <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Employee</DialogTitle>
+            <DialogDescription>
+              Create a new employee account with the required information.
+            </DialogDescription>
+          </DialogHeader>
+          <AddEmployeeForm 
+            departments={departments} 
+            onClose={() => setShowAddForm(false)} 
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
