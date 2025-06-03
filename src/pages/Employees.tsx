@@ -39,7 +39,7 @@ const Employees = () => {
   // Fetch departments
   const { data: departmentsData } = useQuery({
     queryKey: ['departments'],
-    queryFn: getDepartments
+    queryFn: () => getDepartments()
   });
 
   const employees = employeesData?.data || [];
@@ -133,7 +133,10 @@ const Employees = () => {
       )}
 
       {/* Add employee form modal */}
-      <AddEmployeeForm open={showAddForm} onOpenChange={setShowAddForm} />
+      <AddEmployeeForm 
+        departments={departments} 
+        onClose={() => setShowAddForm(false)} 
+      />
     </div>
   );
 };

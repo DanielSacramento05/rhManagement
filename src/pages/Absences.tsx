@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +33,7 @@ const Absences = () => {
   // Fetch team absences if user has permission
   const { data: teamAbsences, isLoading: teamAbsencesLoading } = useQuery({
     queryKey: ['team-absences'],
-    queryFn: () => getAbsences({ department: currentUser?.department }),
+    queryFn: () => getAbsences({ departmentId: currentUser?.departmentId }),
     enabled: canViewAllAbsences,
   });
 
@@ -94,7 +95,7 @@ const Absences = () => {
             <DialogHeader>
               <DialogTitle>Request Time Off</DialogTitle>
             </DialogHeader>
-            <RequestTimeOffForm />
+            <RequestTimeOffForm onClose={() => setShowRequestForm(false)} />
           </DialogContent>
         </Dialog>
       </div>
