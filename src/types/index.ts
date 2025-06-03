@@ -1,4 +1,5 @@
 
+
 // Re-export auth types
 export * from './auth';
 
@@ -128,6 +129,7 @@ export interface AbsenceFilters extends PaginationParams {
   status?: string;
   startDate?: string;
   endDate?: string;
+  department?: string;
 }
 
 export interface TimeClockFilters extends PaginationParams {
@@ -146,3 +148,4 @@ export interface PerformanceFilters extends PaginationParams {
   minScore?: number;
   maxScore?: number;
 }
+

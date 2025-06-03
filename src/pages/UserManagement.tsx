@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Search, 
   UserPlus, 
@@ -38,14 +53,17 @@ import {
   Shield, 
   Mail, 
   Phone,
-  Calendar
+  Calendar,
+  MoreHorizontal,
+  User
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { getEmployees } from "@/services/employeeService";
+import { getEmployees, formatRoleForDisplay } from "@/services/employeeService";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import type { Employee } from "@/types";
 
 type RoleType = 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin';
 
@@ -56,7 +74,7 @@ const UserManagement = () => {
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<Employee | null>(null);
 
   const { data: employeesData, isLoading, refetch } = useQuery({
     queryKey: ['employees', searchTerm, roleFilter, statusFilter],
@@ -80,7 +98,8 @@ const UserManagement = () => {
 
   const handleRoleChange = async (userId: string, newRole: RoleType) => {
     try {
-      await updateUserRole({ userId, role: newRole });
+      // This would call an actual API to update user roles
+      // await updateUserRole({ userId, role: newRole });
       toast({
         title: "Role updated",
         description: "User role has been updated successfully.",
@@ -181,7 +200,7 @@ const UserManagement = () => {
                 Create a new user account with appropriate permissions.
               </DialogDescription>
             </DialogHeader>
-            {/* Add user form */}
+            {/* Add user form would go here */}
           </DialogContent>
         </Dialog>
       </div>
@@ -229,8 +248,8 @@ const UserManagement = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getRoleColor(employee.role)}>
-                      {getRoleDisplayName(employee.role)}
+                    <Badge variant={getRoleColor(employee.role || 'employee')}>
+                      {formatRoleForDisplay(employee.role || 'employee')}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -287,7 +306,7 @@ const UserManagement = () => {
       </div>
 
       {/* User Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center">

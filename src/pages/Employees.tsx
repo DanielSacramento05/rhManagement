@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,18 +26,21 @@ const Employees = () => {
   const canCreateEmployees = hasPermission('employees', 'create', 'department');
 
   // Fetch employees
-  const { data: employeesData, isLoading, error } = useQuery(
-    ['employees', currentPage, pageSize, searchTerm, selectedDepartment],
-    () => getEmployees({
+  const { data: employeesData, isLoading, error } = useQuery({
+    queryKey: ['employees', currentPage, pageSize, searchTerm, selectedDepartment],
+    queryFn: () => getEmployees({
       page: currentPage,
       pageSize: pageSize,
-      searchTerm: searchTerm,
+      search: searchTerm,
       department: selectedDepartment === "all" ? undefined : selectedDepartment,
     })
-  );
+  });
 
   // Fetch departments
-  const { data: departmentsData } = useQuery(['departments'], getDepartments);
+  const { data: departmentsData } = useQuery({
+    queryKey: ['departments'],
+    queryFn: getDepartments
+  });
 
   const employees = employeesData?.data || [];
   const totalEmployees = employeesData?.totalCount || 0;
@@ -102,7 +106,7 @@ const Employees = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {employees.map((employee) => (
-            <EmployeeCard key={employee.id} employee={employee} />
+            <EmployeeCard key={employee.id} {...employee} />
           ))}
         </div>
       )}
@@ -129,7 +133,7 @@ const Employees = () => {
       )}
 
       {/* Add employee form modal */}
-      <AddEmployeeForm show={showAddForm} onClose={() => setShowAddForm(false)} />
+      <AddEmployeeForm open={showAddForm} onOpenChange={setShowAddForm} />
     </div>
   );
 };

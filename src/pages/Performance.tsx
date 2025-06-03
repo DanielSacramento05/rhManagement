@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Target, Award, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getPerformanceData } from "@/services/performanceService";
+import { getPerformanceGoals } from "@/services/performanceService";
 import { getCurrentUser } from "@/services/authService";
 import { hasPermission } from "@/services/permissionService";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -61,7 +61,7 @@ const Performance = () => {
   // Fetch performance data (only for users with permission)
   const { data: performanceData } = useQuery({
     queryKey: ['performance', currentUser?.id],
-    queryFn: () => getPerformanceData(currentUser?.id),
+    queryFn: () => getPerformanceGoals(currentUser?.id),
     enabled: canViewTeamPerformance,
   });
 
