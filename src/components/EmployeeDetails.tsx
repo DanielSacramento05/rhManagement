@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Employee } from '@/types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
-import { updateEmployee, deleteEmployee } from '@/services/employeeService';
+import { updateEmployee } from '@/services/employeeService';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/authService';
 import { canManageUsers } from '@/services/permissionService';
@@ -19,8 +20,6 @@ interface EmployeeDetailsProps {
 }
 
 export function EmployeeDetails({ employee, isOpen, onClose }: EmployeeDetailsProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const currentUser = getCurrentUser();
@@ -64,58 +63,8 @@ export function EmployeeDetails({ employee, isOpen, onClose }: EmployeeDetailsPr
     }
   });
 
-  // Soft delete (deactivate) employee mutation
-  const deleteMutation = useMutation({
-    mutationFn: () => updateEmployee(employee.id, { status: 'inactive' }),
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Employee deactivated successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      setIsDeleting(false);
-      onClose();
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to deactivate employee",
-      });
-    }
-  });
-
-  // Hard delete employee mutation (for actual deletion if required)
-  const hardDeleteMutation = useMutation({
-    mutationFn: () => deleteEmployee(employee.id),
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Employee deleted successfully",
-      });
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      setIsDeleting(false);
-      onClose();
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete employee",
-      });
-    }
-  });
-
-  const handleStatusChange = (newStatus: 'active' | 'on-leave' | 'remote' | 'inactive') => {
+  const handleStatusChange = (newStatus: 'active' | 'on-leave' | 'remote' | 'out-of-office') => {
     updateMutation.mutate({ status: newStatus });
-  };
-
-  const handleDeactivate = () => {
-    deleteMutation.mutate();
-  };
-
-  const handleActivate = () => {
-    updateMutation.mutate({ status: 'active' });
   };
 
   return (
@@ -189,26 +138,14 @@ export function EmployeeDetails({ employee, isOpen, onClose }: EmployeeDetailsPr
               >
                 On Leave
               </Button>
-            </div>
-            
-            <div className="flex justify-between">
-              {employee.status === 'inactive' ? (
-                <Button 
-                  onClick={handleActivate}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  Reactivate Employee
-                </Button>
-              ) : (
-                <Button 
-                  variant="destructive" 
-                  onClick={() => setIsDeleting(true)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Deactivate Employee
-                </Button>
-              )}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleStatusChange('out-of-office')}
+                className="bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-200"
+              >
+                Out of Office
+              </Button>
             </div>
           </div>
         )}
@@ -217,24 +154,6 @@ export function EmployeeDetails({ employee, isOpen, onClose }: EmployeeDetailsPr
           <Button variant="outline" onClick={onClose}>Close</Button>
         </DialogFooter>
       </DialogContent>
-
-      {/* Confirmation dialog for deactivating employee */}
-      <Dialog open={isDeleting} onOpenChange={setIsDeleting}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Deactivate Employee</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to deactivate this employee? They will be marked as inactive but their data will be preserved.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleting(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDeactivate}>
-              Deactivate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Dialog>
   );
 }
