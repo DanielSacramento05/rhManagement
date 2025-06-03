@@ -36,14 +36,6 @@ const SystemConfig = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Settings className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">System Configuration</h1>
-          <p className="text-muted-foreground">Manage system-wide settings and configurations</p>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* General Settings */}
         <Card>
