@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -208,20 +207,16 @@ export function RegisterForm({ updateAuthState }: RegisterFormProps) {
       toast({
         title: isExistingUser ? "Password set successfully" : "Registration successful",
         description: isExistingUser 
-          ? "You can now access your account." 
+          ? "Please complete your profile setup." 
           : "Please complete your profile setup.",
       });
       
       console.log('🔄 Updating auth state');
       updateAuthState();
       
-      if (isExistingUser) {
-        console.log('🏠 Navigating to home page');
-        navigate('/');
-      } else {
-        console.log('👤 Navigating to profile setup');
-        navigate('/profile-setup');
-      }
+      // Both new and existing users should go to profile setup
+      console.log('👤 Navigating to profile setup');
+      navigate('/profile-setup');
     } catch (error) {
       console.error("❌ Registration error:", error);
       
