@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from models import db, Absence, Employee
 from schemas import AbsenceSchema
 from .absence_utils import update_employee_statuses_based_on_absences, enrich_absence_with_employee
+import datetime
 
 absence_status_bp = Blueprint('absence_status', __name__)
 absence_schema = AbsenceSchema()
@@ -33,7 +34,6 @@ def update_absence_status(id):
         employee = Employee.query.get(absence.employee_id)
         if employee:
             # Get today's date as a datetime.date object
-            import datetime
             today = datetime.datetime.now().date()
             
             # Make sure we're comparing date objects to date objects, not strings
@@ -46,12 +46,23 @@ def update_absence_status(id):
                 if absence.start_date <= today and absence.end_date >= today:
                     employee.status = 'on-leave'
                     print(f"Setting employee {employee.name} status to on-leave because absence is current")
-    elif status == 'declined' and absence.start_date <= datetime.datetime.now().date() <= absence.end_date:
+    elif status == 'declined':
         # If declining an absence that would be active today, make sure employee status is updated
         employee = Employee.query.get(absence.employee_id)
         if employee and employee.status == 'on-leave':
-            employee.status = 'out-of-office'
-            print(f"Declined absence for {employee.name} - setting status to out-of-office")
+            # Check if this was the only approved absence for today
+            today = datetime.datetime.now().date()
+            other_active_absences = Absence.query.filter(
+                Absence.employee_id == absence.employee_id,
+                Absence.status == 'approved',
+                Absence.start_date <= today,
+                Absence.end_date >= today,
+                Absence.id != absence.id  # Exclude the current absence being declined
+            ).count()
+            
+            if other_active_absences == 0:
+                employee.status = 'out-of-office'
+                print(f"Declined absence for {employee.name} - setting status to out-of-office")
     
     try:
         db.session.commit()
@@ -67,6 +78,7 @@ def update_absence_status(id):
         return jsonify({'data': result})
     except Exception as e:
         db.session.rollback()
+        print(f"Error updating absence status: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @absence_status_bp.route('/<id>', methods=['DELETE'])
