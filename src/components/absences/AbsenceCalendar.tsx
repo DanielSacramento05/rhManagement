@@ -4,16 +4,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO, isWithinInterval } from "date-fns";
-
-interface Absence {
-  id: string;
-  employeeName: string;
-  type: string;
-  status: string;
-  startDate: string;
-  endDate: string;
-  notes?: string;
-}
+import { Absence } from "@/types";
 
 interface AbsenceCalendarProps {
   absences: Absence[];
@@ -28,6 +19,7 @@ export function AbsenceCalendar({ absences }: AbsenceCalendarProps) {
   // Function to check if a date has any absences
   const getAbsencesForDate = (date: Date) => {
     return approvedAbsences.filter(absence => {
+      if (!absence.startDate || !absence.endDate) return false;
       const startDate = parseISO(absence.startDate);
       const endDate = parseISO(absence.endDate);
       return isWithinInterval(date, { start: startDate, end: endDate });
@@ -78,7 +70,7 @@ export function AbsenceCalendar({ absences }: AbsenceCalendarProps) {
           {selectedDateAbsences.length > 0 ? (
             <div className="space-y-3">
               {selectedDateAbsences.map((absence) => (
-                <div key={absence.id} className="p-3 border rounded-md">
+                <div key={absence.id || absence.employeeId} className="p-3 border rounded-md">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="font-medium">{absence.employeeName}</p>
@@ -93,9 +85,11 @@ export function AbsenceCalendar({ absences }: AbsenceCalendarProps) {
                       {absence.notes}
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {format(parseISO(absence.startDate), "MMM d")} - {format(parseISO(absence.endDate), "MMM d, yyyy")}
-                  </p>
+                  {absence.startDate && absence.endDate && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {format(parseISO(absence.startDate), "MMM d")} - {format(parseISO(absence.endDate), "MMM d, yyyy")}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
