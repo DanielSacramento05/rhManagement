@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -13,7 +12,8 @@ import {
   UserPlus,
   AlertCircle,
   TrendingUp,
-  Clock3
+  Clock3,
+  Briefcase
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -202,7 +202,7 @@ const Index = () => {
 
   return (
     <div className="page-container pb-16 w-full">
-      {/* Mobile Sidebar Toggle Button - Only visible on mobile */}
+      {/* Mobile Sidebar Toggle */}
       {isMobile && (
         <div className="fixed bottom-4 right-4 z-50 shadow-lg rounded-full">
           <SidebarTrigger className="bg-primary text-white h-12 w-12 flex items-center justify-center rounded-full shadow-lg" />
@@ -210,14 +210,58 @@ const Index = () => {
       )}
 
       <div className="w-full mx-auto space-y-8">
-        {/* Time Clock Section */}
+        {/* Welcome Section */}
         <section className="animate-in">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <Clock className="h-5 w-5 mr-2 text-primary" />
-            Time Clock
-          </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Welcome back, {currentUser?.name || 'User'}
+            </h1>
+            <p className="text-muted-foreground">
+              Here's what's happening at your workplace today
+            </p>
+          </div>
+        </section>
+
+        {/* Quick Actions Grid */}
+        <section className="animate-in">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <DashboardCard 
+              title="Clock In/Out" 
+              icon={<Clock className="h-5 w-5" />}
+              footer={<Link to="#timeclock" className="flex items-center text-muted-foreground hover:text-primary">Manage time <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+            />
+            <DashboardCard 
+              title="Request Leave" 
+              icon={<Calendar className="h-5 w-5" />}
+              footer={<Link to="/absences" className="flex items-center text-muted-foreground hover:text-primary">View absences <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+            />
+            {canViewEmployees && (
+              <DashboardCard 
+                title="Team Directory" 
+                icon={<Users className="h-5 w-5" />}
+                footer={<Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View employees <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+              />
+            )}
+            <DashboardCard 
+              title="My Profile" 
+              icon={<Briefcase className="h-5 w-5" />}
+              footer={<Link to="/profile" className="flex items-center text-muted-foreground hover:text-primary">Edit profile <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+            />
+          </div>
+        </section>
+
+        {/* Time Tracking Section */}
+        <section className="animate-in" id="timeclock">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold mb-2 flex items-center">
+              <Clock className="h-6 w-6 mr-3 text-primary" />
+              Time Tracking
+            </h2>
+            <p className="text-muted-foreground">Manage your work hours and view recent activity</p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
               <TimeClock />
             </div>
             <div className="lg:col-span-2">
@@ -229,26 +273,36 @@ const Index = () => {
         {/* Time Clock Manager for managers */}
         {hasPermission('timeclock', 'read', 'department') && (
           <section className="animate-in">
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold text-foreground">Team Time Management</h3>
+              <p className="text-muted-foreground">Monitor and manage your team's time tracking</p>
+            </div>
             <TimeClockManager />
           </section>
         )}
 
-        {/* Personal Leave Section */}
+        <Separator className="my-8" />
+
+        {/* Personal Section */}
         <section className="animate-in">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <Clock3 className="h-5 w-5 mr-2 text-primary" />
-            My Leave Requests
-          </h2>
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold mb-2 flex items-center">
+              <Clock3 className="h-6 w-6 mr-3 text-primary" />
+              My Leave Requests
+            </h2>
+            <p className="text-muted-foreground">Track your time off requests and status</p>
+          </div>
+          
           <div className="glass-panel divide-y">
             {userLeaveRequests.length > 0 ? userLeaveRequests.map((leave) => (
-              <div key={leave.id} className="p-4">
+              <div key={leave.id} className="p-6">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <div className="font-medium text-base mb-1">
+                    <div className="font-medium text-lg mb-2">
                       {leave.type || "Time Off"} • {formatDateRange(leave)}
                     </div>
                     {leave.notes && (
-                      <div className="text-sm text-muted-foreground italic">
+                      <div className="text-sm text-muted-foreground italic mb-2">
                         "{leave.notes}"
                       </div>
                     )}
@@ -263,32 +317,46 @@ const Index = () => {
                 </div>
               </div>
             )) : (
-              <div className="p-6 text-center text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p className="mb-3">You don't have any leave requests yet</p>
+              <div className="p-8 text-center text-muted-foreground">
+                <Calendar className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                <h3 className="text-lg font-medium mb-2">No leave requests yet</h3>
+                <p className="mb-4">You haven't submitted any time off requests</p>
                 <Button variant="outline" asChild>
                   <Link to="/absences">Request Time Off</Link>
                 </Button>
               </div>
             )}
             {userLeaveRequests.length > 0 && (
-              <div className="p-3 text-center bg-muted/20">
+              <div className="p-4 text-center bg-muted/20">
                 <Button variant="outline" asChild>
-                  <Link to="/absences">Manage Leave</Link>
+                  <Link to="/absences">Manage All Leave Requests</Link>
                 </Button>
               </div>
             )}
           </div>
         </section>
 
-        {/* Announcements Section */}
+        <Separator className="my-8" />
+
+        {/* Communication Section */}
         <section className="animate-in">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold mb-2 flex items-center">
+              <AlertCircle className="h-6 w-6 mr-3 text-primary" />
+              Company Updates
+            </h2>
+            <p className="text-muted-foreground">Stay informed with the latest announcements</p>
+          </div>
           <Announcements />
         </section>
 
         {/* Announcement Manager for users with permission */}
         {canManageAnnouncements && (
           <section className="animate-in">
+            <div className="mb-4">
+              <h3 className="text-xl font-semibold text-foreground">Manage Announcements</h3>
+              <p className="text-muted-foreground">Create and manage company-wide communications</p>
+            </div>
             <AnnouncementManager />
           </section>
         )}
@@ -298,13 +366,18 @@ const Index = () => {
           <>
             <Separator className="my-8" />
             
-            {/* Company Metrics */}
+            {/* Company Analytics Header */}
             <section className="animate-in">
-              <h2 className="text-xl font-semibold mb-4 flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-primary" />
-                Company Overview
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold mb-2 flex items-center">
+                  <TrendingUp className="h-6 w-6 mr-3 text-primary" />
+                  Company Analytics
+                </h2>
+                <p className="text-muted-foreground">Overview of company metrics and team performance</p>
+              </div>
+              
+              {/* Key Metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <DashboardCard 
                   title="Total Employees" 
                   value={totalEmployees.toString()} 
@@ -312,45 +385,74 @@ const Index = () => {
                   trend={{ value: 4.6, isPositive: true }}
                   footer={canViewEmployees ? <Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View all employees <ChevronRight className="h-4 w-4 ml-1" /></Link> : <span className="text-muted-foreground">Company employees</span>}
                 />
+                <DashboardCard 
+                  title="Active Departments" 
+                  value={sortedDepartments.length.toString()} 
+                  icon={<BarChart className="h-5 w-5" />}
+                  footer={<span className="text-muted-foreground">Across organization</span>}
+                />
+                <DashboardCard 
+                  title="Upcoming Leave" 
+                  value={upcomingLeave.length.toString()} 
+                  icon={<Calendar className="h-5 w-5" />}
+                  footer={<Link to="/absences" className="flex items-center text-muted-foreground hover:text-primary">Manage leave <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+                />
+                <DashboardCard 
+                  title="Recent Hires" 
+                  value={recentEmployees.length.toString()} 
+                  icon={<UserPlus className="h-5 w-5" />}
+                  footer={<span className="text-muted-foreground">Last 30 days</span>}
+                />
               </div>
             </section>
 
             {/* Detailed Analytics */}
             <section className="animate-in">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Department Overview */}
                 <div className="lg:col-span-2">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center">
-                    <BarChart className="h-5 w-5 mr-2 text-primary" />
-                    Department Overview
-                  </h3>
+                  <div className="mb-4">
+                    <h3 className="text-xl font-semibold mb-2 flex items-center">
+                      <BarChart className="h-5 w-5 mr-2 text-primary" />
+                      Department Distribution
+                    </h3>
+                    <p className="text-muted-foreground">Employee distribution across departments</p>
+                  </div>
                   
-                  <div className="glass-panel p-6 space-y-4">
+                  <div className="glass-panel p-6 space-y-6">
                     {sortedDepartments.map(([department, count]) => (
-                      <div key={department} className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="font-medium">{department}</span>
-                          <span className="text-muted-foreground">{count} employees</span>
+                      <div key={department} className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium text-base">{department}</span>
+                          <div className="text-right">
+                            <span className="text-sm font-medium">{count} employees</span>
+                            <span className="text-xs text-muted-foreground ml-2">
+                              ({Math.round((count / totalEmployees) * 100)}%)
+                            </span>
+                          </div>
                         </div>
-                        <Progress value={Math.round((count / totalEmployees) * 100)} className="h-2" />
+                        <Progress value={Math.round((count / totalEmployees) * 100)} className="h-3" />
                       </div>
                     ))}
                   </div>
                 </div>
                 
                 {/* Right Sidebar */}
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {/* Upcoming Leave */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center">
-                      <Calendar className="h-5 w-5 mr-2 text-primary" />
-                      Upcoming Leave
-                    </h3>
+                    <div className="mb-4">
+                      <h3 className="text-xl font-semibold mb-2 flex items-center">
+                        <Calendar className="h-5 w-5 mr-2 text-primary" />
+                        Upcoming Leave
+                      </h3>
+                      <p className="text-muted-foreground text-sm">Next 30 days</p>
+                    </div>
                     
                     <div className="glass-panel divide-y">
                       {upcomingLeave.length > 0 ? upcomingLeave.map((leave) => (
                         <div key={leave.id} className="p-4">
-                          <div className="font-medium text-sm">{leave.employeeName || (leave as any).employee_name || "Employee"}</div>
+                          <div className="font-medium text-sm mb-1">{leave.employeeName || (leave as any).employee_name || "Employee"}</div>
                           <div className="text-xs text-muted-foreground mb-2">{leave.position || "Position"}</div>
                           <div className="flex justify-between items-center">
                             <span className="text-xs text-muted-foreground">
@@ -363,13 +465,14 @@ const Index = () => {
                           </div>
                         </div>
                       )) : (
-                        <div className="p-4 text-center text-muted-foreground text-sm">
-                          No upcoming leave requests
+                        <div className="p-6 text-center text-muted-foreground text-sm">
+                          <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                          <p>No upcoming leave</p>
                         </div>
                       )}
-                      <div className="p-3 text-center">
+                      <div className="p-3 text-center bg-muted/20">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to="/absences">View all leave</Link>
+                          <Link to="/absences">View All Leave</Link>
                         </Button>
                       </div>
                     </div>
@@ -377,28 +480,32 @@ const Index = () => {
                   
                   {/* Recent Hires */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center">
-                      <UserPlus className="h-5 w-5 mr-2 text-primary" />
-                      Recent Hires
-                    </h3>
+                    <div className="mb-4">
+                      <h3 className="text-xl font-semibold mb-2 flex items-center">
+                        <UserPlus className="h-5 w-5 mr-2 text-primary" />
+                        Recent Hires
+                      </h3>
+                      <p className="text-muted-foreground text-sm">Latest team members</p>
+                    </div>
                     
                     <div className="glass-panel divide-y">
                       {recentEmployees.length > 0 ? recentEmployees.map((employee) => (
                         <div key={employee.id} className="p-4">
-                          <div className="font-medium text-sm">{employee.name}</div>
-                          <div className="text-xs text-muted-foreground">{employee.position}</div>
-                          <div className="text-xs text-muted-foreground mt-1">
+                          <div className="font-medium text-sm mb-1">{employee.name}</div>
+                          <div className="text-xs text-muted-foreground mb-1">{employee.position}</div>
+                          <div className="text-xs text-muted-foreground">
                             Joined: {(employee.hireDate || (employee as any).hire_date) ? format(parseISO(employee.hireDate || (employee as any).hire_date), "dd/MM/yyyy") : "N/A"}
                           </div>
                         </div>
                       )) : (
-                        <div className="p-4 text-center text-muted-foreground text-sm">
-                          No recent hires
+                        <div className="p-6 text-center text-muted-foreground text-sm">
+                          <UserPlus className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                          <p>No recent hires</p>
                         </div>
                       )}
-                      <div className="p-3 text-center">
+                      <div className="p-3 text-center bg-muted/20">
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to="/employees">View all employees</Link>
+                          <Link to="/employees">View All Employees</Link>
                         </Button>
                       </div>
                     </div>
