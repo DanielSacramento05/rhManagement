@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -143,7 +144,6 @@ export function TimeClockManager() {
         return format(date, 'HH:mm');
       }
     } catch (error) {
-      console.error("Error formatting time:", error);
       return '---';
     }
   };
@@ -157,7 +157,6 @@ export function TimeClockManager() {
         return format(parseISO(timeString), 'dd/MM/yyyy');
       }
     } catch (error) {
-      console.error("Error formatting date:", error);
       return 'Invalid date';
     }
   };

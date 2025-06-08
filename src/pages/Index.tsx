@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -91,7 +92,6 @@ const Index = () => {
         const startDate = parseISO(startDateField);
         return isAfter(startDate, today) && isBefore(startDate, addDays(today, 30));
       } catch (error) {
-        console.error("Error parsing date:", error, absence);
         return false;
       }
     })
@@ -105,7 +105,6 @@ const Index = () => {
         if (!bStartDate) return -1;
         return parseISO(aStartDate).getTime() - parseISO(bStartDate).getTime();
       } catch (error) {
-        console.error("Error sorting dates:", error);
         return 0;
       }
     })
@@ -126,7 +125,6 @@ const Index = () => {
       try {
         return parseISO(bHireDate).getTime() - parseISO(aHireDate).getTime();
       } catch (error) {
-        console.error("Error parsing hire dates:", error);
         return 0;
       }
     })
@@ -143,7 +141,7 @@ const Index = () => {
         try {
           return new Date(bRequestDate).getTime() - new Date(aRequestDate).getTime();
         } catch (error) {
-          console.error("Error parsing request dates:", error);
+          // Fallback to start date sorting
         }
       }
       
@@ -157,7 +155,6 @@ const Index = () => {
       try {
         return parseISO(bStartDate).getTime() - parseISO(aStartDate).getTime();
       } catch (error) {
-        console.error("Error parsing start dates:", error);
         return 0;
       }
     })
@@ -165,16 +162,11 @@ const Index = () => {
 
   // Helper function to format date range for leave requests
   const formatDateRange = (leave: any) => {
-    console.log("Full leave object:", JSON.stringify(leave, null, 2)); // Debug log to see full structure
-    
     // The API returns start_date and end_date (with underscores)
     const startDate = leave.start_date || leave.startDate;
     const endDate = leave.end_date || leave.endDate;
     
-    console.log("Extracted - Start date:", startDate, "End date:", endDate); // Debug log
-    
     if (!startDate) {
-      console.log("No start date found, returning empty string");
       return "";
     }
     
@@ -182,7 +174,6 @@ const Index = () => {
       const formattedStartDate = format(parseISO(startDate), "dd/MM/yyyy");
       
       if (!endDate) {
-        console.log("No end date, returning single date:", formattedStartDate);
         return formattedStartDate;
       }
       
@@ -190,15 +181,11 @@ const Index = () => {
       
       // If it's the same date, just show one date
       if (formattedStartDate === formattedEndDate) {
-        console.log("Same dates, returning single date:", formattedStartDate);
         return formattedStartDate;
       }
       
-      const dateRange = `${formattedStartDate} - ${formattedEndDate}`;
-      console.log("Different dates, returning range:", dateRange);
-      return dateRange;
+      return `${formattedStartDate} - ${formattedEndDate}`;
     } catch (error) {
-      console.error("Error formatting dates:", error, { startDate, endDate });
       return "";
     }
   };
@@ -212,10 +199,6 @@ const Index = () => {
       }, 100 * index);
     });
   }, []);
-
-  // Debug log to see what data we're working with
-  console.log("User absences data:", userAbsencesData);
-  console.log("User leave requests:", userLeaveRequests);
 
   return (
     <div className="page-container pb-16 w-full">

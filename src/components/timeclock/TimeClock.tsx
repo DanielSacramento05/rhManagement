@@ -8,9 +8,11 @@ import { getCurrentUser } from "@/services/authService";
 import { getActiveTimeClockEntry, clockIn, clockOut } from "@/services/timeClockService";
 import { format, parseISO, isValid } from "date-fns";
 import { Clock } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export function TimeClock() {
   const [isLoading, setIsLoading] = useState(false);
+  const [showLeaveAlert, setShowLeaveAlert] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const currentUser = getCurrentUser();
@@ -36,6 +38,17 @@ export function TimeClock() {
         description: `Successfully clocked in at ${format(new Date(), 'HH:mm')}`,
       });
     },
+    onError: (error: any) => {
+      if (error.message.includes('on leave')) {
+        setShowLeaveAlert(true);
+      } else {
+        toast({
+          title: "Clock In Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    }
   });
 
   // Clock out mutation
@@ -93,44 +106,61 @@ export function TimeClock() {
       }
       return "Invalid date";
     } catch (error) {
-      console.error("Date formatting error:", error, { dateString });
       return "Invalid date";
     }
   };
 
   return (
-    <Card className="p-4">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="flex items-center space-x-2">
-          <Clock className="h-6 w-6 text-primary" />
-          <h3 className="text-lg font-medium">Time Clock</h3>
-        </div>
-        
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground mb-2">
-            {isClockedIn ? (
-              <>
-                {activeEntry.date && activeEntry.clockInTime ? (
-                  `Clocked in at ${safeFormatDate(`${activeEntry.date}T${activeEntry.clockInTime}`)}`
-                ) : (
-                  "Currently clocked in"
-                )}
-              </>
-            ) : (
-              "Not clocked in"
-            )}
-          </p>
+    <>
+      <Card className="p-4">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="flex items-center space-x-2">
+            <Clock className="h-6 w-6 text-primary" />
+            <h3 className="text-lg font-medium">Time Clock</h3>
+          </div>
           
-          <Button 
-            onClick={handleClockAction} 
-            disabled={isLoading}
-            className={isClockedIn ? "bg-red-600 hover:bg-red-700" : ""}
-          >
-            {isLoading ? "Processing..." : isClockedIn ? "Clock Out" : "Clock In"}
-          </Button>
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-2">
+              {isClockedIn ? (
+                <>
+                  {activeEntry.date && activeEntry.clockInTime ? (
+                    `Clocked in at ${safeFormatDate(`${activeEntry.date}T${activeEntry.clockInTime}`)}`
+                  ) : (
+                    "Currently clocked in"
+                  )}
+                </>
+              ) : (
+                "Not clocked in"
+              )}
+            </p>
+            
+            <Button 
+              onClick={handleClockAction} 
+              disabled={isLoading}
+              className={isClockedIn ? "bg-red-600 hover:bg-red-700" : ""}
+            >
+              {isLoading ? "Processing..." : isClockedIn ? "Clock Out" : "Clock In"}
+            </Button>
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+
+      <AlertDialog open={showLeaveAlert} onOpenChange={setShowLeaveAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unable to Clock In</AlertDialogTitle>
+            <AlertDialogDescription>
+              You cannot clock in while you are currently on leave. Please contact your manager if you believe this is an error.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowLeaveAlert(false)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 

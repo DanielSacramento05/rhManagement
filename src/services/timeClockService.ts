@@ -26,8 +26,6 @@ const ENDPOINT = '/time-clock';
 
 // Custom error handler for time clock operations
 const handleTimeClockError = (error: any, operation: string) => {
-  console.error(`Error during time clock operation (${operation}):`, error);
-  
   // Check for specific time clock errors
   if (error.message.includes('already clocked in')) {
     throw new Error('This employee is already clocked in. Please clock out first.');
@@ -63,10 +61,8 @@ export const getTimeClockEntries = async (
       undefined,
       buildQueryParams(filters)
     );
-    console.log('Time clock entries response:', response);
     return response;
   } catch (error) {
-    console.error('Error fetching time clock entries:', error);
     throw error;
   }
 };
@@ -82,7 +78,6 @@ export const getActiveTimeClockEntry = async (
       `${ENDPOINT}/active/${employeeId}`
     );
   } catch (error) {
-    console.error(`Error fetching active time clock entry for ${employeeId}:`, error);
     throw error;
   }
 };
@@ -129,14 +124,12 @@ export const updateTimeClockEntry = async (
   data: Partial<TimeClockEntry>
 ): Promise<ApiResponse<TimeClockEntry>> => {
   try {
-    console.log(`Updating time clock entry ${id} with data:`, data);
     return await apiRequest<ApiResponse<TimeClockEntry>, Partial<TimeClockEntry>>(
       `${ENDPOINT}/${id}`,
       'PUT',
       data
     );
   } catch (error) {
-    console.error('Error updating time clock entry:', error);
     return handleTimeClockError(error, 'update');
   }
 };
@@ -153,7 +146,6 @@ export const deleteTimeClockEntry = async (
       'DELETE'
     );
   } catch (error) {
-    console.error('Error deleting time clock entry:', error);
     return handleTimeClockError(error, 'delete');
   }
 };
