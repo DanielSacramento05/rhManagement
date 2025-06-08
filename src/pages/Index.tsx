@@ -115,12 +115,12 @@ const Index = () => {
   // Get recent employees - improved data handling (only for managers)
   const recentEmployees = canViewEmployees ? [...employees]
     .filter(employee => {
-      const hireDateField = employee.hireDate || employee.hire_date;
+      const hireDateField = employee.hireDate || (employee as any).hire_date;
       return hireDateField;
     })
     .sort((a, b) => {
-      const aHireDate = a.hireDate || a.hire_date;
-      const bHireDate = b.hireDate || b.hire_date;
+      const aHireDate = a.hireDate || (a as any).hire_date;
+      const bHireDate = b.hireDate || (b as any).hire_date;
       
       if (!aHireDate || !bHireDate) return 0;
       
@@ -137,8 +137,8 @@ const Index = () => {
   const userLeaveRequests = (userAbsencesData?.data || [])
     .sort((a, b) => {
       // Sort by request date if available, otherwise by start date
-      const aRequestDate = a.requestDate || a.request_date;
-      const bRequestDate = b.requestDate || b.request_date;
+      const aRequestDate = a.requestDate || (a as any).request_date;
+      const bRequestDate = b.requestDate || (b as any).request_date;
       
       if (aRequestDate && bRequestDate) {
         try {
@@ -306,7 +306,7 @@ const Index = () => {
                   <div className="glass-panel divide-y">
                     {upcomingLeave.length > 0 ? upcomingLeave.map((leave) => (
                       <div key={leave.id} className="p-3">
-                        <div className="font-medium">{leave.employeeName || leave.employee_name || "Employee"}</div>
+                        <div className="font-medium">{leave.employeeName || (leave as any).employee_name || "Employee"}</div>
                         <div className="text-sm text-muted-foreground">{leave.position || "Position"}</div>
                         <div className="mt-2 flex justify-between items-center">
                           <span className="text-sm">
@@ -343,7 +343,7 @@ const Index = () => {
                         <div className="font-medium">{employee.name}</div>
                         <div className="text-sm text-muted-foreground">{employee.position}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          Joined: {(employee.hireDate || employee.hire_date) ? format(parseISO(employee.hireDate || employee.hire_date), "dd/MM/yyyy") : "N/A"}
+                          Joined: {(employee.hireDate || (employee as any).hire_date) ? format(parseISO(employee.hireDate || (employee as any).hire_date), "dd/MM/yyyy") : "N/A"}
                         </div>
                       </div>
                     )) : (
