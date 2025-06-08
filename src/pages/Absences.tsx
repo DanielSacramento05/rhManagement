@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RequestTimeOffForm } from "@/components/absences/RequestTimeOffForm";
 import { AbsenceCalendar } from "@/components/absences/AbsenceCalendar";
-import { Plus, FileText, Clock, CheckCircle, XCircle, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, FileText, Clock, CheckCircle, XCircle, Calendar as CalendarIcon, User } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAbsences, updateAbsenceStatus } from "@/services/absenceService";
 import { format, parseISO } from "date-fns";
@@ -161,15 +162,13 @@ const Absences = () => {
         <CardContent className="p-6 text-center text-muted-foreground">
           <FileText className="h-12 w-12 mx-auto mb-2 opacity-30" />
           <p>{emptyMessage}</p>
-          {isEmployee && (
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={() => setShowRequestForm(true)}
-            >
-              Request Time Off
-            </Button>
-          )}
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => setShowRequestForm(true)}
+          >
+            Request Time Off
+          </Button>
         </CardContent>
       </Card>
     );
@@ -244,9 +243,13 @@ const Absences = () => {
           </TabsContent>
         </Tabs>
       ) : (
-        /* For non-employees: Show tabs with Team Requests and Calendar */
+        /* For non-employees: Show tabs with My Requests, Team Requests and Calendar */
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="my-requests" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              My Requests
+            </TabsTrigger>
             {canViewAllAbsences && (
               <TabsTrigger value="team-requests" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
@@ -260,6 +263,16 @@ const Absences = () => {
               </TabsTrigger>
             )}
           </TabsList>
+          
+          <TabsContent value="my-requests">
+            <div className="space-y-4">
+              {renderAbsenceCards(
+                filteredUserAbsences, 
+                userAbsencesLoading, 
+                "You don't have any absence requests yet"
+              )}
+            </div>
+          </TabsContent>
           
           {canViewAllAbsences && (
             <TabsContent value="team-requests">
