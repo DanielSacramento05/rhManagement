@@ -212,7 +212,7 @@ const Index = () => {
       <div className="w-full mx-auto space-y-8">
         {/* Welcome Section */}
         <section className="animate-in">
-          <div className="mb-6">
+          <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Welcome back, {currentUser?.name || 'User'}
             </h1>
@@ -222,30 +222,34 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Quick Actions Grid */}
+        {/* Quick Actions Grid - Better organized */}
         <section className="animate-in">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <DashboardCard 
               title="Clock In/Out" 
               icon={<Clock className="h-5 w-5" />}
               footer={<Link to="#timeclock" className="flex items-center text-muted-foreground hover:text-primary">Manage time <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+              className="hover:shadow-md transition-all duration-200"
             />
             <DashboardCard 
               title="Request Leave" 
               icon={<Calendar className="h-5 w-5" />}
               footer={<Link to="/absences" className="flex items-center text-muted-foreground hover:text-primary">View absences <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+              className="hover:shadow-md transition-all duration-200"
             />
             {canViewEmployees && (
               <DashboardCard 
                 title="Team Directory" 
                 icon={<Users className="h-5 w-5" />}
                 footer={<Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View employees <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+                className="hover:shadow-md transition-all duration-200"
               />
             )}
             <DashboardCard 
               title="My Profile" 
               icon={<Briefcase className="h-5 w-5" />}
               footer={<Link to="/profile" className="flex items-center text-muted-foreground hover:text-primary">Edit profile <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+              className="hover:shadow-md transition-all duration-200"
             />
           </div>
         </section>
@@ -376,32 +380,36 @@ const Index = () => {
                 <p className="text-muted-foreground">Overview of company metrics and team performance</p>
               </div>
               
-              {/* Key Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {/* Key Metrics - Better organized grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <DashboardCard 
                   title="Total Employees" 
                   value={totalEmployees.toString()} 
                   icon={<Users className="h-5 w-5" />}
                   trend={{ value: 4.6, isPositive: true }}
                   footer={canViewEmployees ? <Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View all employees <ChevronRight className="h-4 w-4 ml-1" /></Link> : <span className="text-muted-foreground">Company employees</span>}
+                  className="hover:shadow-md transition-all duration-200"
                 />
                 <DashboardCard 
                   title="Active Departments" 
                   value={sortedDepartments.length.toString()} 
                   icon={<BarChart className="h-5 w-5" />}
                   footer={<span className="text-muted-foreground">Across organization</span>}
+                  className="hover:shadow-md transition-all duration-200"
                 />
                 <DashboardCard 
                   title="Upcoming Leave" 
                   value={upcomingLeave.length.toString()} 
                   icon={<Calendar className="h-5 w-5" />}
                   footer={<Link to="/absences" className="flex items-center text-muted-foreground hover:text-primary">Manage leave <ChevronRight className="h-4 w-4 ml-1" /></Link>}
+                  className="hover:shadow-md transition-all duration-200"
                 />
                 <DashboardCard 
                   title="Recent Hires" 
                   value={recentEmployees.length.toString()} 
                   icon={<UserPlus className="h-5 w-5" />}
                   footer={<span className="text-muted-foreground">Last 30 days</span>}
+                  className="hover:shadow-md transition-all duration-200"
                 />
               </div>
             </section>
