@@ -3,7 +3,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,10 +29,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { createEmployee } from "@/services/employeeService";
+import { createEmployee, getEmployees } from "@/services/employeeService";
 import { useToast } from "@/hooks/use-toast";
 import { Department } from "@/types";
 import { cn } from "@/lib/utils";
+import { getCurrentUser } from "@/services/authService";
+import { canManageUsers } from "@/services/permissionService";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -42,6 +44,7 @@ const formSchema = z.object({
   phone: z.string().min(5, { message: "Phone number is required" }),
   hireDate: z.date({ required_error: "Hire date is required" }),
   imageUrl: z.string().url({ message: "Please enter a valid URL" }).optional(),
+  managerId: z.string().optional(),
 });
 
 type AddEmployeeFormProps = {
@@ -53,6 +56,21 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const currentUser = getCurrentUser();
+  const isAdmin = canManageUsers(currentUser);
+
+  // Fetch potential managers (HR admins, department managers, system admins)
+  const { data: managersData } = useQuery({
+    queryKey: ['potential-managers'],
+    queryFn: () => getEmployees({ pageSize: 100 }),
+    enabled: isAdmin
+  });
+
+  const potentialManagers = managersData?.data?.filter(employee => 
+    employee.role === 'hr_admin' || 
+    employee.role === 'dept_manager' || 
+    employee.role === 'system_admin'
+  ) || [];
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -64,6 +82,7 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
       phone: "",
       hireDate: new Date(),
       imageUrl: "https://randomuser.me/api/portraits/men/1.jpg",
+      managerId: "",
     },
   });
 
@@ -80,6 +99,7 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
         status: "active" as const,
         imageUrl: values.imageUrl || "https://randomuser.me/api/portraits/men/1.jpg",
         hireDate: values.hireDate.toISOString().split('T')[0],
+        managerId: values.managerId || undefined,
       };
       
       await createEmployee(newEmployee);
@@ -194,6 +214,37 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
             )}
           />
         </div>
+
+        {isAdmin && (
+          <FormField
+            control={form.control}
+            name="managerId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Manager (Optional)</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select manager" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="">No Manager</SelectItem>
+                    {potentialManagers.map(manager => (
+                      <SelectItem key={manager.id} value={manager.id}>
+                        {manager.name} - {manager.displayRole}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
         <FormField
           control={form.control}

@@ -6,6 +6,7 @@ import {
   ApiResponse, 
   PaginatedResponse 
 } from '@/types';
+import { getCurrentUser } from './authService';
 
 const ENDPOINT = '/employees';
 
@@ -18,9 +19,17 @@ export const getEmployees = async (
   filters?: EmployeeFilters
 ): Promise<PaginatedResponse<Employee>> => {
   try {
+    const currentUser = getCurrentUser();
+    let updatedFilters = { ...filters };
+    
+    // If user is a department manager, only show employees from their department
+    if (currentUser?.role === 'dept_manager' && currentUser.department) {
+      updatedFilters.department = currentUser.department;
+    }
+    
     // Add a timestamp parameter to prevent caching
     const timestamp = new Date().getTime();
-    const updatedFilters = { ...filters, _t: timestamp };
+    updatedFilters = { ...updatedFilters, _t: timestamp };
     
     const response = await apiRequest<PaginatedResponse<Employee>>(
       ENDPOINT, 
@@ -116,6 +125,12 @@ export const createEmployee = async (
     delete apiEmployee.hireDate;
   }
   
+  // Map managerId to manager_id for API compatibility
+  if (apiEmployee.managerId) {
+    apiEmployee.manager_id = apiEmployee.managerId;
+    delete apiEmployee.managerId;
+  }
+  
   // Remove any display-only fields
   if ('displayRole' in apiEmployee) {
     delete apiEmployee.displayRole;
@@ -165,6 +180,12 @@ export const updateEmployee = async (
     delete apiEmployee.hireDate;
   }
   
+  // Map managerId to manager_id for API compatibility
+  if (apiEmployee.managerId) {
+    apiEmployee.manager_id = apiEmployee.managerId;
+    delete apiEmployee.managerId;
+  }
+  
   // Remove any display-only fields
   if ('displayRole' in apiEmployee) {
     delete apiEmployee.displayRole;
@@ -201,4 +222,33 @@ export const deleteEmployee = async (
     `${ENDPOINT}/${id}`, 
     'DELETE'
   );
+};
+
+/**
+ * Update employee role
+ * @param id Employee ID
+ * @param role New role
+ * @returns Updated employee
+ */
+export const updateEmployeeRole = async (
+  id: string,
+  role: 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin'
+): Promise<ApiResponse<Employee>> => {
+  const response = await apiRequest<ApiResponse<Employee>>(
+    `${ENDPOINT}/${id}/role`,
+    'PUT',
+    { role }
+  );
+  
+  // Map API fields back to frontend fields
+  if (response.data) {
+    if (response.data.image_url) {
+      response.data.imageUrl = response.data.image_url;
+    }
+    
+    // Add displayRole for frontend display purposes
+    response.data.displayRole = formatRoleForDisplay(response.data.role || 'employee');
+  }
+  
+  return response;
 };

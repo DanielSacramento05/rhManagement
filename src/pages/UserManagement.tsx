@@ -58,11 +58,12 @@ import {
   MoreHorizontal,
   User,
   UserX,
-  UserCheck
+  UserCheck,
+  Users
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getEmployees, formatRoleForDisplay, updateEmployee } from "@/services/employeeService";
+import { getEmployees, formatRoleForDisplay, updateEmployee, updateEmployeeRole } from "@/services/employeeService";
 import { updateUserRole } from "@/services/authService";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -80,6 +81,8 @@ const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<Employee | null>(null);
+  const [showManagerDialog, setShowManagerDialog] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   const { data: employeesData, isLoading, refetch } = useQuery({
     queryKey: ['employees', searchTerm, roleFilter, statusFilter],
@@ -101,14 +104,20 @@ const UserManagement = () => {
     return true;
   });
 
+  // Get potential managers (excluding the selected employee)
+  const potentialManagers = employees.filter(emp => 
+    (emp.role === 'hr_admin' || emp.role === 'dept_manager' || emp.role === 'system_admin') &&
+    emp.id !== selectedEmployee?.id
+  );
+
   // Role update mutation
   const roleUpdateMutation = useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: RoleType }) => 
-      updateUserRole({ userId, role }),
+      updateEmployeeRole(userId, role),
     onSuccess: (updatedUser) => {
       toast({
         title: "Role updated",
-        description: `User role has been updated to ${formatRoleForDisplay(updatedUser.role || 'employee')}.`,
+        description: `User role has been updated to ${formatRoleForDisplay(updatedUser.data.role || 'employee')}.`,
       });
       // Invalidate and refetch the employees data
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -146,6 +155,30 @@ const UserManagement = () => {
     }
   });
 
+  // Manager update mutation
+  const managerUpdateMutation = useMutation({
+    mutationFn: ({ userId, managerId }: { userId: string; managerId: string | null }) => 
+      updateEmployee(userId, { managerId }),
+    onSuccess: () => {
+      toast({
+        title: "Manager updated",
+        description: "Employee manager has been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      setShowManagerDialog(false);
+      setSelectedEmployee(null);
+      refetch();
+    },
+    onError: (error) => {
+      console.error('Manager update error:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update employee manager.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleRoleChange = async (userId: string, newRole: RoleType) => {
     console.log('Updating role for user:', userId, 'to:', newRole);
     roleUpdateMutation.mutate({ userId, role: newRole });
@@ -153,6 +186,12 @@ const UserManagement = () => {
 
   const handleStatusChange = (userId: string, newStatus: 'active' | 'on-leave' | 'remote' | 'inactive' | 'out-of-office') => {
     statusUpdateMutation.mutate({ userId, status: newStatus });
+  };
+
+  const handleManagerChange = (managerId: string | null) => {
+    if (selectedEmployee) {
+      managerUpdateMutation.mutate({ userId: selectedEmployee.id, managerId });
+    }
   };
 
   const getRoleColor = (role: string) => {
@@ -254,6 +293,7 @@ const UserManagement = () => {
               <TableHead>User</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Department</TableHead>
+              <TableHead>Manager</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -261,110 +301,163 @@ const UserManagement = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   Loading users...
                 </TableCell>
               </TableRow>
             ) : filteredEmployees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   No users found matching your criteria
                 </TableCell>
               </TableRow>
             ) : (
-              filteredEmployees.map((employee) => (
-                <TableRow key={employee.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={employee.imageUrl} />
-                        <AvatarFallback>
-                          {employee.name.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{employee.name}</p>
-                        <p className="text-sm text-muted-foreground">{employee.email}</p>
+              filteredEmployees.map((employee) => {
+                const manager = employees.find(emp => emp.id === employee.managerId);
+                return (
+                  <TableRow key={employee.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={employee.imageUrl} />
+                          <AvatarFallback>
+                            {employee.name.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{employee.name}</p>
+                          <p className="text-sm text-muted-foreground">{employee.email}</p>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getRoleColor(employee.role || 'employee')}>
-                      {formatRoleForDisplay(employee.role || 'employee')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{employee.department}</p>
-                      <p className="text-sm text-muted-foreground">{employee.position}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusColor(employee.status)}>
-                      {employee.status || 'active'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" disabled={roleUpdateMutation.isPending || statusUpdateMutation.isPending}>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => handleRoleChange(employee.id, 'employee')}
-                          disabled={employee.role === 'employee' || roleUpdateMutation.isPending}
-                        >
-                          Set as Employee
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleRoleChange(employee.id, 'dept_manager')}
-                          disabled={employee.role === 'dept_manager' || roleUpdateMutation.isPending}
-                        >
-                          Set as Dept Manager
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleRoleChange(employee.id, 'hr_admin')}
-                          disabled={employee.role === 'hr_admin' || roleUpdateMutation.isPending}
-                        >
-                          Set as HR Admin
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleRoleChange(employee.id, 'system_admin')}
-                          disabled={employee.role === 'system_admin' || roleUpdateMutation.isPending}
-                        >
-                          Set as System Admin
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {employee.status === 'inactive' ? (
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getRoleColor(employee.role || 'employee')}>
+                        {formatRoleForDisplay(employee.role || 'employee')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{employee.department}</p>
+                        <p className="text-sm text-muted-foreground">{employee.position}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {manager ? (
+                        <div>
+                          <p className="font-medium">{manager.name}</p>
+                          <p className="text-sm text-muted-foreground">{formatRoleForDisplay(manager.role || 'employee')}</p>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">No Manager</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusColor(employee.status)}>
+                        {employee.status || 'active'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" disabled={roleUpdateMutation.isPending || statusUpdateMutation.isPending || managerUpdateMutation.isPending}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => handleStatusChange(employee.id, 'active')}
-                            disabled={statusUpdateMutation.isPending}
-                            className="text-green-600"
+                            onClick={() => {
+                              setSelectedEmployee(employee);
+                              setShowManagerDialog(true);
+                            }}
                           >
-                            <UserCheck className="h-4 w-4 mr-2" />
-                            Reactivate User
+                            <Users className="h-4 w-4 mr-2" />
+                            Set Manager
                           </DropdownMenuItem>
-                        ) : (
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => handleStatusChange(employee.id, 'inactive')}
-                            disabled={statusUpdateMutation.isPending}
-                            className="text-red-600"
+                            onClick={() => handleRoleChange(employee.id, 'employee')}
+                            disabled={employee.role === 'employee' || roleUpdateMutation.isPending}
                           >
-                            <UserX className="h-4 w-4 mr-2" />
-                            Deactivate User
+                            Set as Employee
                           </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+                          <DropdownMenuItem
+                            onClick={() => handleRoleChange(employee.id, 'dept_manager')}
+                            disabled={employee.role === 'dept_manager' || roleUpdateMutation.isPending}
+                          >
+                            Set as Dept Manager
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleRoleChange(employee.id, 'hr_admin')}
+                            disabled={employee.role === 'hr_admin' || roleUpdateMutation.isPending}
+                          >
+                            Set as HR Admin
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleRoleChange(employee.id, 'system_admin')}
+                            disabled={employee.role === 'system_admin' || roleUpdateMutation.isPending}
+                          >
+                            Set as System Admin
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {employee.status === 'inactive' ? (
+                            <DropdownMenuItem
+                              onClick={() => handleStatusChange(employee.id, 'active')}
+                              disabled={statusUpdateMutation.isPending}
+                              className="text-green-600"
+                            >
+                              <UserCheck className="h-4 w-4 mr-2" />
+                              Reactivate User
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={() => handleStatusChange(employee.id, 'inactive')}
+                              disabled={statusUpdateMutation.isPending}
+                              className="text-red-600"
+                            >
+                              <UserX className="h-4 w-4 mr-2" />
+                              Deactivate User
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
       </div>
+
+      {/* Manager Assignment Dialog */}
+      <Dialog open={showManagerDialog} onOpenChange={setShowManagerDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Set Manager</DialogTitle>
+            <DialogDescription>
+              Select a manager for {selectedEmployee?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Select 
+              defaultValue={selectedEmployee?.managerId || ""}
+              onValueChange={(value) => handleManagerChange(value || null)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select manager" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No Manager</SelectItem>
+                {potentialManagers.map(manager => (
+                  <SelectItem key={manager.id} value={manager.id}>
+                    {manager.name} - {formatRoleForDisplay(manager.role || 'employee')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* User Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
