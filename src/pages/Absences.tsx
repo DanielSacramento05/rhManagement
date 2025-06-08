@@ -91,9 +91,24 @@ const Absences = () => {
       // Try different date field names that might be used
       const dateToUse = absence.requestDate || absence.request_date || absence.createdAt || absence.created_at;
       
+      console.log("Formatting request date for absence:", absence.id, "dateToUse:", dateToUse);
+      
       if (dateToUse) {
         // Handle both ISO strings and date objects
-        const date = typeof dateToUse === 'string' ? parseISO(dateToUse) : new Date(dateToUse);
+        let date;
+        if (typeof dateToUse === 'string') {
+          // If it's an ISO string with time, parse it directly
+          date = new Date(dateToUse);
+        } else {
+          date = new Date(dateToUse);
+        }
+        
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+          console.error("Invalid date:", dateToUse);
+          return "Date not available";
+        }
+        
         return format(date, "dd MMM yyyy");
       }
       
