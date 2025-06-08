@@ -59,6 +59,13 @@ def get_absences():
             absence_data['position'] = employee.position
             absence_data['imageUrl'] = employee.image_url
         
+        # Ensure requestDate is properly formatted
+        if absence.request_date:
+            absence_data['requestDate'] = absence.request_date.isoformat()
+        else:
+            # If no request_date is set, use the created timestamp or current time
+            absence_data['requestDate'] = datetime.datetime.now().isoformat()
+        
         result_data.append(absence_data)
     
     # Prepare response
@@ -84,6 +91,13 @@ def get_absence(id):
         absence_data['department'] = employee.department
         absence_data['position'] = employee.position
         absence_data['imageUrl'] = employee.image_url
+    
+    # Ensure requestDate is properly formatted
+    if absence.request_date:
+        absence_data['requestDate'] = absence.request_date.isoformat()
+    else:
+        # If no request_date is set, use current time as fallback
+        absence_data['requestDate'] = datetime.datetime.now().isoformat()
     
     return jsonify({'data': absence_data})
 
@@ -113,7 +127,7 @@ def create_absence():
     if not employee:
         return jsonify({'error': 'Employee not found'}), 404
     
-    # Create new absence
+    # Create new absence with current timestamp as request_date
     new_absence = Absence(
         id=str(uuid.uuid4()),
         employee_id=data['employee_id'],
@@ -122,7 +136,8 @@ def create_absence():
         start_date=data['start_date'],
         end_date=data['end_date'],
         notes=data.get('notes'),
-        approved_by=data.get('approved_by')
+        approved_by=data.get('approved_by'),
+        request_date=datetime.datetime.now()  # Set request_date to current timestamp
     )
     
     db.session.add(new_absence)
@@ -136,6 +151,10 @@ def create_absence():
         result['department'] = employee.department
         result['position'] = employee.position
         result['imageUrl'] = employee.image_url
+        
+        # Ensure requestDate is properly formatted
+        if new_absence.request_date:
+            result['requestDate'] = new_absence.request_date.isoformat()
         
         return jsonify({'data': result}), 201
     except Exception as e:
@@ -178,6 +197,12 @@ def update_absence(id):
         result['department'] = employee.department
         result['position'] = employee.position
         result['imageUrl'] = employee.image_url
+        
+        # Ensure requestDate is properly formatted
+        if absence.request_date:
+            result['requestDate'] = absence.request_date.isoformat()
+        else:
+            result['requestDate'] = datetime.datetime.now().isoformat()
         
         return jsonify({'data': result})
     except Exception as e:
@@ -237,6 +262,12 @@ def update_absence_status(id):
         result['department'] = employee.department
         result['position'] = employee.position
         result['imageUrl'] = employee.image_url
+        
+        # Ensure requestDate is properly formatted
+        if absence.request_date:
+            result['requestDate'] = absence.request_date.isoformat()
+        else:
+            result['requestDate'] = datetime.datetime.now().isoformat()
         
         return jsonify({'data': result})
     except Exception as e:
