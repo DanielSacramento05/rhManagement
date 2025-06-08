@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -57,9 +56,20 @@ export function TimeClock() {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['timeclock'] });
       
+      // Debug: Log the full response to see what we're getting
+      console.log('Clock out response:', response);
+      
       // Handle the API response structure properly
       const timeClockEntry = response.data;
-      const hours = timeClockEntry?.totalHours || 0;
+      console.log('Time clock entry:', timeClockEntry);
+      
+      // Try multiple possible field names for total hours
+      const hours = timeClockEntry?.totalHours || 
+                   timeClockEntry?.total_hours || 
+                   (timeClockEntry as any)?.['total_hours'] || 
+                   0;
+      
+      console.log('Hours worked:', hours);
       const formattedHours = Number(hours).toFixed(2);
       
       toast({
