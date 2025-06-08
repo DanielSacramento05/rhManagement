@@ -36,15 +36,15 @@ export function DashboardCard({
       )}
       onClick={onClick}
     >
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-4">
+      <div className="p-4">
+        <div className="flex justify-between items-start mb-3">
           <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
           {icon && <div className="text-muted-foreground">{icon}</div>}
         </div>
         
         {value && (
           <div className="flex items-baseline">
-            <div className="text-2xl font-bold">{value}</div>
+            <div className="text-xl font-bold">{value}</div>
             
             {trend && (
               <div className={cn(
@@ -61,7 +61,7 @@ export function DashboardCard({
       </div>
       
       {footer && (
-        <div className="bg-muted/50 px-6 py-3 text-sm">
+        <div className="bg-muted/50 px-4 py-2 text-sm">
           {footer}
         </div>
       )}
