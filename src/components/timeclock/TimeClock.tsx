@@ -63,10 +63,9 @@ export function TimeClock() {
       const timeClockEntry = response.data;
       console.log('Time clock entry:', timeClockEntry);
       
-      // Try multiple possible field names for total hours
+      // Try multiple possible field names for total hours with proper type handling
       const hours = timeClockEntry?.totalHours || 
-                   timeClockEntry?.total_hours || 
-                   (timeClockEntry as any)?.['total_hours'] || 
+                   (timeClockEntry as any)?.total_hours || 
                    0;
       
       console.log('Hours worked:', hours);
