@@ -54,11 +54,13 @@ export function TimeClock() {
   // Clock out mutation
   const clockOutMutation = useMutation({
     mutationFn: () => clockOut(userId),
-    onSuccess: (data) => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['timeclock'] });
       
-      const hours = data.data.totalHours || 0;
-      const formattedHours = hours.toFixed(2);
+      // Handle different response structures from the API
+      const timeClockData = response.data || response;
+      const hours = timeClockData.totalHours || timeClockData.total_hours || 0;
+      const formattedHours = Number(hours).toFixed(2);
       
       toast({
         title: "Clocked Out",
