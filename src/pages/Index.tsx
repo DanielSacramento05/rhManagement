@@ -346,7 +346,7 @@ const Index = () => {
               </div>
               
               {/* Key Metrics - Better organized grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <DashboardCard 
                   title="Total Employees" 
                   value={totalEmployees.toString()} 
@@ -359,20 +359,6 @@ const Index = () => {
                   value={sortedDepartments.length.toString()} 
                   icon={<BarChart className="h-5 w-5" />}
                   footer={<span className="text-muted-foreground">Across organization</span>}
-                  className="hover:shadow-md transition-all duration-200"
-                />
-                <DashboardCard 
-                  title="Upcoming Leave" 
-                  value={upcomingLeave.length.toString()} 
-                  icon={<Calendar className="h-5 w-5" />}
-                  footer={<Link to="/absences" className="flex items-center text-muted-foreground hover:text-primary">Manage leave <ChevronRight className="h-4 w-4 ml-1" /></Link>}
-                  className="hover:shadow-md transition-all duration-200"
-                />
-                <DashboardCard 
-                  title="Recent Hires" 
-                  value={recentEmployees.length.toString()} 
-                  icon={<UserPlus className="h-5 w-5" />}
-                  footer={<span className="text-muted-foreground">Last 30 days</span>}
                   className="hover:shadow-md transition-all duration-200"
                 />
               </div>
