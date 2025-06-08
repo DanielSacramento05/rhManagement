@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -187,7 +186,7 @@ const Index = () => {
       {isMobile && (
         <div className="fixed bottom-4 right-4 z-50 shadow-lg rounded-full">
           <SidebarTrigger className="bg-primary text-white h-12 w-12 flex items-center justify-center rounded-full shadow-lg" />
-        )}
+        </div>
       )}
 
       <div className="w-full mx-auto space-y-8">
