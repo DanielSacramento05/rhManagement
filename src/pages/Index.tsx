@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -80,14 +81,15 @@ const Index = () => {
     .sort(([, countA], [, countB]) => countB - countA)
     .slice(0, 6); // Get top 6 departments
   
-  // Get upcoming leave requests - with null/undefined safety checks (only for managers)
+  // Get upcoming leave requests - with improved data handling (only for managers)
   const upcomingLeave = canViewEmployees ? (absencesData?.data || [])
     .filter(absence => {
       // Skip any absences with missing startDate
-      if (!absence.startDate) return false;
+      const startDateField = absence.startDate || absence.start_date;
+      if (!startDateField) return false;
       
       try {
-        const startDate = parseISO(absence.startDate);
+        const startDate = parseISO(startDateField);
         return isAfter(startDate, today) && isBefore(startDate, addDays(today, 30));
       } catch (error) {
         console.error("Error parsing date:", error, absence);
@@ -96,10 +98,13 @@ const Index = () => {
     })
     .sort((a, b) => {
       try {
-        // Handle potential undefined values
-        if (!a.startDate) return 1;
-        if (!b.startDate) return -1;
-        return parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime();
+        // Handle potential undefined values and different field names
+        const aStartDate = a.startDate || a.start_date;
+        const bStartDate = b.startDate || b.start_date;
+        
+        if (!aStartDate) return 1;
+        if (!bStartDate) return -1;
+        return parseISO(aStartDate).getTime() - parseISO(bStartDate).getTime();
       } catch (error) {
         console.error("Error sorting dates:", error);
         return 0;
@@ -107,12 +112,24 @@ const Index = () => {
     })
     .slice(0, 5) : [];
   
-  // Get recent employees (sort by hire date if available) (only for managers)
+  // Get recent employees - improved data handling (only for managers)
   const recentEmployees = canViewEmployees ? [...employees]
-    .filter(employee => employee.hireDate)
+    .filter(employee => {
+      const hireDateField = employee.hireDate || employee.hire_date;
+      return hireDateField;
+    })
     .sort((a, b) => {
-      if (!a.hireDate || !b.hireDate) return 0;
-      return parseISO(b.hireDate).getTime() - parseISO(a.hireDate).getTime();
+      const aHireDate = a.hireDate || a.hire_date;
+      const bHireDate = b.hireDate || b.hire_date;
+      
+      if (!aHireDate || !bHireDate) return 0;
+      
+      try {
+        return parseISO(bHireDate).getTime() - parseISO(aHireDate).getTime();
+      } catch (error) {
+        console.error("Error parsing hire dates:", error);
+        return 0;
+      }
     })
     .slice(0, 3) : [];
 
@@ -120,13 +137,30 @@ const Index = () => {
   const userLeaveRequests = (userAbsencesData?.data || [])
     .sort((a, b) => {
       // Sort by request date if available, otherwise by start date
-      if (a.requestDate && b.requestDate) {
-        return parseISO(b.requestDate).getTime() - parseISO(a.requestDate).getTime();
+      const aRequestDate = a.requestDate || a.request_date;
+      const bRequestDate = b.requestDate || b.request_date;
+      
+      if (aRequestDate && bRequestDate) {
+        try {
+          return new Date(bRequestDate).getTime() - new Date(aRequestDate).getTime();
+        } catch (error) {
+          console.error("Error parsing request dates:", error);
+        }
       }
+      
       // Fallback to sorting by start date
-      if (!a.startDate) return 1;
-      if (!b.startDate) return -1;
-      return parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime();
+      const aStartDate = a.startDate || a.start_date;
+      const bStartDate = b.startDate || b.start_date;
+      
+      if (!aStartDate) return 1;
+      if (!bStartDate) return -1;
+      
+      try {
+        return parseISO(bStartDate).getTime() - parseISO(aStartDate).getTime();
+      } catch (error) {
+        console.error("Error parsing start dates:", error);
+        return 0;
+      }
     })
     .slice(0, 5);
 
@@ -176,8 +210,8 @@ const Index = () => {
                   <div>
                     <div className="font-medium">{leave.type || "Time Off"}</div>
                     <div className="text-sm text-muted-foreground mt-1">
-                      {leave.startDate && format(parseISO(leave.startDate), "dd/MM/yyyy")} - 
-                      {leave.endDate && format(parseISO(leave.endDate), "dd/MM/yyyy")}
+                      {(leave.startDate || leave.start_date) && format(parseISO(leave.startDate || leave.start_date), "dd/MM/yyyy")} - 
+                      {(leave.endDate || leave.end_date) && format(parseISO(leave.endDate || leave.end_date), "dd/MM/yyyy")}
                     </div>
                   </div>
                   <Badge className={`
@@ -230,7 +264,7 @@ const Index = () => {
           <>
             {/* Manager/HR Admin Dashboard View */}
             
-            {/* Key metrics - for users with analytics permission */}
+            {/* Key metrics - for users with analytics permission (only Total Employees now) */}
             <div className="dashboard-grid animate-in mb-5 gap-3">
               <DashboardCard 
                 title="Total Employees" 
@@ -238,22 +272,6 @@ const Index = () => {
                 icon={<Users className="h-5 w-5" />}
                 trend={{ value: 4.6, isPositive: true }}
                 footer={canViewEmployees ? <Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View all employees <ChevronRight className="h-4 w-4 ml-1" /></Link> : <span className="text-muted-foreground">Company employees</span>}
-              />
-              
-              <DashboardCard 
-                title="Avg. Attendance" 
-                value="92%" 
-                icon={<Clock className="h-5 w-5" />}
-                trend={{ value: 1.2, isPositive: true }}
-                footer={<span className="text-muted-foreground">Last 30 days</span>}
-              />
-              
-              <DashboardCard 
-                title="Open Positions" 
-                value="12" 
-                icon={<UserPlus className="h-5 w-5" />}
-                trend={{ value: 2, isPositive: false }}
-                footer={<span className="text-muted-foreground">4 in final interview stage</span>}
               />
             </div>
 
@@ -288,12 +306,12 @@ const Index = () => {
                   <div className="glass-panel divide-y">
                     {upcomingLeave.length > 0 ? upcomingLeave.map((leave) => (
                       <div key={leave.id} className="p-3">
-                        <div className="font-medium">{leave.employeeName || "Employee"}</div>
+                        <div className="font-medium">{leave.employeeName || leave.employee_name || "Employee"}</div>
                         <div className="text-sm text-muted-foreground">{leave.position || "Position"}</div>
                         <div className="mt-2 flex justify-between items-center">
                           <span className="text-sm">
-                            {leave.startDate && format(parseISO(leave.startDate), "dd/MM/yyyy")} - 
-                            {leave.endDate && format(parseISO(leave.endDate), "dd/MM/yyyy")}
+                            {(leave.startDate || leave.start_date) && format(parseISO(leave.startDate || leave.start_date), "dd/MM/yyyy")} - 
+                            {(leave.endDate || leave.end_date) && format(parseISO(leave.endDate || leave.end_date), "dd/MM/yyyy")}
                           </span>
                           <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
                             {leave.type}
@@ -325,7 +343,7 @@ const Index = () => {
                         <div className="font-medium">{employee.name}</div>
                         <div className="text-sm text-muted-foreground">{employee.position}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          Joined: {employee.hireDate ? format(parseISO(employee.hireDate), "dd/MM/yyyy") : "N/A"}
+                          Joined: {(employee.hireDate || employee.hire_date) ? format(parseISO(employee.hireDate || employee.hire_date), "dd/MM/yyyy") : "N/A"}
                         </div>
                       </div>
                     )) : (
