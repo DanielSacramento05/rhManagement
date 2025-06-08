@@ -57,9 +57,9 @@ export function TimeClock() {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['timeclock'] });
       
-      // Handle different response structures from the API
-      const timeClockData = response.data || response;
-      const hours = timeClockData.totalHours || timeClockData.total_hours || 0;
+      // Handle the API response structure properly
+      const timeClockEntry = response.data;
+      const hours = timeClockEntry?.totalHours || 0;
       const formattedHours = Number(hours).toFixed(2);
       
       toast({
