@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { DashboardCard } from "@/components/DashboardCard";
 import { Separator } from "@/components/ui/separator";
@@ -166,19 +165,23 @@ const Index = () => {
 
   // Helper function to format date range for leave requests
   const formatDateRange = (leave: any) => {
-    console.log("Formatting leave:", leave); // Debug log
+    console.log("Full leave object:", JSON.stringify(leave, null, 2)); // Debug log to see full structure
     
     const startDate = leave.startDate || leave.start_date;
     const endDate = leave.endDate || leave.end_date;
     
-    console.log("Start date:", startDate, "End date:", endDate); // Debug log
+    console.log("Extracted - Start date:", startDate, "End date:", endDate); // Debug log
     
-    if (!startDate) return "";
+    if (!startDate) {
+      console.log("No start date found, returning empty string");
+      return "";
+    }
     
     try {
       const formattedStartDate = format(parseISO(startDate), "dd/MM/yyyy");
       
       if (!endDate) {
+        console.log("No end date, returning single date:", formattedStartDate);
         return formattedStartDate;
       }
       
@@ -186,10 +189,13 @@ const Index = () => {
       
       // If it's the same date, just show one date
       if (formattedStartDate === formattedEndDate) {
+        console.log("Same dates, returning single date:", formattedStartDate);
         return formattedStartDate;
       }
       
-      return `${formattedStartDate} - ${formattedEndDate}`;
+      const dateRange = `${formattedStartDate} - ${formattedEndDate}`;
+      console.log("Different dates, returning range:", dateRange);
+      return dateRange;
     } catch (error) {
       console.error("Error formatting dates:", error, { startDate, endDate });
       return "";
@@ -205,6 +211,10 @@ const Index = () => {
       }, 100 * index);
     });
   }, []);
+
+  // Debug log to see what data we're working with
+  console.log("User absences data:", userAbsencesData);
+  console.log("User leave requests:", userLeaveRequests);
 
   return (
     <div className="page-container pb-16 w-full">
