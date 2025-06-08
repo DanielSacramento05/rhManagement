@@ -1,3 +1,4 @@
+
 import { apiRequest, buildQueryParams } from './api';
 import { 
   Employee, 
@@ -233,7 +234,7 @@ export const updateEmployeeRole = async (
   id: string,
   role: 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin'
 ): Promise<ApiResponse<Employee>> => {
-  const response = await apiRequest<ApiResponse<Employee>>(
+  const response = await apiRequest<ApiResponse<Employee>, { role: string }>(
     `${ENDPOINT}/${id}/role`,
     'PUT',
     { role }

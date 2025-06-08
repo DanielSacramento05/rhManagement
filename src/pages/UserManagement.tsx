@@ -440,14 +440,14 @@ const UserManagement = () => {
           </DialogHeader>
           <div className="space-y-4">
             <Select 
-              defaultValue={selectedEmployee?.managerId || ""}
-              onValueChange={(value) => handleManagerChange(value || null)}
+              defaultValue={selectedEmployee?.managerId || "no-manager"}
+              onValueChange={(value) => handleManagerChange(value === "no-manager" ? null : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select manager" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Manager</SelectItem>
+                <SelectItem value="no-manager">No Manager</SelectItem>
                 {potentialManagers.map(manager => (
                   <SelectItem key={manager.id} value={manager.id}>
                     {manager.name} - {formatRoleForDisplay(manager.role || 'employee')}
