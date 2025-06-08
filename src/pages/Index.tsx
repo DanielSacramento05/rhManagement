@@ -164,6 +164,38 @@ const Index = () => {
     })
     .slice(0, 5);
 
+  // Helper function to format date range for leave requests
+  const formatDateRange = (leave: any) => {
+    console.log("Formatting leave:", leave); // Debug log
+    
+    const startDate = leave.startDate || leave.start_date;
+    const endDate = leave.endDate || leave.end_date;
+    
+    console.log("Start date:", startDate, "End date:", endDate); // Debug log
+    
+    if (!startDate) return "";
+    
+    try {
+      const formattedStartDate = format(parseISO(startDate), "dd/MM/yyyy");
+      
+      if (!endDate) {
+        return formattedStartDate;
+      }
+      
+      const formattedEndDate = format(parseISO(endDate), "dd/MM/yyyy");
+      
+      // If it's the same date, just show one date
+      if (formattedStartDate === formattedEndDate) {
+        return formattedStartDate;
+      }
+      
+      return `${formattedStartDate} - ${formattedEndDate}`;
+    } catch (error) {
+      console.error("Error formatting dates:", error, { startDate, endDate });
+      return "";
+    }
+  };
+
   useEffect(() => {
     // Simulate data loading with nice animation
     const items = document.querySelectorAll('.animate-in');
@@ -209,9 +241,7 @@ const Index = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="font-medium">
-                      {leave.type || "Time Off"} • {(leave.startDate || leave.start_date) && (leave.endDate || leave.end_date) && 
-                        `${format(parseISO(leave.startDate || leave.start_date), "dd/MM/yyyy")} - ${format(parseISO(leave.endDate || leave.end_date), "dd/MM/yyyy")}`
-                      }
+                      {leave.type || "Time Off"} • {formatDateRange(leave)}
                     </div>
                   </div>
                   <Badge className={`
