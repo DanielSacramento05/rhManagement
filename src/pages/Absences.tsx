@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +85,26 @@ const Absences = () => {
     }
   };
 
+  // Helper function to format request date safely
+  const formatRequestDate = (absence: any) => {
+    try {
+      // Try different date field names that might be used
+      const dateToUse = absence.requestDate || absence.request_date || absence.createdAt || absence.created_at;
+      
+      if (dateToUse) {
+        // Handle both ISO strings and date objects
+        const date = typeof dateToUse === 'string' ? parseISO(dateToUse) : new Date(dateToUse);
+        return format(date, "dd MMM yyyy");
+      }
+      
+      // Fallback to a default date if no request date is available
+      return "Date not available";
+    } catch (error) {
+      console.error("Error formatting request date:", error, absence);
+      return "Date not available";
+    }
+  };
+
   // Render absence cards
   const renderAbsenceCards = (absences: any[], isLoading: boolean, emptyMessage: string) => {
     if (isLoading) {
@@ -126,7 +145,7 @@ const Absences = () => {
               )}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
-                <span>Requested on {absence.requestDate ? format(parseISO(absence.requestDate), "dd MMM yyyy") : "Unknown"}</span>
+                <span>Requested on {formatRequestDate(absence)}</span>
               </div>
               
               {!isEmployee && absence.status === 'pending' && (
