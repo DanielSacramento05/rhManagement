@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -232,7 +231,7 @@ export function AddEmployeeForm({ departments, onClose }: AddEmployeeFormProps) 
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">No Manager</SelectItem>
+                    <SelectItem value="no-manager">No Manager</SelectItem>
                     {potentialManagers.map(manager => (
                       <SelectItem key={manager.id} value={manager.id}>
                         {manager.name} - {manager.displayRole}
