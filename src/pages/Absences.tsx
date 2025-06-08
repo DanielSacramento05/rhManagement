@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +58,6 @@ const Absences = () => {
       
       toast.success(`Absence request ${status} successfully`);
     } catch (error) {
-      console.error(`Error ${status} absence:`, error);
       toast.error(`Failed to ${status === 'approved' ? 'approve' : 'decline'} absence request`);
     }
   };
@@ -91,8 +91,6 @@ const Absences = () => {
       // Try different date field names that might be used
       const dateToUse = absence.requestDate || absence.request_date || absence.createdAt || absence.created_at;
       
-      console.log("Formatting request date for absence:", absence.id, "dateToUse:", dateToUse);
-      
       if (dateToUse) {
         // Handle both ISO strings and date objects
         let date;
@@ -105,7 +103,6 @@ const Absences = () => {
         
         // Check if the date is valid
         if (isNaN(date.getTime())) {
-          console.error("Invalid date:", dateToUse);
           return "Date not available";
         }
         
@@ -115,7 +112,30 @@ const Absences = () => {
       // Fallback to a default date if no request date is available
       return "Date not available";
     } catch (error) {
-      console.error("Error formatting request date:", error, absence);
+      return "Date not available";
+    }
+  };
+
+  // Helper function to format date range
+  const formatDateRange = (absence: any) => {
+    try {
+      // Handle both camelCase and snake_case field names
+      const startDate = absence.startDate || absence.start_date;
+      const endDate = absence.endDate || absence.end_date;
+      
+      if (!startDate || !endDate) {
+        return "Date not available";
+      }
+      
+      const formattedStartDate = format(parseISO(startDate), "dd MMM yyyy");
+      const formattedEndDate = format(parseISO(endDate), "dd MMM yyyy");
+      
+      if (formattedStartDate === formattedEndDate) {
+        return formattedStartDate;
+      }
+      
+      return `${formattedStartDate} - ${formattedEndDate}`;
+    } catch (error) {
       return "Date not available";
     }
   };
@@ -143,8 +163,7 @@ const Absences = () => {
                 </CardTitle>
                 <CardDescription>
                   {!isEmployee && absence.employeeName && (absence.type || "Time Off")} {!isEmployee && absence.employeeName && " • "}
-                  {absence.startDate && format(parseISO(absence.startDate), "dd MMM yyyy")} - 
-                  {absence.endDate && format(parseISO(absence.endDate), "dd MMM yyyy")}
+                  {formatDateRange(absence)}
                 </CardDescription>
               </div>
               {getStatusBadge(absence.status)}
