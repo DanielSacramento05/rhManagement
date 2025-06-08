@@ -351,7 +351,6 @@ const Index = () => {
                   title="Total Employees" 
                   value={totalEmployees.toString()} 
                   icon={<Users className="h-5 w-5" />}
-                  trend={{ value: 4.6, isPositive: true }}
                   footer={canViewEmployees ? <Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View all employees <ChevronRight className="h-4 w-4 ml-1" /></Link> : <span className="text-muted-foreground">Company employees</span>}
                   className="hover:shadow-md transition-all duration-200"
                 />
