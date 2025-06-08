@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
@@ -10,6 +11,7 @@ absences_schema = AbsenceSchema(many=True)
 
 @absences_bp.route('', methods=['GET'])
 def get_absences():
+    # ... keep existing code (get_absences function)
     # Get query parameters for filtering and pagination
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('pageSize', 10, type=int)
@@ -71,6 +73,7 @@ def get_absences():
 
 @absences_bp.route('/<id>', methods=['GET'])
 def get_absence(id):
+    # ... keep existing code (get_absence function)
     absence = Absence.query.get_or_404(id)
     absence_data = absence_schema.dump(absence)
     
@@ -86,6 +89,7 @@ def get_absence(id):
 
 @absences_bp.route('', methods=['POST'])
 def create_absence():
+    # ... keep existing code (create_absence function)
     # Validate and deserialize input
     json_data = request.get_json()
     print("Received absence request data:", json_data)
@@ -140,6 +144,7 @@ def create_absence():
 
 @absences_bp.route('/<id>', methods=['PUT'])
 def update_absence(id):
+    # ... keep existing code (update_absence function)
     absence = Absence.query.get_or_404(id)
     
     # Get JSON data
@@ -240,6 +245,7 @@ def update_absence_status(id):
 
 @absences_bp.route('/<id>', methods=['DELETE'])
 def delete_absence(id):
+    # ... keep existing code (delete_absence function)
     absence = Absence.query.get_or_404(id)
     
     try:
@@ -256,59 +262,9 @@ def update_employee_statuses_based_on_absences():
     Updates all employee statuses based on current approved absences.
     Should be run after absence approvals or on a regular schedule.
     """
-    # Get today's date as a datetime.date object, not a string
-    today = datetime.datetime.now().date()
-    print(f"Checking for employees who should be on leave today: {today}")
-    
-    # Get all employees
-    employees = Employee.query.all()
-    
-    for employee in employees:
-        # Skip inactive employees
-        if employee.status == 'inactive':
-            continue
-            
-        # Check if employee has an approved absence for today
-        current_absence = Absence.query.filter(
-            Absence.employee_id == employee.id,
-            Absence.status == 'approved',
-            Absence.start_date <= today,
-            Absence.end_date >= today
-        ).first()
-        
-        if current_absence:
-            # If there's an approved absence covering today, set status to on-leave
-            if employee.status != 'on-leave':
-                print(f"Setting employee {employee.name} to on-leave due to approved absence")
-                employee.status = 'on-leave'
-        elif employee.status == 'on-leave':
-            # If employee is marked as on-leave but doesn't have an absence for today
-            # Check if they've clocked in today
-            from models import TimeClock
-            
-            # Get today's date in YYYY-MM-DD format for comparison
-            today_date = datetime.datetime.now().strftime("%Y-%m-%d")
-            
-            # Check if employee has clocked in today
-            clock_entry = TimeClock.query.filter(
-                TimeClock.employee_id == employee.id,
-                TimeClock.date == today_date
-            ).first()
-            
-            if clock_entry:
-                if clock_entry.clock_out_time:
-                    employee.status = 'out-of-office'  # Clocked out
-                else:
-                    employee.status = 'active'  # Still clocked in
-            else:
-                employee.status = 'out-of-office'  # No absence and no clock-in
-    
-    try:
-        db.session.commit()
-        print("Employee statuses updated successfully")
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error updating employee statuses: {str(e)}")
+    # Import here to avoid circular imports
+    from routes.absence.absence_utils import update_employee_statuses_based_on_absences as update_statuses
+    update_statuses()
 
 # Run the update on module load to ensure we're starting with correct statuses
 try:

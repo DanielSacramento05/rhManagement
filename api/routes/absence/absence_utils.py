@@ -24,6 +24,9 @@ def update_employee_statuses_based_on_absences():
     today = datetime.datetime.now().date()
     print(f"Checking for employees who should be on leave today: {today}")
     
+    # Get today's date in YYYY-MM-DD format for comparison
+    today_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    
     # Get all employees
     employees = Employee.query.all()
     
@@ -45,14 +48,9 @@ def update_employee_statuses_based_on_absences():
             if employee.status != 'on-leave':
                 print(f"Setting employee {employee.name} to on-leave due to approved absence")
                 employee.status = 'on-leave'
-        elif employee.status == 'on-leave':
-            # Employee is marked as on-leave but doesn't have an active absence for today
-            # This means their leave has ended - check if they've clocked in today
-            
-            # Get today's date in YYYY-MM-DD format for comparison
-            today_date = datetime.datetime.now().strftime("%Y-%m-%d")
-            
-            # Check if employee has clocked in today
+        else:
+            # Employee doesn't have an active absence for today
+            # Check if they've clocked in today
             clock_entry = TimeClock.query.filter(
                 TimeClock.employee_id == employee.id,
                 TimeClock.date == today_date
@@ -60,12 +58,20 @@ def update_employee_statuses_based_on_absences():
             
             if clock_entry:
                 if clock_entry.clock_out_time:
-                    employee.status = 'out-of-office'  # Clocked out
+                    # Employee clocked in and out today
+                    if employee.status != 'out-of-office':
+                        print(f"Setting employee {employee.name} to out-of-office (clocked out)")
+                        employee.status = 'out-of-office'
                 else:
-                    employee.status = 'active'  # Still clocked in
+                    # Employee is still clocked in
+                    if employee.status != 'active':
+                        print(f"Setting employee {employee.name} to active (still clocked in)")
+                        employee.status = 'active'
             else:
-                print(f"Leave ended for {employee.name} - setting status to out-of-office")
-                employee.status = 'out-of-office'  # No absence and no clock-in
+                # Employee hasn't clocked in today and has no absence
+                if employee.status not in ['out-of-office', 'remote']:
+                    print(f"Setting employee {employee.name} to out-of-office (no clock-in, no absence)")
+                    employee.status = 'out-of-office'
     
     try:
         db.session.commit()
