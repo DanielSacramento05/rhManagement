@@ -208,10 +208,10 @@ const Index = () => {
               <div key={leave.id} className="p-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="font-medium">{leave.type || "Time Off"}</div>
-                    <div className="text-sm text-muted-foreground mt-1">
-                      {(leave.startDate || leave.start_date) && format(parseISO(leave.startDate || leave.start_date), "dd/MM/yyyy")} - 
-                      {(leave.endDate || leave.end_date) && format(parseISO(leave.endDate || leave.end_date), "dd/MM/yyyy")}
+                    <div className="font-medium">
+                      {leave.type || "Time Off"} • {(leave.startDate || leave.start_date) && (leave.endDate || leave.end_date) && 
+                        `${format(parseISO(leave.startDate || leave.start_date), "dd/MM/yyyy")} - ${format(parseISO(leave.endDate || leave.end_date), "dd/MM/yyyy")}`
+                      }
                     </div>
                   </div>
                   <Badge className={`
