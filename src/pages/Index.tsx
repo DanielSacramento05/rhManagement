@@ -167,8 +167,9 @@ const Index = () => {
   const formatDateRange = (leave: any) => {
     console.log("Full leave object:", JSON.stringify(leave, null, 2)); // Debug log to see full structure
     
-    const startDate = leave.startDate || leave.start_date;
-    const endDate = leave.endDate || leave.end_date;
+    // The API returns start_date and end_date (with underscores)
+    const startDate = leave.start_date || leave.startDate;
+    const endDate = leave.end_date || leave.endDate;
     
     console.log("Extracted - Start date:", startDate, "End date:", endDate); // Debug log
     
