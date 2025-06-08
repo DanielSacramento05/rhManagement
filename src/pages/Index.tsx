@@ -109,26 +109,6 @@ const Index = () => {
       }
     })
     .slice(0, 5) : [];
-  
-  // Get recent employees - improved data handling (only for managers)
-  const recentEmployees = canViewEmployees ? [...employees]
-    .filter(employee => {
-      const hireDateField = employee.hireDate || (employee as any).hire_date;
-      return hireDateField;
-    })
-    .sort((a, b) => {
-      const aHireDate = a.hireDate || (a as any).hire_date;
-      const bHireDate = b.hireDate || (b as any).hire_date;
-      
-      if (!aHireDate || !bHireDate) return 0;
-      
-      try {
-        return parseISO(bHireDate).getTime() - parseISO(aHireDate).getTime();
-      } catch (error) {
-        return 0;
-      }
-    })
-    .slice(0, 3) : [];
 
   // Get user's latest leave requests
   const userLeaveRequests = (userAbsencesData?.data || [])
@@ -229,13 +209,53 @@ const Index = () => {
             <p className="text-muted-foreground">Manage your work hours and view recent activity</p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1">
               <TimeClock />
             </div>
             <div className="lg:col-span-2">
               <TimeClockHistory />
             </div>
+            {/* Upcoming Leave Card - only show for managers */}
+            {canViewEmployees && (
+              <div className="lg:col-span-1">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2 flex items-center">
+                    <Calendar className="h-5 w-5 mr-2 text-primary" />
+                    Upcoming Leave
+                  </h3>
+                  <p className="text-muted-foreground text-sm">Next 30 days</p>
+                </div>
+                
+                <div className="glass-panel divide-y max-h-96 overflow-y-auto">
+                  {upcomingLeave.length > 0 ? upcomingLeave.map((leave) => (
+                    <div key={leave.id} className="p-3">
+                      <div className="font-medium text-sm mb-1">{leave.employeeName || (leave as any).employee_name || "Employee"}</div>
+                      <div className="text-xs text-muted-foreground mb-2">{leave.position || "Position"}</div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">
+                          {(leave.startDate || leave.start_date) && format(parseISO(leave.startDate || leave.start_date), "dd/MM")} - 
+                          {(leave.endDate || leave.end_date) && format(parseISO(leave.endDate || leave.end_date), "dd/MM")}
+                        </span>
+                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs">
+                          {leave.type}
+                        </Badge>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="p-4 text-center text-muted-foreground text-sm">
+                      <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                      <p>No upcoming leave</p>
+                    </div>
+                  )}
+                  <div className="p-2 text-center bg-muted/20">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to="/absences">View All</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -366,9 +386,9 @@ const Index = () => {
 
             {/* Detailed Analytics */}
             <section className="animate-in">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
                 {/* Department Overview */}
-                <div className="lg:col-span-2">
+                <div>
                   <div className="mb-4">
                     <h3 className="text-xl font-semibold mb-2 flex items-center">
                       <BarChart className="h-5 w-5 mr-2 text-primary" />
@@ -392,81 +412,6 @@ const Index = () => {
                         <Progress value={Math.round((count / totalEmployees) * 100)} className="h-3" />
                       </div>
                     ))}
-                  </div>
-                </div>
-                
-                {/* Right Sidebar */}
-                <div className="space-y-8">
-                  {/* Upcoming Leave */}
-                  <div>
-                    <div className="mb-4">
-                      <h3 className="text-xl font-semibold mb-2 flex items-center">
-                        <Calendar className="h-5 w-5 mr-2 text-primary" />
-                        Upcoming Leave
-                      </h3>
-                      <p className="text-muted-foreground text-sm">Next 30 days</p>
-                    </div>
-                    
-                    <div className="glass-panel divide-y">
-                      {upcomingLeave.length > 0 ? upcomingLeave.map((leave) => (
-                        <div key={leave.id} className="p-4">
-                          <div className="font-medium text-sm mb-1">{leave.employeeName || (leave as any).employee_name || "Employee"}</div>
-                          <div className="text-xs text-muted-foreground mb-2">{leave.position || "Position"}</div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-muted-foreground">
-                              {(leave.startDate || leave.start_date) && format(parseISO(leave.startDate || leave.start_date), "dd/MM")} - 
-                              {(leave.endDate || leave.end_date) && format(parseISO(leave.endDate || leave.end_date), "dd/MM")}
-                            </span>
-                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs">
-                              {leave.type}
-                            </Badge>
-                          </div>
-                        </div>
-                      )) : (
-                        <div className="p-6 text-center text-muted-foreground text-sm">
-                          <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                          <p>No upcoming leave</p>
-                        </div>
-                      )}
-                      <div className="p-3 text-center bg-muted/20">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to="/absences">View All Leave</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Recent Hires */}
-                  <div>
-                    <div className="mb-4">
-                      <h3 className="text-xl font-semibold mb-2 flex items-center">
-                        <UserPlus className="h-5 w-5 mr-2 text-primary" />
-                        Recent Hires
-                      </h3>
-                      <p className="text-muted-foreground text-sm">Latest team members</p>
-                    </div>
-                    
-                    <div className="glass-panel divide-y">
-                      {recentEmployees.length > 0 ? recentEmployees.map((employee) => (
-                        <div key={employee.id} className="p-4">
-                          <div className="font-medium text-sm mb-1">{employee.name}</div>
-                          <div className="text-xs text-muted-foreground mb-1">{employee.position}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Joined: {(employee.hireDate || (employee as any).hire_date) ? format(parseISO(employee.hireDate || (employee as any).hire_date), "dd/MM/yyyy") : "N/A"}
-                          </div>
-                        </div>
-                      )) : (
-                        <div className="p-6 text-center text-muted-foreground text-sm">
-                          <UserPlus className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                          <p>No recent hires</p>
-                        </div>
-                      )}
-                      <div className="p-3 text-center bg-muted/20">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to="/employees">View All Employees</Link>
-                        </Button>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
