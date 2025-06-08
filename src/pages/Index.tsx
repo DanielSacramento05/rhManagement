@@ -209,11 +209,14 @@ const Index = () => {
         </div>
       )}
 
-      {/* Content grid now using full width */}
-      <div className="w-full mx-auto">
-        {/* Employee time clock section - all users (positioned first) */}
-        <div className="mb-6 animate-in">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div className="w-full mx-auto space-y-8">
+        {/* Time Clock Section */}
+        <section className="animate-in">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <Clock className="h-5 w-5 mr-2 text-primary" />
+            Time Clock
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div>
               <TimeClock />
             </div>
@@ -221,22 +224,34 @@ const Index = () => {
               <TimeClockHistory />
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* User's Leave Requests - visible to all users */}
-        <div className="mb-6 animate-in">
-          <h2 className="section-title flex items-center">
+        {/* Time Clock Manager for managers */}
+        {hasPermission('timeclock', 'read', 'department') && (
+          <section className="animate-in">
+            <TimeClockManager />
+          </section>
+        )}
+
+        {/* Personal Leave Section */}
+        <section className="animate-in">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
             <Clock3 className="h-5 w-5 mr-2 text-primary" />
             My Leave Requests
           </h2>
           <div className="glass-panel divide-y">
             {userLeaveRequests.length > 0 ? userLeaveRequests.map((leave) => (
-              <div key={leave.id} className="p-3">
+              <div key={leave.id} className="p-4">
                 <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-medium">
+                  <div className="flex-1">
+                    <div className="font-medium text-base mb-1">
                       {leave.type || "Time Off"} • {formatDateRange(leave)}
                     </div>
+                    {leave.notes && (
+                      <div className="text-sm text-muted-foreground italic">
+                        "{leave.notes}"
+                      </div>
+                    )}
                   </div>
                   <Badge className={`
                     ${leave.status === 'approved' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
@@ -246,146 +261,153 @@ const Index = () => {
                     {leave.status}
                   </Badge>
                 </div>
-                {leave.notes && (
-                  <div className="text-sm mt-2 italic text-muted-foreground">
-                    "{leave.notes}"
-                  </div>
-                )}
               </div>
             )) : (
-              <div className="p-4 text-center text-muted-foreground">
-                You don't have any leave requests yet
+              <div className="p-6 text-center text-muted-foreground">
+                <Calendar className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="mb-3">You don't have any leave requests yet</p>
+                <Button variant="outline" asChild>
+                  <Link to="/absences">Request Time Off</Link>
+                </Button>
               </div>
             )}
-            <div className="p-3 text-center">
-              <Button variant="outline" asChild>
-                <Link to="/absences">Manage Leave</Link>
-              </Button>
-            </div>
+            {userLeaveRequests.length > 0 && (
+              <div className="p-3 text-center bg-muted/20">
+                <Button variant="outline" asChild>
+                  <Link to="/absences">Manage Leave</Link>
+                </Button>
+              </div>
+            )}
           </div>
-        </div>
+        </section>
 
-        {/* Time Clock Manager for managers */}
-        {hasPermission('timeclock', 'read', 'department') && (
-          <div className="mb-6 animate-in">
-            <TimeClockManager />
-          </div>
-        )}
-
-        {/* Announcements section - visible to all users */}
-        <div className="mb-6 animate-in">
+        {/* Announcements Section */}
+        <section className="animate-in">
           <Announcements />
-        </div>
+        </section>
 
         {/* Announcement Manager for users with permission */}
         {canManageAnnouncements && (
-          <div className="mb-6 animate-in">
+          <section className="animate-in">
             <AnnouncementManager />
-          </div>
+          </section>
         )}
 
-        {canViewCompanyAnalytics ? (
+        {/* Management Dashboard */}
+        {canViewCompanyAnalytics && (
           <>
-            {/* Manager/HR Admin Dashboard View */}
+            <Separator className="my-8" />
             
-            {/* Key metrics - for users with analytics permission (only Total Employees now) */}
-            <div className="dashboard-grid animate-in mb-5 gap-3">
-              <DashboardCard 
-                title="Total Employees" 
-                value={totalEmployees.toString()} 
-                icon={<Users className="h-5 w-5" />}
-                trend={{ value: 4.6, isPositive: true }}
-                footer={canViewEmployees ? <Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View all employees <ChevronRight className="h-4 w-4 ml-1" /></Link> : <span className="text-muted-foreground">Company employees</span>}
-              />
-            </div>
+            {/* Company Metrics */}
+            <section className="animate-in">
+              <h2 className="text-xl font-semibold mb-4 flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-primary" />
+                Company Overview
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <DashboardCard 
+                  title="Total Employees" 
+                  value={totalEmployees.toString()} 
+                  icon={<Users className="h-5 w-5" />}
+                  trend={{ value: 4.6, isPositive: true }}
+                  footer={canViewEmployees ? <Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View all employees <ChevronRight className="h-4 w-4 ml-1" /></Link> : <span className="text-muted-foreground">Company employees</span>}
+                />
+              </div>
+            </section>
 
-            {/* Manager dashboard layout - charts and info */}
-            <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-3 animate-in">
-              <div className="lg:col-span-2">
-                <h2 className="section-title flex items-center">
-                  <BarChart className="h-5 w-5 mr-2 text-primary" />
-                  Department Overview
-                </h2>
-                
-                <div className="glass-panel p-4 space-y-3">
-                  {sortedDepartments.map(([department, count]) => (
-                    <div key={department} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>{department}</span>
-                        <span className="font-medium">{count} employees</span>
-                      </div>
-                      <Progress value={Math.round((count / totalEmployees) * 100)} className="h-2" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <h2 className="section-title flex items-center">
-                    <Calendar className="h-5 w-5 mr-2 text-primary" />
-                    Upcoming Leave
-                  </h2>
+            {/* Detailed Analytics */}
+            <section className="animate-in">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Department Overview */}
+                <div className="lg:col-span-2">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    <BarChart className="h-5 w-5 mr-2 text-primary" />
+                    Department Overview
+                  </h3>
                   
-                  <div className="glass-panel divide-y">
-                    {upcomingLeave.length > 0 ? upcomingLeave.map((leave) => (
-                      <div key={leave.id} className="p-3">
-                        <div className="font-medium">{leave.employeeName || (leave as any).employee_name || "Employee"}</div>
-                        <div className="text-sm text-muted-foreground">{leave.position || "Position"}</div>
-                        <div className="mt-2 flex justify-between items-center">
-                          <span className="text-sm">
-                            {(leave.startDate || leave.start_date) && format(parseISO(leave.startDate || leave.start_date), "dd/MM/yyyy")} - 
-                            {(leave.endDate || leave.end_date) && format(parseISO(leave.endDate || leave.end_date), "dd/MM/yyyy")}
-                          </span>
-                          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-                            {leave.type}
-                          </Badge>
+                  <div className="glass-panel p-6 space-y-4">
+                    {sortedDepartments.map(([department, count]) => (
+                      <div key={department} className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-medium">{department}</span>
+                          <span className="text-muted-foreground">{count} employees</span>
                         </div>
+                        <Progress value={Math.round((count / totalEmployees) * 100)} className="h-2" />
                       </div>
-                    )) : (
-                      <div className="p-3 text-center text-muted-foreground">
-                        No upcoming leave requests
-                      </div>
-                    )}
-                    <div className="p-3 text-center">
-                      <Button variant="ghost" asChild>
-                        <Link to="/absences">View all leave</Link>
-                      </Button>
-                    </div>
+                    ))}
                   </div>
                 </div>
                 
-                <div>
-                  <h2 className="section-title flex items-center">
-                    <UserPlus className="h-5 w-5 mr-2 text-primary" />
-                    Recent Hires
-                  </h2>
-                  
-                  <div className="glass-panel divide-y">
-                    {recentEmployees.length > 0 ? recentEmployees.map((employee) => (
-                      <div key={employee.id} className="p-3">
-                        <div className="font-medium">{employee.name}</div>
-                        <div className="text-sm text-muted-foreground">{employee.position}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          Joined: {(employee.hireDate || (employee as any).hire_date) ? format(parseISO(employee.hireDate || (employee as any).hire_date), "dd/MM/yyyy") : "N/A"}
+                {/* Right Sidebar */}
+                <div className="space-y-6">
+                  {/* Upcoming Leave */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center">
+                      <Calendar className="h-5 w-5 mr-2 text-primary" />
+                      Upcoming Leave
+                    </h3>
+                    
+                    <div className="glass-panel divide-y">
+                      {upcomingLeave.length > 0 ? upcomingLeave.map((leave) => (
+                        <div key={leave.id} className="p-4">
+                          <div className="font-medium text-sm">{leave.employeeName || (leave as any).employee_name || "Employee"}</div>
+                          <div className="text-xs text-muted-foreground mb-2">{leave.position || "Position"}</div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-muted-foreground">
+                              {(leave.startDate || leave.start_date) && format(parseISO(leave.startDate || leave.start_date), "dd/MM")} - 
+                              {(leave.endDate || leave.end_date) && format(parseISO(leave.endDate || leave.end_date), "dd/MM")}
+                            </span>
+                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 text-xs">
+                              {leave.type}
+                            </Badge>
+                          </div>
                         </div>
+                      )) : (
+                        <div className="p-4 text-center text-muted-foreground text-sm">
+                          No upcoming leave requests
+                        </div>
+                      )}
+                      <div className="p-3 text-center">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to="/absences">View all leave</Link>
+                        </Button>
                       </div>
-                    )) : (
-                      <div className="p-3 text-center text-muted-foreground">
-                        No recent hires
+                    </div>
+                  </div>
+                  
+                  {/* Recent Hires */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center">
+                      <UserPlus className="h-5 w-5 mr-2 text-primary" />
+                      Recent Hires
+                    </h3>
+                    
+                    <div className="glass-panel divide-y">
+                      {recentEmployees.length > 0 ? recentEmployees.map((employee) => (
+                        <div key={employee.id} className="p-4">
+                          <div className="font-medium text-sm">{employee.name}</div>
+                          <div className="text-xs text-muted-foreground">{employee.position}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Joined: {(employee.hireDate || (employee as any).hire_date) ? format(parseISO(employee.hireDate || (employee as any).hire_date), "dd/MM/yyyy") : "N/A"}
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="p-4 text-center text-muted-foreground text-sm">
+                          No recent hires
+                        </div>
+                      )}
+                      <div className="p-3 text-center">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to="/employees">View all employees</Link>
+                        </Button>
                       </div>
-                    )}
-                    <div className="p-3 text-center">
-                      <Button variant="ghost" asChild>
-                        <Link to="/employees">View all employees</Link>
-                      </Button>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
           </>
-        ) : null}
+        )}
       </div>
     </div>
   );
