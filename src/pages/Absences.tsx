@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RequestTimeOffForm } from "@/components/absences/RequestTimeOffForm";
-import { Plus, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
+import { AbsenceCalendar } from "@/components/absences/AbsenceCalendar";
+import { Plus, FileText, Clock, CheckCircle, XCircle, Calendar as CalendarIcon } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAbsences, updateAbsenceStatus } from "@/services/absenceService";
 import { format, parseISO } from "date-fns";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 const Absences = () => {
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("requests");
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   
@@ -214,20 +215,50 @@ const Absences = () => {
         </Dialog>
       </div>
 
-      {/* For employees: Show requests directly without tabs */}
+      {/* For employees: Show tabs with Calendar and Requests */}
       {isEmployee ? (
-        <div className="space-y-4">
-          {renderAbsenceCards(
-            filteredUserAbsences, 
-            userAbsencesLoading, 
-            "You don't have any absence requests yet"
-          )}
-        </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="requests" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              My Requests
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              Calendar
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="requests">
+            <div className="space-y-4">
+              {renderAbsenceCards(
+                filteredUserAbsences, 
+                userAbsencesLoading, 
+                "You don't have any absence requests yet"
+              )}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="calendar">
+            <AbsenceCalendar absences={userAbsences?.data || []} />
+          </TabsContent>
+        </Tabs>
       ) : (
-        /* For non-employees: Show tabs with Team Requests */
-        <Tabs defaultValue="team-requests" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-1">
-            {canViewAllAbsences && <TabsTrigger value="team-requests">Team Requests</TabsTrigger>}
+        /* For non-employees: Show tabs with Team Requests and Calendar */
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            {canViewAllAbsences && (
+              <TabsTrigger value="team-requests" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Team Requests
+              </TabsTrigger>
+            )}
+            {canViewAllAbsences && (
+              <TabsTrigger value="calendar" className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                Calendar
+              </TabsTrigger>
+            )}
           </TabsList>
           
           {canViewAllAbsences && (
@@ -239,6 +270,12 @@ const Absences = () => {
                   "No team absence requests found"
                 )}
               </div>
+            </TabsContent>
+          )}
+          
+          {canViewAllAbsences && (
+            <TabsContent value="calendar">
+              <AbsenceCalendar absences={teamAbsences?.data || []} />
             </TabsContent>
           )}
         </Tabs>
