@@ -1,4 +1,3 @@
-
 import { apiRequest, buildQueryParams } from './api';
 import { 
   Employee, 
@@ -23,19 +22,19 @@ export const getEmployees = async (
     let updatedFilters = { ...filters };
     
     // If user is a department manager, only show employees from their department
-    if (currentUser?.role === 'dept_manager' && currentUser.department) {
-      updatedFilters.department = currentUser.department;
+    if (currentUser?.role === 'dept_manager' && currentUser.departmentName) {
+      updatedFilters.department = currentUser.departmentName;
     }
     
-    // Add a timestamp parameter to prevent caching
+    // Add a timestamp parameter to prevent caching - extend the filters type
     const timestamp = new Date().getTime();
-    updatedFilters = { ...updatedFilters, _t: timestamp };
+    const filtersWithTimestamp = { ...updatedFilters, _t: timestamp } as any;
     
     const response = await apiRequest<PaginatedResponse<Employee>>(
       ENDPOINT, 
       'GET', 
       undefined, 
-      buildQueryParams(updatedFilters)
+      buildQueryParams(filtersWithTimestamp)
     );
     
     // Map image_url to imageUrl for frontend compatibility for each employee
