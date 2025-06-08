@@ -216,41 +216,6 @@ const Index = () => {
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Welcome back, {currentUser?.name || 'User'}
             </h1>
-            <p className="text-muted-foreground">
-              Here's what's happening at your workplace today
-            </p>
-          </div>
-        </section>
-
-        {/* Quick Actions Grid - Better organized */}
-        <section className="animate-in">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <DashboardCard 
-              title="Clock In/Out" 
-              icon={<Clock className="h-5 w-5" />}
-              footer={<Link to="#timeclock" className="flex items-center text-muted-foreground hover:text-primary">Manage time <ChevronRight className="h-4 w-4 ml-1" /></Link>}
-              className="hover:shadow-md transition-all duration-200"
-            />
-            <DashboardCard 
-              title="Request Leave" 
-              icon={<Calendar className="h-5 w-5" />}
-              footer={<Link to="/absences" className="flex items-center text-muted-foreground hover:text-primary">View absences <ChevronRight className="h-4 w-4 ml-1" /></Link>}
-              className="hover:shadow-md transition-all duration-200"
-            />
-            {canViewEmployees && (
-              <DashboardCard 
-                title="Team Directory" 
-                icon={<Users className="h-5 w-5" />}
-                footer={<Link to="/employees" className="flex items-center text-muted-foreground hover:text-primary">View employees <ChevronRight className="h-4 w-4 ml-1" /></Link>}
-                className="hover:shadow-md transition-all duration-200"
-              />
-            )}
-            <DashboardCard 
-              title="My Profile" 
-              icon={<Briefcase className="h-5 w-5" />}
-              footer={<Link to="/profile" className="flex items-center text-muted-foreground hover:text-primary">Edit profile <ChevronRight className="h-4 w-4 ml-1" /></Link>}
-              className="hover:shadow-md transition-all duration-200"
-            />
           </div>
         </section>
 
