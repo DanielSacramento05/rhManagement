@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
@@ -39,13 +40,9 @@ def get_absences():
         query = query.filter(Absence.end_date <= end_date)
     
     # Sort by status (pending first) and then by request_date (newest first)
+    # Using a more explicit approach for better database compatibility
     query = query.order_by(
-        db.case(
-            (Absence.status == 'pending', 1),
-            (Absence.status == 'approved', 2),
-            (Absence.status == 'declined', 3),
-            else_=4
-        ),
+        Absence.status.asc(),  # This will put 'pending' before others alphabetically
         Absence.request_date.desc()
     )
     
@@ -55,8 +52,11 @@ def get_absences():
     # Apply pagination
     absences = query.paginate(page=page, per_page=page_size, error_out=False).items
     
-    # Prepare response with enhanced employee details
-    result_data = []
+    # Post-process to ensure proper sorting (pending first)
+    absences_list = []
+    pending_absences = []
+    other_absences = []
+    
     for absence in absences:
         absence_data = absence_schema.dump(absence)
         
@@ -75,7 +75,18 @@ def get_absences():
             # If no request_date is set, use the created timestamp or current time
             absence_data['requestDate'] = datetime.datetime.now().isoformat()
         
-        result_data.append(absence_data)
+        # Separate pending from other absences
+        if absence.status == 'pending':
+            pending_absences.append(absence_data)
+        else:
+            other_absences.append(absence_data)
+    
+    # Sort each group by request date (newest first)
+    pending_absences.sort(key=lambda x: x.get('requestDate', ''), reverse=True)
+    other_absences.sort(key=lambda x: x.get('requestDate', ''), reverse=True)
+    
+    # Combine: pending first, then others
+    result_data = pending_absences + other_absences
     
     # Prepare response
     result = {
@@ -108,6 +119,8 @@ def get_absence(id):
         absence_data['requestDate'] = datetime.datetime.now().isoformat()
     
     return jsonify({'data': absence_data})
+
+# ... keep existing code (create_absence, update_absence, update_absence_status, delete_absence, and helper functions)
 
 @absences_bp.route('', methods=['POST'])
 def create_absence():
