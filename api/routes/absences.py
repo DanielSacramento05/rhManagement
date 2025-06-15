@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
@@ -40,9 +39,14 @@ def get_absences():
         query = query.filter(Absence.end_date <= end_date)
     
     # Sort by status (pending first) and then by request_date (newest first)
-    # Using a more explicit approach for better database compatibility
+    # Use CASE statement to properly order pending requests first
     query = query.order_by(
-        Absence.status.asc(),  # This will put 'pending' before others alphabetically
+        db.case(
+            (Absence.status == 'pending', 0),
+            (Absence.status == 'approved', 1),
+            (Absence.status == 'declined', 2),
+            else_=3
+        ),
         Absence.request_date.desc()
     )
     
@@ -52,10 +56,8 @@ def get_absences():
     # Apply pagination
     absences = query.paginate(page=page, per_page=page_size, error_out=False).items
     
-    # Post-process to ensure proper sorting (pending first)
-    absences_list = []
-    pending_absences = []
-    other_absences = []
+    # Prepare response with enhanced employee details
+    result_data = []
     
     for absence in absences:
         absence_data = absence_schema.dump(absence)
@@ -75,18 +77,7 @@ def get_absences():
             # If no request_date is set, use the created timestamp or current time
             absence_data['requestDate'] = datetime.datetime.now().isoformat()
         
-        # Separate pending from other absences
-        if absence.status == 'pending':
-            pending_absences.append(absence_data)
-        else:
-            other_absences.append(absence_data)
-    
-    # Sort each group by request date (newest first)
-    pending_absences.sort(key=lambda x: x.get('requestDate', ''), reverse=True)
-    other_absences.sort(key=lambda x: x.get('requestDate', ''), reverse=True)
-    
-    # Combine: pending first, then others
-    result_data = pending_absences + other_absences
+        result_data.append(absence_data)
     
     # Prepare response
     result = {
