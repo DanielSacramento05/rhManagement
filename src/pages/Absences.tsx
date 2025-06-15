@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +32,7 @@ const Absences = () => {
   const [activeTab, setActiveTab] = useState("requests");
   const [currentPage, setCurrentPage] = useState(1);
   const [teamCurrentPage, setTeamCurrentPage] = useState(1);
-  const pageSize = 10; // Reduced from 20 to 10
+  const pageSize = 10;
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   
@@ -84,25 +83,6 @@ const Absences = () => {
     }
   };
 
-  // Sort absences to show pending first
-  const sortAbsencesByPriority = (absences: any[] = []) => {
-    return [...absences].sort((a, b) => {
-      // Pending absences first
-      if (a.status === 'pending' && b.status !== 'pending') return -1;
-      if (b.status === 'pending' && a.status !== 'pending') return 1;
-      
-      // Then by request date (newest first)
-      const aRequestDate = a.requestDate || a.request_date || a.createdAt || a.created_at;
-      const bRequestDate = b.requestDate || b.request_date || b.createdAt || b.created_at;
-      
-      if (aRequestDate && bRequestDate) {
-        return new Date(bRequestDate).getTime() - new Date(aRequestDate).getTime();
-      }
-      
-      return 0;
-    });
-  };
-
   // Filter out current user's absences from team absences
   const filterTeamAbsences = (absences: any[] = []) => {
     if (!currentUser?.id) return absences;
@@ -112,9 +92,9 @@ const Absences = () => {
     );
   };
 
-  const sortedUserAbsences = sortAbsencesByPriority(userAbsences?.data || []);
+  // Backend now handles sorting, so we just use the data as-is
+  const userAbsencesData = userAbsences?.data || [];
   const filteredTeamAbsences = filterTeamAbsences(teamAbsences?.data || []);
-  const sortedTeamAbsences = sortAbsencesByPriority(filteredTeamAbsences);
 
   // Get status badge color
   const getStatusBadge = (status: string) => {
@@ -437,7 +417,7 @@ const Absences = () => {
           
           <TabsContent value="requests">
             {renderAbsenceCards(
-              sortedUserAbsences, 
+              userAbsencesData, 
               userAbsencesLoading, 
               "You don't have any absence requests yet",
               userAbsences?.totalCount || 0,
@@ -474,7 +454,7 @@ const Absences = () => {
           
           <TabsContent value="my-requests">
             {renderAbsenceCards(
-              sortedUserAbsences, 
+              userAbsencesData, 
               userAbsencesLoading, 
               "You don't have any absence requests yet",
               userAbsences?.totalCount || 0,
@@ -486,7 +466,7 @@ const Absences = () => {
           {canViewAllAbsences && (
             <TabsContent value="team-requests">
               {renderAbsenceCards(
-                sortedTeamAbsences, 
+                filteredTeamAbsences, 
                 teamAbsencesLoading, 
                 "No team absence requests found",
                 teamAbsences?.totalCount || 0,

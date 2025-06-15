@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
@@ -11,7 +10,6 @@ absences_schema = AbsenceSchema(many=True)
 
 @absences_bp.route('', methods=['GET'])
 def get_absences():
-    # ... keep existing code (get_absences function)
     # Get query parameters for filtering and pagination
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('pageSize', 10, type=int)
@@ -39,6 +37,17 @@ def get_absences():
     
     if end_date:
         query = query.filter(Absence.end_date <= end_date)
+    
+    # Sort by status (pending first) and then by request_date (newest first)
+    query = query.order_by(
+        db.case(
+            (Absence.status == 'pending', 1),
+            (Absence.status == 'approved', 2),
+            (Absence.status == 'declined', 3),
+            else_=4
+        ),
+        Absence.request_date.desc()
+    )
     
     # Get total count before pagination
     total_count = query.count()
@@ -80,7 +89,6 @@ def get_absences():
 
 @absences_bp.route('/<id>', methods=['GET'])
 def get_absence(id):
-    # ... keep existing code (get_absence function)
     absence = Absence.query.get_or_404(id)
     absence_data = absence_schema.dump(absence)
     
@@ -103,7 +111,6 @@ def get_absence(id):
 
 @absences_bp.route('', methods=['POST'])
 def create_absence():
-    # ... keep existing code (create_absence function)
     # Validate and deserialize input
     json_data = request.get_json()
     print("Received absence request data:", json_data)
@@ -163,7 +170,6 @@ def create_absence():
 
 @absences_bp.route('/<id>', methods=['PUT'])
 def update_absence(id):
-    # ... keep existing code (update_absence function)
     absence = Absence.query.get_or_404(id)
     
     # Get JSON data
@@ -276,7 +282,6 @@ def update_absence_status(id):
 
 @absences_bp.route('/<id>', methods=['DELETE'])
 def delete_absence(id):
-    # ... keep existing code (delete_absence function)
     absence = Absence.query.get_or_404(id)
     
     try:
