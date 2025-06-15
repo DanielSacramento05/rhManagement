@@ -1,5 +1,3 @@
-
-
 from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
@@ -12,6 +10,8 @@ absences_schema = AbsenceSchema(many=True)
 
 @absences_bp.route('', methods=['GET'])
 def get_absences():
+    print(f"=== ABSENCES DEBUG - FUNCTION CALLED ===")
+    
     # Get query parameters for filtering and pagination
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('pageSize', 10, type=int)
@@ -24,6 +24,7 @@ def get_absences():
     
     print(f"=== ABSENCES DEBUG ===")
     print(f"Query params: page={page}, pageSize={page_size}, employeeId={employee_id}, status={status}, department={department}")
+    print(f"Raw request args: {dict(request.args)}")
     
     # Start building the query
     query = Absence.query
@@ -31,22 +32,28 @@ def get_absences():
     # Apply filters
     if employee_id:
         query = query.filter(Absence.employee_id == employee_id)
+        print(f"Applied employee_id filter: {employee_id}")
     
     if department:
         # Filter by department through employee relationship
         query = query.join(Employee).filter(Employee.department == department)
+        print(f"Applied department filter: {department}")
     
     if type:
         query = query.filter(Absence.type == type)
+        print(f"Applied type filter: {type}")
     
     if status:
         query = query.filter(Absence.status == status)
+        print(f"Applied status filter: {status}")
     
     if start_date:
         query = query.filter(Absence.start_date >= start_date)
+        print(f"Applied start_date filter: {start_date}")
     
     if end_date:
         query = query.filter(Absence.end_date <= end_date)
+        print(f"Applied end_date filter: {end_date}")
     
     # Check all absences before sorting to see status distribution
     all_absences_for_debug = query.all()
@@ -61,6 +68,8 @@ def get_absences():
         (Absence.status != 'pending').asc(),
         Absence.request_date.desc()
     )
+    
+    print(f"Applied ordering: pending first, then by request_date desc")
     
     # Get total count before pagination
     total_count = query.count()
@@ -108,8 +117,6 @@ def get_absences():
     }
     
     return jsonify(result)
-
-# ... keep existing code (get_absence, create_absence, update_absence, update_absence_status, delete_absence, and helper functions)
 
 @absences_bp.route('/<id>', methods=['GET'])
 def get_absence(id):
@@ -332,4 +339,3 @@ try:
         update_employee_statuses_based_on_absences()
 except Exception as e:
     print(f"Could not update employee statuses on module load: {str(e)}")
-
