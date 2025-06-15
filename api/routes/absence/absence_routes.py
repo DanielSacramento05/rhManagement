@@ -37,8 +37,8 @@ def get_absences():
         print(f"Applied employee_id filter: {employee_id}")
     
     if department:
-        # Filter by department through employee relationship
-        query = query.join(Employee).filter(Employee.department == department)
+        # Filter by department through employee relationship - explicitly specify the join condition
+        query = query.join(Employee, Absence.employee_id == Employee.id).filter(Employee.department == department)
         print(f"Applied department filter: {department}")
     
     if type:
@@ -119,6 +119,8 @@ def get_absences():
     }
     
     return jsonify(result)
+
+# ... keep existing code (remaining route handlers)
 
 @absences_bp.route('/<id>', methods=['GET'])
 def get_absence(id):
