@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RequestTimeOffForm } from "@/components/absences/RequestTimeOffForm";
 import { AbsenceCalendar } from "@/components/absences/AbsenceCalendar";
-import { Plus, FileText, Clock, CheckCircle, XCircle, Calendar as CalendarIcon, User } from "lucide-react";
+import { Plus, FileText, Clock, CheckCircle, XCircle, Calendar as CalendarIcon, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getAbsences, updateAbsenceStatus } from "@/services/absenceService";
 import { format, parseISO } from "date-fns";
@@ -17,11 +17,22 @@ import { hasPermission } from "@/services/permissionService";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { toast } from "sonner";
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const Absences = () => {
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("requests");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [teamCurrentPage, setTeamCurrentPage] = useState(1);
+  const pageSize = 20; // Increased from default 10
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   
@@ -29,16 +40,26 @@ const Absences = () => {
   const canViewAllAbsences = hasPermission('absences', 'read', 'department');
   const isEmployee = currentUser?.role === 'employee';
 
-  // Fetch user's own absences
+  // Fetch user's own absences with pagination
   const { data: userAbsences, isLoading: userAbsencesLoading } = useQuery({
-    queryKey: ['absences', currentUser?.id],
-    queryFn: () => getAbsences({ employeeId: currentUser?.id }),
+    queryKey: ['absences', currentUser?.id, currentPage, statusFilter],
+    queryFn: () => getAbsences({ 
+      employeeId: currentUser?.id,
+      page: currentPage,
+      pageSize,
+      ...(statusFilter !== 'all' && { status: statusFilter })
+    }),
   });
 
-  // Fetch team absences if user has permission
+  // Fetch team absences if user has permission with pagination
   const { data: teamAbsences, isLoading: teamAbsencesLoading } = useQuery({
-    queryKey: ['team-absences'],
-    queryFn: () => getAbsences({ department: currentUser?.departmentName }),
+    queryKey: ['team-absences', teamCurrentPage, statusFilter],
+    queryFn: () => getAbsences({ 
+      department: currentUser?.departmentName,
+      page: teamCurrentPage,
+      pageSize,
+      ...(statusFilter !== 'all' && { status: statusFilter })
+    }),
     enabled: canViewAllAbsences,
   });
 
@@ -62,14 +83,27 @@ const Absences = () => {
     }
   };
 
-  // Filter absences based on status
-  const filterAbsencesByStatus = (absences: any[] = []) => {
-    if (statusFilter === 'all') return absences;
-    return absences.filter(absence => absence.status === statusFilter);
+  // Sort absences to show pending first
+  const sortAbsencesByPriority = (absences: any[] = []) => {
+    return [...absences].sort((a, b) => {
+      // Pending absences first
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (b.status === 'pending' && a.status !== 'pending') return 1;
+      
+      // Then by request date (newest first)
+      const aRequestDate = a.requestDate || a.request_date || a.createdAt || a.created_at;
+      const bRequestDate = b.requestDate || b.request_date || b.createdAt || b.created_at;
+      
+      if (aRequestDate && bRequestDate) {
+        return new Date(bRequestDate).getTime() - new Date(aRequestDate).getTime();
+      }
+      
+      return 0;
+    });
   };
 
-  const filteredUserAbsences = filterAbsencesByStatus(userAbsences?.data || []);
-  const filteredTeamAbsences = filterAbsencesByStatus(teamAbsences?.data || []);
+  const sortedUserAbsences = sortAbsencesByPriority(userAbsences?.data || []);
+  const sortedTeamAbsences = sortAbsencesByPriority(teamAbsences?.data || []);
 
   // Get status badge color
   const getStatusBadge = (status: string) => {
@@ -88,20 +122,16 @@ const Absences = () => {
   // Helper function to format request date safely
   const formatRequestDate = (absence: any) => {
     try {
-      // Try different date field names that might be used
       const dateToUse = absence.requestDate || absence.request_date || absence.createdAt || absence.created_at;
       
       if (dateToUse) {
-        // Handle both ISO strings and date objects
         let date;
         if (typeof dateToUse === 'string') {
-          // If it's an ISO string with time, parse it directly
           date = new Date(dateToUse);
         } else {
           date = new Date(dateToUse);
         }
         
-        // Check if the date is valid
         if (isNaN(date.getTime())) {
           return "Date not available";
         }
@@ -109,17 +139,14 @@ const Absences = () => {
         return format(date, "dd MMM yyyy");
       }
       
-      // Fallback to a default date if no request date is available
       return "Date not available";
     } catch (error) {
       return "Date not available";
     }
   };
 
-  // Helper function to format date range
   const formatDateRange = (absence: any) => {
     try {
-      // Handle both camelCase and snake_case field names
       const startDate = absence.startDate || absence.start_date;
       const endDate = absence.endDate || absence.end_date;
       
@@ -140,8 +167,51 @@ const Absences = () => {
     }
   };
 
+  // Render pagination component
+  const renderPagination = (totalCount: number, currentPageNum: number, setCurrentPageFunc: (page: number) => void) => {
+    const totalPages = Math.ceil(totalCount / pageSize);
+    
+    if (totalPages <= 1) return null;
+
+    return (
+      <Pagination className="mt-6">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious 
+              onClick={() => setCurrentPageFunc(Math.max(1, currentPageNum - 1))}
+              className={currentPageNum === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
+          </PaginationItem>
+          
+          {/* Show page numbers */}
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            const page = i + 1;
+            return (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  onClick={() => setCurrentPageFunc(page)}
+                  isActive={currentPageNum === page}
+                  className="cursor-pointer"
+                >
+                  {page}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          })}
+          
+          <PaginationItem>
+            <PaginationNext 
+              onClick={() => setCurrentPageFunc(Math.min(totalPages, currentPageNum + 1))}
+              className={currentPageNum === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    );
+  };
+
   // Render absence cards
-  const renderAbsenceCards = (absences: any[], isLoading: boolean, emptyMessage: string) => {
+  const renderAbsenceCards = (absences: any[], isLoading: boolean, emptyMessage: string, totalCount: number, currentPageNum: number, setCurrentPageFunc: (page: number) => void) => {
     if (isLoading) {
       return (
         <Card>
@@ -153,61 +223,73 @@ const Absences = () => {
     }
 
     if (absences.length > 0) {
-      return absences.map((absence) => (
-        <Card key={absence.id}>
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-lg">
-                  {!isEmployee && absence.employeeName ? absence.employeeName : (absence.type || "Time Off")}
-                </CardTitle>
-                <CardDescription>
-                  {!isEmployee && absence.employeeName && (absence.type || "Time Off")} {!isEmployee && absence.employeeName && " • "}
-                  {formatDateRange(absence)}
-                </CardDescription>
-              </div>
-              {getStatusBadge(absence.status)}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {absence.notes && (
-                <div className="text-sm">
-                  <span className="font-medium">Reason: </span>
-                  {absence.notes}
+      return (
+        <div className="space-y-4">
+          {/* Show total count */}
+          <div className="text-sm text-muted-foreground">
+            Showing {absences.length} of {totalCount} requests
+          </div>
+          
+          {absences.map((absence) => (
+            <Card key={absence.id}>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">
+                      {!isEmployee && absence.employeeName ? absence.employeeName : (absence.type || "Time Off")}
+                    </CardTitle>
+                    <CardDescription>
+                      {!isEmployee && absence.employeeName && (absence.type || "Time Off")} {!isEmployee && absence.employeeName && " • "}
+                      {formatDateRange(absence)}
+                    </CardDescription>
+                  </div>
+                  {getStatusBadge(absence.status)}
                 </div>
-              )}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span>Requested on {formatRequestDate(absence)}</span>
-              </div>
-              
-              {!isEmployee && absence.status === 'pending' && (
-                <div className="flex gap-2 mt-4">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50"
-                    onClick={() => handleStatusUpdate(absence.id, 'approved')}
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    Approve
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => handleStatusUpdate(absence.id, 'declined')}
-                  >
-                    <XCircle className="h-4 w-4" />
-                    Decline
-                  </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {absence.notes && (
+                    <div className="text-sm">
+                      <span className="font-medium">Reason: </span>
+                      {absence.notes}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    <span>Requested on {formatRequestDate(absence)}</span>
+                  </div>
+                  
+                  {!isEmployee && absence.status === 'pending' && (
+                    <div className="flex gap-2 mt-4">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex items-center gap-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                        onClick={() => handleStatusUpdate(absence.id, 'approved')}
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Approve
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleStatusUpdate(absence.id, 'declined')}
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Decline
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ));
+              </CardContent>
+            </Card>
+          ))}
+          
+          {/* Pagination */}
+          {renderPagination(totalCount, currentPageNum, setCurrentPageFunc)}
+        </div>
+      );
     }
 
     return (
@@ -238,7 +320,11 @@ const Absences = () => {
 
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={(value) => {
+            setStatusFilter(value);
+            setCurrentPage(1);
+            setTeamCurrentPage(1);
+          }}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -282,13 +368,14 @@ const Absences = () => {
           </TabsList>
           
           <TabsContent value="requests">
-            <div className="space-y-4">
-              {renderAbsenceCards(
-                filteredUserAbsences, 
-                userAbsencesLoading, 
-                "You don't have any absence requests yet"
-              )}
-            </div>
+            {renderAbsenceCards(
+              sortedUserAbsences, 
+              userAbsencesLoading, 
+              "You don't have any absence requests yet",
+              userAbsences?.totalCount || 0,
+              currentPage,
+              setCurrentPage
+            )}
           </TabsContent>
           
           <TabsContent value="calendar">
@@ -318,24 +405,26 @@ const Absences = () => {
           </TabsList>
           
           <TabsContent value="my-requests">
-            <div className="space-y-4">
-              {renderAbsenceCards(
-                filteredUserAbsences, 
-                userAbsencesLoading, 
-                "You don't have any absence requests yet"
-              )}
-            </div>
+            {renderAbsenceCards(
+              sortedUserAbsences, 
+              userAbsencesLoading, 
+              "You don't have any absence requests yet",
+              userAbsences?.totalCount || 0,
+              currentPage,
+              setCurrentPage
+            )}
           </TabsContent>
           
           {canViewAllAbsences && (
             <TabsContent value="team-requests">
-              <div className="space-y-4">
-                {renderAbsenceCards(
-                  filteredTeamAbsences, 
-                  teamAbsencesLoading, 
-                  "No team absence requests found"
-                )}
-              </div>
+              {renderAbsenceCards(
+                sortedTeamAbsences, 
+                teamAbsencesLoading, 
+                "No team absence requests found",
+                teamAbsences?.totalCount || 0,
+                teamCurrentPage,
+                setTeamCurrentPage
+              )}
             </TabsContent>
           )}
           
