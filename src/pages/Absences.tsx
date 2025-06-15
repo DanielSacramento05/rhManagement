@@ -24,6 +24,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 
 const Absences = () => {
@@ -32,7 +33,7 @@ const Absences = () => {
   const [activeTab, setActiveTab] = useState("requests");
   const [currentPage, setCurrentPage] = useState(1);
   const [teamCurrentPage, setTeamCurrentPage] = useState(1);
-  const pageSize = 20; // Increased from default 10
+  const pageSize = 10; // Reduced from 20 to 10
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   
@@ -102,8 +103,18 @@ const Absences = () => {
     });
   };
 
+  // Filter out current user's absences from team absences
+  const filterTeamAbsences = (absences: any[] = []) => {
+    if (!currentUser?.id) return absences;
+    return absences.filter(absence => 
+      absence.employee_id !== currentUser.id && 
+      absence.employeeId !== currentUser.id
+    );
+  };
+
   const sortedUserAbsences = sortAbsencesByPriority(userAbsences?.data || []);
-  const sortedTeamAbsences = sortAbsencesByPriority(teamAbsences?.data || []);
+  const filteredTeamAbsences = filterTeamAbsences(teamAbsences?.data || []);
+  const sortedTeamAbsences = sortAbsencesByPriority(filteredTeamAbsences);
 
   // Get status badge color
   const getStatusBadge = (status: string) => {
@@ -167,11 +178,28 @@ const Absences = () => {
     }
   };
 
-  // Render pagination component
+  // Render pagination component with improved page display
   const renderPagination = (totalCount: number, currentPageNum: number, setCurrentPageFunc: (page: number) => void) => {
     const totalPages = Math.ceil(totalCount / pageSize);
     
     if (totalPages <= 1) return null;
+
+    // Calculate which pages to show
+    const getVisiblePages = () => {
+      const maxVisiblePages = 5;
+      const half = Math.floor(maxVisiblePages / 2);
+      let start = Math.max(1, currentPageNum - half);
+      let end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      // Adjust start if we're near the end
+      if (end - start + 1 < maxVisiblePages) {
+        start = Math.max(1, end - maxVisiblePages + 1);
+      }
+      
+      return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    };
+
+    const visiblePages = getVisiblePages();
 
     return (
       <Pagination className="mt-6">
@@ -183,21 +211,56 @@ const Absences = () => {
             />
           </PaginationItem>
           
-          {/* Show page numbers */}
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            const page = i + 1;
-            return (
-              <PaginationItem key={page}>
+          {/* Show first page if not visible */}
+          {visiblePages[0] > 1 && (
+            <>
+              <PaginationItem>
                 <PaginationLink
-                  onClick={() => setCurrentPageFunc(page)}
-                  isActive={currentPageNum === page}
+                  onClick={() => setCurrentPageFunc(1)}
                   className="cursor-pointer"
                 >
-                  {page}
+                  1
                 </PaginationLink>
               </PaginationItem>
-            );
-          })}
+              {visiblePages[0] > 2 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+            </>
+          )}
+          
+          {/* Show current range of pages */}
+          {visiblePages.map((page) => (
+            <PaginationItem key={page}>
+              <PaginationLink
+                onClick={() => setCurrentPageFunc(page)}
+                isActive={currentPageNum === page}
+                className="cursor-pointer"
+              >
+                {page}
+              </PaginationLink>
+            </PaginationItem>
+          ))}
+          
+          {/* Show last page if not visible */}
+          {visiblePages[visiblePages.length - 1] < totalPages && (
+            <>
+              {visiblePages[visiblePages.length - 1] < totalPages - 1 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              <PaginationItem>
+                <PaginationLink
+                  onClick={() => setCurrentPageFunc(totalPages)}
+                  className="cursor-pointer"
+                >
+                  {totalPages}
+                </PaginationLink>
+              </PaginationItem>
+            </>
+          )}
           
           <PaginationItem>
             <PaginationNext 
@@ -211,7 +274,7 @@ const Absences = () => {
   };
 
   // Render absence cards
-  const renderAbsenceCards = (absences: any[], isLoading: boolean, emptyMessage: string, totalCount: number, currentPageNum: number, setCurrentPageFunc: (page: number) => void) => {
+  const renderAbsenceCards = (absences: any[], isLoading: boolean, emptyMessage: string, totalCount: number, currentPageNum: number, setCurrentPageFunc: (page: number) => void, isTeamView: boolean = false) => {
     if (isLoading) {
       return (
         <Card>
@@ -223,11 +286,16 @@ const Absences = () => {
     }
 
     if (absences.length > 0) {
+      // For team view, adjust total count to exclude current user's absences
+      const displayTotalCount = isTeamView ? 
+        (teamAbsences?.totalCount || 0) - (userAbsences?.totalCount || 0) : 
+        totalCount;
+        
       return (
         <div className="space-y-4">
           {/* Show total count */}
           <div className="text-sm text-muted-foreground">
-            Showing {absences.length} of {totalCount} requests
+            Showing {absences.length} of {displayTotalCount} requests
           </div>
           
           {absences.map((absence) => (
@@ -287,7 +355,7 @@ const Absences = () => {
           ))}
           
           {/* Pagination */}
-          {renderPagination(totalCount, currentPageNum, setCurrentPageFunc)}
+          {renderPagination(isTeamView ? displayTotalCount : totalCount, currentPageNum, setCurrentPageFunc)}
         </div>
       );
     }
@@ -423,7 +491,8 @@ const Absences = () => {
                 "No team absence requests found",
                 teamAbsences?.totalCount || 0,
                 teamCurrentPage,
-                setTeamCurrentPage
+                setTeamCurrentPage,
+                true
               )}
             </TabsContent>
           )}
