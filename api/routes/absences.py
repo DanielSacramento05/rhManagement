@@ -1,4 +1,5 @@
 
+
 from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
@@ -54,15 +55,10 @@ def get_absences():
         status_count[abs.status] = status_count.get(abs.status, 0) + 1
     print(f"Status distribution before sorting: {status_count}")
     
-    # Sort by status (pending first) and then by request_date (newest first)
-    # Use CASE statement to properly order pending requests first
+    # Order by status with pending first, then by request_date descending
+    # Using a simpler approach: order by status != 'pending', then by request_date
     query = query.order_by(
-        db.case(
-            (Absence.status == 'pending', 0),
-            (Absence.status == 'approved', 1),
-            (Absence.status == 'declined', 2),
-            else_=3
-        ),
+        (Absence.status != 'pending').asc(),
         Absence.request_date.desc()
     )
     
@@ -336,3 +332,4 @@ try:
         update_employee_statuses_based_on_absences()
 except Exception as e:
     print(f"Could not update employee statuses on module load: {str(e)}")
+
