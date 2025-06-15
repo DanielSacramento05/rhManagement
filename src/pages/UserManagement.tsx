@@ -1,5 +1,5 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,14 +68,45 @@ import { updateUserRole } from "@/services/authService";
 import { format, parseISO } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { isSystemAdmin } from "@/services/permissionService";
 import type { Employee } from "@/types";
 
 type RoleType = 'hr_admin' | 'dept_manager' | 'employee' | 'system_admin';
 
 const UserManagement = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  
+  // Check permissions on component mount
+  useEffect(() => {
+    if (!isSystemAdmin()) {
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "You don't have permission to access User Management.",
+      });
+      navigate('/');
+    }
+  }, [navigate, toast]);
+
+  // Early return if not system admin
+  if (!isSystemAdmin()) {
+    return (
+      <div className="page-container flex items-center justify-center min-h-[50vh]">
+        <div className="text-center">
+          <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground">You don't have permission to access this page.</p>
+          <Button onClick={() => navigate('/')} className="mt-4">
+            Go to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
