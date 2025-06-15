@@ -51,6 +51,14 @@ const Absences = () => {
     }),
   });
 
+  // Debug logging for user absences
+  console.log('=== FRONTEND DEBUG ===');
+  console.log('User absences response:', userAbsences);
+  console.log('User absences data length:', userAbsences?.data?.length);
+  console.log('User absences total count:', userAbsences?.totalCount);
+  console.log('Status filter:', statusFilter);
+  console.log('Current page:', currentPage);
+
   // Fetch team absences if user has permission with pagination
   const { data: teamAbsences, isLoading: teamAbsencesLoading } = useQuery({
     queryKey: ['team-absences', teamCurrentPage, statusFilter],
@@ -281,6 +289,13 @@ const Absences = () => {
     if (absences.length > 0) {
       // For team view, use the calculated total count that excludes current user
       const displayTotalCount = isTeamView ? getTeamAbsencesTotalCount() : totalCount;
+      
+      // Debug logging for count display
+      console.log('=== RENDER DEBUG ===');
+      console.log('Absences length:', absences.length);
+      console.log('Total count passed:', totalCount);
+      console.log('Display total count:', displayTotalCount);
+      console.log('Is team view:', isTeamView);
         
       return (
         <div className="space-y-4">
