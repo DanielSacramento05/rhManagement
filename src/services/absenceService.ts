@@ -15,7 +15,7 @@ const ENDPOINT = '/absences';
  * @returns Paginated list of absences
  */
 export const getAbsences = async (
-  filters?: AbsenceFilters
+  filters?: AbsenceFilters & { excludeEmployeeId?: string }
 ): Promise<PaginatedResponse<Absence>> => {
   try {
     return await apiRequest<PaginatedResponse<Absence>>(

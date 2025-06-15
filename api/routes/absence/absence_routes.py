@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
@@ -23,9 +22,10 @@ def get_absences():
     start_date = request.args.get('startDate', '')
     end_date = request.args.get('endDate', '')
     department = request.args.get('department', '')
+    exclude_employee_id = request.args.get('excludeEmployeeId', '')
     
     print(f"=== ABSENCES DEBUG ===")
-    print(f"Query params: page={page}, pageSize={page_size}, employeeId={employee_id}, status={status}, department={department}")
+    print(f"Query params: page={page}, pageSize={page_size}, employeeId={employee_id}, status={status}, department={department}, excludeEmployeeId={exclude_employee_id}")
     print(f"Raw request args: {dict(request.args)}")
     
     # Start building the query
@@ -40,6 +40,11 @@ def get_absences():
         # Filter by department through employee relationship - explicitly specify the join condition
         query = query.join(Employee, Absence.employee_id == Employee.id).filter(Employee.department == department)
         print(f"Applied department filter: {department}")
+        
+        # If excludeEmployeeId is provided, exclude that employee's absences
+        if exclude_employee_id:
+            query = query.filter(Absence.employee_id != exclude_employee_id)
+            print(f"Excluded employee_id: {exclude_employee_id}")
     
     if type:
         query = query.filter(Absence.type == type)
@@ -119,8 +124,6 @@ def get_absences():
     }
     
     return jsonify(result)
-
-# ... keep existing code (remaining route handlers)
 
 @absences_bp.route('/<id>', methods=['GET'])
 def get_absence(id):

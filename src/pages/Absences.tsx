@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,28 +51,17 @@ const Absences = () => {
     }),
   });
 
-  // Fetch team absences if user has permission with pagination
+  // Fetch team absences if user has permission with pagination (excluding current user)
   const { data: teamAbsences, isLoading: teamAbsencesLoading } = useQuery({
     queryKey: ['team-absences', teamCurrentPage, statusFilter],
     queryFn: () => getAbsences({ 
       department: currentUser?.departmentName,
+      excludeEmployeeId: currentUser?.id, // Exclude current user from team view
       page: teamCurrentPage,
       pageSize,
       ...(statusFilter !== 'all' && { status: statusFilter })
     }),
     enabled: canViewAllAbsences,
-  });
-
-  // Fetch total count of current user's absences in the department (for accurate team count calculation)
-  const { data: userAbsencesInDepartment } = useQuery({
-    queryKey: ['user-absences-in-department', currentUser?.id, statusFilter],
-    queryFn: () => getAbsences({ 
-      employeeId: currentUser?.id,
-      page: 1,
-      pageSize: 1000, // Get all user absences to count them
-      ...(statusFilter !== 'all' && { status: statusFilter })
-    }),
-    enabled: canViewAllAbsences && !!currentUser?.id,
   });
 
   // Handle approve/decline actions
@@ -96,29 +84,9 @@ const Absences = () => {
     }
   };
 
-  // Filter out current user's absences from team absences
-  const filterTeamAbsences = (absences: any[] = []) => {
-    if (!currentUser?.id) return absences;
-    return absences.filter(absence => 
-      absence.employee_id !== currentUser.id && 
-      absence.employeeId !== currentUser.id
-    );
-  };
-
-  // Calculate team absences total count excluding current user
-  const getTeamAbsencesTotalCount = () => {
-    if (!teamAbsences?.totalCount || !currentUser?.id) return teamAbsences?.totalCount || 0;
-    
-    // Use the dedicated query to get the exact count of user's absences in department
-    const userAbsencesCount = userAbsencesInDepartment?.totalCount || 0;
-    
-    // Subtract current user's total absences from team total count
-    return Math.max(0, teamAbsences.totalCount - userAbsencesCount);
-  };
-
-  // Backend now handles sorting, so we just use the data as-is
+  // Backend now handles sorting and exclusion, so we just use the data as-is
   const userAbsencesData = userAbsences?.data || [];
-  const filteredTeamAbsences = filterTeamAbsences(teamAbsences?.data || []);
+  const teamAbsencesData = teamAbsences?.data || [];
 
   // Get status badge color
   const getStatusBadge = (status: string) => {
@@ -278,7 +246,7 @@ const Absences = () => {
   };
 
   // Render absence cards
-  const renderAbsenceCards = (absences: any[], isLoading: boolean, emptyMessage: string, totalCount: number, currentPageNum: number, setCurrentPageFunc: (page: number) => void, isTeamView: boolean = false) => {
+  const renderAbsenceCards = (absences: any[], isLoading: boolean, emptyMessage: string, totalCount: number, currentPageNum: number, setCurrentPageFunc: (page: number) => void) => {
     if (isLoading) {
       return (
         <Card>
@@ -290,14 +258,11 @@ const Absences = () => {
     }
 
     if (absences.length > 0) {
-      // For team view, use the calculated total count that excludes current user
-      const displayTotalCount = isTeamView ? getTeamAbsencesTotalCount() : totalCount;
-        
       return (
         <div className="space-y-4">
           {/* Show total count */}
           <div className="text-sm text-muted-foreground">
-            Showing {absences.length} of {displayTotalCount} requests
+            Showing {absences.length} of {totalCount} requests
           </div>
           
           {absences.map((absence) => (
@@ -357,7 +322,7 @@ const Absences = () => {
           ))}
           
           {/* Pagination */}
-          {renderPagination(displayTotalCount, currentPageNum, setCurrentPageFunc)}
+          {renderPagination(totalCount, currentPageNum, setCurrentPageFunc)}
         </div>
       );
     }
@@ -488,13 +453,12 @@ const Absences = () => {
           {canViewAllAbsences && (
             <TabsContent value="team-requests">
               {renderAbsenceCards(
-                filteredTeamAbsences, 
+                teamAbsencesData, 
                 teamAbsencesLoading, 
                 "No team absence requests found",
                 teamAbsences?.totalCount || 0,
                 teamCurrentPage,
-                setTeamCurrentPage,
-                true
+                setTeamCurrentPage
               )}
             </TabsContent>
           )}
