@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify
 import uuid
 from models import db, Absence, Employee
@@ -18,6 +19,10 @@ def get_absences():
     status = request.args.get('status', '')
     start_date = request.args.get('startDate', '')
     end_date = request.args.get('endDate', '')
+    department = request.args.get('department', '')
+    
+    print(f"=== ABSENCES DEBUG ===")
+    print(f"Query params: page={page}, pageSize={page_size}, employeeId={employee_id}, status={status}, department={department}")
     
     # Start building the query
     query = Absence.query
@@ -25,6 +30,10 @@ def get_absences():
     # Apply filters
     if employee_id:
         query = query.filter(Absence.employee_id == employee_id)
+    
+    if department:
+        # Filter by department through employee relationship
+        query = query.join(Employee).filter(Employee.department == department)
     
     if type:
         query = query.filter(Absence.type == type)
@@ -37,6 +46,13 @@ def get_absences():
     
     if end_date:
         query = query.filter(Absence.end_date <= end_date)
+    
+    # Check all absences before sorting to see status distribution
+    all_absences_for_debug = query.all()
+    status_count = {}
+    for abs in all_absences_for_debug:
+        status_count[abs.status] = status_count.get(abs.status, 0) + 1
+    print(f"Status distribution before sorting: {status_count}")
     
     # Sort by status (pending first) and then by request_date (newest first)
     # Use CASE statement to properly order pending requests first
@@ -52,9 +68,15 @@ def get_absences():
     
     # Get total count before pagination
     total_count = query.count()
+    print(f"Total count: {total_count}")
     
     # Apply pagination
     absences = query.paginate(page=page, per_page=page_size, error_out=False).items
+    
+    # Debug: Print the status of each absence in the result
+    print(f"Absences on page {page}:")
+    for i, abs in enumerate(absences):
+        print(f"  {i+1}. ID: {abs.id[:8]}..., Status: {abs.status}, Request Date: {abs.request_date}")
     
     # Prepare response with enhanced employee details
     result_data = []
@@ -79,6 +101,8 @@ def get_absences():
         
         result_data.append(absence_data)
     
+    print(f"=== END DEBUG ===")
+    
     # Prepare response
     result = {
         'data': result_data,
@@ -88,6 +112,8 @@ def get_absences():
     }
     
     return jsonify(result)
+
+# ... keep existing code (get_absence, create_absence, update_absence, update_absence_status, delete_absence, and helper functions)
 
 @absences_bp.route('/<id>', methods=['GET'])
 def get_absence(id):
@@ -110,8 +136,6 @@ def get_absence(id):
         absence_data['requestDate'] = datetime.datetime.now().isoformat()
     
     return jsonify({'data': absence_data})
-
-# ... keep existing code (create_absence, update_absence, update_absence_status, delete_absence, and helper functions)
 
 @absences_bp.route('', methods=['POST'])
 def create_absence():
