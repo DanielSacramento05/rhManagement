@@ -4,6 +4,7 @@ import uuid
 from models import db, Absence, Employee
 from schemas import AbsenceSchema
 from .absence_utils import update_employee_statuses_based_on_absences, enrich_absence_with_employee
+import datetime
 
 absences_bp = Blueprint('absences', __name__)
 absence_schema = AbsenceSchema()
@@ -11,6 +12,8 @@ absences_schema = AbsenceSchema(many=True)
 
 @absences_bp.route('', methods=['GET'])
 def get_absences():
+    print(f"=== ABSENCES DEBUG - FUNCTION CALLED ===")
+    
     # Get query parameters for filtering and pagination
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('pageSize', 10, type=int)
@@ -19,6 +22,11 @@ def get_absences():
     status = request.args.get('status', '')
     start_date = request.args.get('startDate', '')
     end_date = request.args.get('endDate', '')
+    department = request.args.get('department', '')
+    
+    print(f"=== ABSENCES DEBUG ===")
+    print(f"Query params: page={page}, pageSize={page_size}, employeeId={employee_id}, status={status}, department={department}")
+    print(f"Raw request args: {dict(request.args)}")
     
     # Start building the query
     query = Absence.query
@@ -26,31 +34,81 @@ def get_absences():
     # Apply filters
     if employee_id:
         query = query.filter(Absence.employee_id == employee_id)
+        print(f"Applied employee_id filter: {employee_id}")
+    
+    if department:
+        # Filter by department through employee relationship
+        query = query.join(Employee).filter(Employee.department == department)
+        print(f"Applied department filter: {department}")
     
     if type:
         query = query.filter(Absence.type == type)
+        print(f"Applied type filter: {type}")
     
     if status:
         query = query.filter(Absence.status == status)
+        print(f"Applied status filter: {status}")
     
     if start_date:
         query = query.filter(Absence.start_date >= start_date)
+        print(f"Applied start_date filter: {start_date}")
     
     if end_date:
         query = query.filter(Absence.end_date <= end_date)
+        print(f"Applied end_date filter: {end_date}")
+    
+    # Check all absences before sorting to see status distribution
+    all_absences_for_debug = query.all()
+    status_count = {}
+    for abs in all_absences_for_debug:
+        status_count[abs.status] = status_count.get(abs.status, 0) + 1
+    print(f"Status distribution before sorting: {status_count}")
+    
+    # Order by status with pending first, then by request_date descending
+    # Using a simpler approach: order by status != 'pending', then by request_date
+    query = query.order_by(
+        (Absence.status != 'pending').asc(),
+        Absence.request_date.desc()
+    )
+    
+    print(f"Applied ordering: pending first, then by request_date desc")
     
     # Get total count before pagination
     total_count = query.count()
+    print(f"Total count: {total_count}")
     
     # Apply pagination
     absences = query.paginate(page=page, per_page=page_size, error_out=False).items
     
+    # Debug: Print the status of each absence in the result
+    print(f"Absences on page {page}:")
+    for i, abs in enumerate(absences):
+        print(f"  {i+1}. ID: {abs.id[:8]}..., Status: {abs.status}, Request Date: {abs.request_date}")
+    
     # Prepare response with enhanced employee details
     result_data = []
+    
     for absence in absences:
         absence_data = absence_schema.dump(absence)
-        absence_data = enrich_absence_with_employee(absence_data, absence.employee_id)
+        
+        # Get employee details
+        employee = Employee.query.get(absence.employee_id)
+        if employee:
+            absence_data['employeeName'] = employee.name
+            absence_data['department'] = employee.department
+            absence_data['position'] = employee.position
+            absence_data['imageUrl'] = employee.image_url
+        
+        # Ensure requestDate is properly formatted
+        if absence.request_date:
+            absence_data['requestDate'] = absence.request_date.isoformat()
+        else:
+            # If no request_date is set, use the created timestamp or current time
+            absence_data['requestDate'] = datetime.datetime.now().isoformat()
+        
         result_data.append(absence_data)
+    
+    print(f"=== END DEBUG ===")
     
     # Prepare response
     result = {
