@@ -18,6 +18,7 @@ export const getAbsences = async (
   filters?: AbsenceFilters & { excludeEmployeeId?: string }
 ): Promise<PaginatedResponse<Absence>> => {
   try {
+    console.log('getAbsences called with filters:', filters);
     return await apiRequest<PaginatedResponse<Absence>>(
       ENDPOINT, 
       'GET', 
