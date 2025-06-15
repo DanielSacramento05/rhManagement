@@ -92,6 +92,19 @@ const Absences = () => {
     );
   };
 
+  // Calculate team absences total count excluding current user
+  const getTeamAbsencesTotalCount = () => {
+    if (!teamAbsences?.data || !currentUser?.id) return teamAbsences?.totalCount || 0;
+    
+    // Count how many absences in the current team data belong to the current user
+    const currentUserAbsencesInTeam = teamAbsences.data.filter(absence => 
+      absence.employee_id === currentUser.id || absence.employeeId === currentUser.id
+    ).length;
+    
+    // Subtract current user's absences from total count
+    return Math.max(0, (teamAbsences?.totalCount || 0) - currentUserAbsencesInTeam);
+  };
+
   // Backend now handles sorting, so we just use the data as-is
   const userAbsencesData = userAbsences?.data || [];
   const filteredTeamAbsences = filterTeamAbsences(teamAbsences?.data || []);
@@ -266,10 +279,8 @@ const Absences = () => {
     }
 
     if (absences.length > 0) {
-      // For team view, adjust total count to exclude current user's absences
-      const displayTotalCount = isTeamView ? 
-        (teamAbsences?.totalCount || 0) - (userAbsences?.totalCount || 0) : 
-        totalCount;
+      // For team view, use the calculated total count that excludes current user
+      const displayTotalCount = isTeamView ? getTeamAbsencesTotalCount() : totalCount;
         
       return (
         <div className="space-y-4">
@@ -335,7 +346,7 @@ const Absences = () => {
           ))}
           
           {/* Pagination */}
-          {renderPagination(isTeamView ? displayTotalCount : totalCount, currentPageNum, setCurrentPageFunc)}
+          {renderPagination(displayTotalCount, currentPageNum, setCurrentPageFunc)}
         </div>
       );
     }
