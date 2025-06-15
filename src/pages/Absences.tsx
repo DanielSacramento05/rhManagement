@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,14 +52,6 @@ const Absences = () => {
     }),
   });
 
-  // Debug logging for user absences
-  console.log('=== FRONTEND DEBUG ===');
-  console.log('User absences response:', userAbsences);
-  console.log('User absences data length:', userAbsences?.data?.length);
-  console.log('User absences total count:', userAbsences?.totalCount);
-  console.log('Status filter:', statusFilter);
-  console.log('Current page:', currentPage);
-
   // Fetch team absences if user has permission with pagination
   const { data: teamAbsences, isLoading: teamAbsencesLoading } = useQuery({
     queryKey: ['team-absences', teamCurrentPage, statusFilter],
@@ -69,6 +62,18 @@ const Absences = () => {
       ...(statusFilter !== 'all' && { status: statusFilter })
     }),
     enabled: canViewAllAbsences,
+  });
+
+  // Fetch total count of current user's absences in the department (for accurate team count calculation)
+  const { data: userAbsencesInDepartment } = useQuery({
+    queryKey: ['user-absences-in-department', currentUser?.id, statusFilter],
+    queryFn: () => getAbsences({ 
+      employeeId: currentUser?.id,
+      page: 1,
+      pageSize: 1000, // Get all user absences to count them
+      ...(statusFilter !== 'all' && { status: statusFilter })
+    }),
+    enabled: canViewAllAbsences && !!currentUser?.id,
   });
 
   // Handle approve/decline actions
@@ -102,15 +107,13 @@ const Absences = () => {
 
   // Calculate team absences total count excluding current user
   const getTeamAbsencesTotalCount = () => {
-    if (!teamAbsences?.data || !currentUser?.id) return teamAbsences?.totalCount || 0;
+    if (!teamAbsences?.totalCount || !currentUser?.id) return teamAbsences?.totalCount || 0;
     
-    // Count how many absences in the current team data belong to the current user
-    const currentUserAbsencesInTeam = teamAbsences.data.filter(absence => 
-      absence.employee_id === currentUser.id || absence.employeeId === currentUser.id
-    ).length;
+    // Use the dedicated query to get the exact count of user's absences in department
+    const userAbsencesCount = userAbsencesInDepartment?.totalCount || 0;
     
-    // Subtract current user's absences from total count
-    return Math.max(0, (teamAbsences?.totalCount || 0) - currentUserAbsencesInTeam);
+    // Subtract current user's total absences from team total count
+    return Math.max(0, teamAbsences.totalCount - userAbsencesCount);
   };
 
   // Backend now handles sorting, so we just use the data as-is
@@ -289,13 +292,6 @@ const Absences = () => {
     if (absences.length > 0) {
       // For team view, use the calculated total count that excludes current user
       const displayTotalCount = isTeamView ? getTeamAbsencesTotalCount() : totalCount;
-      
-      // Debug logging for count display
-      console.log('=== RENDER DEBUG ===');
-      console.log('Absences length:', absences.length);
-      console.log('Total count passed:', totalCount);
-      console.log('Display total count:', displayTotalCount);
-      console.log('Is team view:', isTeamView);
         
       return (
         <div className="space-y-4">
